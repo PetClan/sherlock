@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sherlock - Shopify App Diagnostics</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>
+            <span class="icon">🔍</span>
+            Sherlock
+            <span class="shop-name" id="shop-name"></span>
+        </h1>
+        <div>
+            <button class="btn btn-primary" onclick="startScan('full')">
+                🔍 Run Full Scan
+            </button>
+        </div>
+    </header>
+    
+    <!-- Notifications -->
+    <div class="container">
+        <div id="notifications"></div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="tab" onclick="switchTab('conflicts')">⚡ Conflicts</button>
+            <button class="tab" onclick="switchTab('orphan')">🧹 Orphan Code</button>
+            <button class="tab" onclick="switchTab('timeline')">📈 Timeline</button>
+            <button class="tab" onclick="switchTab('community')">👥 Community</button>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="container" id="main-content">
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-content">
+            <!-- Scan Progress (hidden by default) -->
+            <div id="scan-progress" class="hidden"></div>
+            
+            <!-- Stats Cards -->
+            <div id="stats-container">
+                <div class="grid grid-4">
+                    <div class="card stat-card">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Two Column Layout -->
+            <div class="grid grid-2">
+                <!-- Recent Scans -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Scans</h3>
+                        <div>
+                            <button class="btn btn-secondary btn-sm" onclick="startScan('quick')" title="Quick scan - recently installed apps only">
+                                ⚡ Quick
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="startScan('full')">
+                                🔍 Full Scan
+                            </button>
+                        </div>
+                    </div>
+                    <div id="recent-scans">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading scans...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Suspect Apps -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Suspect Apps</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="viewAllApps()">
+                            View All Apps
+                        </button>
+                    </div>
+                    <div id="suspect-apps">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading apps...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Conflicts Tab -->
+        <div id="tab-conflicts" class="tab-content hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">⚡ Known App Conflicts</h3>
+                    <button class="btn btn-primary btn-sm" onclick="checkConflicts()">
+                        Check Conflicts
+                    </button>
+                </div>
+                <div id="conflicts-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚡</div>
+                        <h3>Check for Conflicts</h3>
+                        <p>Click "Check Conflicts" to see if any of your installed apps have known conflicts with each other.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Orphan Code Tab -->
+        <div id="tab-orphan" class="tab-content hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🧹 Orphan Code Detection</h3>
+                    <button class="btn btn-primary btn-sm" onclick="scanOrphanCode()">
+                        Scan for Orphan Code
+                    </button>
+                </div>
+                <div id="orphan-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🧹</div>
+                        <h3>Find Leftover Code</h3>
+                        <p>Scan your theme for code left behind by uninstalled apps. This orphan code can slow down your store.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Timeline Tab -->
+        <div id="tab-timeline" class="tab-content hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Performance Timeline</h3>
+                    <button class="btn btn-primary btn-sm" onclick="loadTimeline()">
+                        Load Timeline
+                    </button>
+                </div>
+                <div id="timeline-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📈</div>
+                        <h3>Track Performance Changes</h3>
+                        <p>See how your store's performance changed after each app installation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Community Tab -->
+        <div id="tab-community" class="tab-content hidden">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">👥 Community Insights</h3>
+                    <button class="btn btn-primary btn-sm" onclick="loadCommunityInsights()">
+                        Load Insights
+                    </button>
+                </div>
+                <div id="community-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <h3>Community-Reported Issues</h3>
+                        <p>See known issues for your installed apps based on reports from Shopify forums and communities.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Sherlock v2.0 · Enhanced Shopify App Diagnostics · <a href="/docs" target="_blank">API Docs</a></p>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

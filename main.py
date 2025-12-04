@@ -1,0 +1,1069 @@
+"""
+Sherlock - Shopify App Diagnostics
+Main application entry point
+"""
+
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, FileResponse
+from pydantic import BaseModel
+from contextlib import asynccontextmanager
+from typing import Optional, List
+from datetime import datetime
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from app.core.config import settings
+from app.db.database import init_db, get_db
+from app.db.models import Store, InstalledApp, Diagnosis, ThemeIssue, PerformanceSnapshot
+from app.services.diagnosis_service import DiagnosisService
+from app.services.app_scanner_service import AppScannerService
+from app.services.theme_analyzer_service import ThemeAnalyzerService
+from app.services.performance_service import PerformanceService
+from app.api import api_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan context manager for startup and shutdown events
+    """
+    # Startup: Initialize database
+    print("🔍 Starting Sherlock - Shopify App Diagnostics...")
+    print(f"Environment: {settings.environment}")
+    print(f"Debug mode: {settings.debug}")
+    
+    try:
+        await init_db()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️  Database initialization warning: {e}")
+        print("   (This is normal if database doesn't exist yet)")
+    
+    yield
+    
+    # Shutdown
+    print("👋 Shutting down Sherlock...")
+
+
+# Create FastAPI application
+app = FastAPI(
+    title=settings.app_name,
+    description="Diagnose which Shopify app is causing issues in your store",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include API routers (auth, webhooks, etc.)
+app.include_router(api_router, prefix="/api/v1")
+
+# Also include auth router at root level for cleaner OAuth URLs
+from app.api.routers.auth import router as auth_router
+app.include_router(auth_router)
+
+# Mount static files
+import os
+static_path = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_path):
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+
+# ==================== Dashboard Routes ====================
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request, shop: Optional[str] = None):
+    """
+    Serve the main dashboard HTML page.
+    
+    Usage: /dashboard?shop=my-store.myshopify.com
+    """
+    templates_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
+    
+    if os.path.exists(templates_path):
+        with open(templates_path, "r") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    
+    return HTMLResponse(content="""
+        <html>
+            <head><title>Sherlock Dashboard</title></head>
+            <body>
+                <h1>Dashboard template not found</h1>
+                <p>Please ensure templates/dashboard.html exists.</p>
+            </body>
+        </html>
+    """, status_code=500)
+
+
+@app.get("/install", response_class=HTMLResponse)
+async def install_page(request: Request):
+    """
+    Serve the install landing page.
+    This is where merchants start the installation process.
+    """
+    templates_path = os.path.join(os.path.dirname(__file__), "templates", "install.html")
+    
+    if os.path.exists(templates_path):
+        with open(templates_path, "r") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    
+    return HTMLResponse(content="""
+        <html>
+            <head><title>Install Sherlock</title></head>
+            <body>
+                <h1>Install page not found</h1>
+            </body>
+        </html>
+    """, status_code=500)
+
+
+# ==================== Pydantic Models ====================
+
+class StoreInfo(BaseModel):
+    shopify_domain: str
+    shop_name: Optional[str] = None
+    email: Optional[str] = None
+
+
+class ScanRequest(BaseModel):
+    shop: str  # e.g., "my-store.myshopify.com"
+    scan_type: str = "full"  # "full", "quick", "apps_only", "theme_only", "performance"
+
+
+class AppInfo(BaseModel):
+    app_name: str
+    installed_on: Optional[datetime] = None
+    is_suspect: bool = False
+    risk_score: float = 0.0
+    risk_reasons: Optional[List[str]] = None
+
+
+class DiagnosisResult(BaseModel):
+    diagnosis_id: str
+    status: str
+    scan_type: str
+    total_apps_scanned: int
+    issues_found: int
+    suspect_apps: Optional[List[str]] = None
+    recommendations: Optional[List[dict]] = None
+    performance_score: Optional[float] = None
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+
+
+class HealthResponse(BaseModel):
+    status: str
+    app_name: str
+    version: str
+    environment: str
+
+
+# ==================== Helper Functions ====================
+
+async def get_store_by_domain(db: AsyncSession, shopify_domain: str) -> Optional[Store]:
+    """Get store by Shopify domain"""
+    result = await db.execute(
+        select(Store).where(Store.shopify_domain == shopify_domain)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_or_create_store(db: AsyncSession, shopify_domain: str) -> Store:
+    """Get existing store or create a new one"""
+    store = await get_store_by_domain(db, shopify_domain)
+    if not store:
+        store = Store(shopify_domain=shopify_domain)
+        db.add(store)
+        await db.flush()
+    return store
+
+
+# ==================== Background Tasks ====================
+
+async def run_scan_background(store_id: str, diagnosis_id: str, scan_type: str):
+    """Background task to run diagnostic scan"""
+    from app.db.database import async_session
+    
+    async with async_session() as db:
+        try:
+            # Get store
+            result = await db.execute(
+                select(Store).where(Store.id == store_id)
+            )
+            store = result.scalar_one_or_none()
+            
+            if not store:
+                print(f"❌ [Background] Store not found: {store_id}")
+                return
+            
+            # Run diagnosis
+            diagnosis_service = DiagnosisService(db)
+            await diagnosis_service.run_diagnosis(store, diagnosis_id, scan_type)
+            
+            await db.commit()
+            
+        except Exception as e:
+            print(f"❌ [Background] Scan error: {e}")
+            await db.rollback()
+
+
+# ==================== Core Endpoints ====================
+
+@app.get("/")
+async def root(request: Request):
+    """
+    Root endpoint - redirects browsers to install page, returns API info for programmatic access.
+    """
+    # Check if this is a browser request
+    accept_header = request.headers.get("accept", "")
+    
+    if "text/html" in accept_header:
+        # Browser request - redirect to install page
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/install")
+    
+    # API request - return health info
+    return {
+        "status": "healthy",
+        "app_name": settings.app_name,
+        "version": "1.0.0",
+        "environment": settings.environment,
+        "docs": "/docs",
+        "install": "/install",
+        "dashboard": "/dashboard"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+
+
+# ==================== Scan Endpoints ====================
+
+@app.post("/api/v1/scan/start", response_model=DiagnosisResult)
+async def start_scan(
+    request: ScanRequest, 
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Start a new diagnostic scan for a store.
+    
+    Scan types:
+    - full: Complete scan (apps + theme + performance)
+    - quick: Fast check of recently installed apps only
+    - apps_only: Scan installed apps and their risk factors
+    - theme_only: Analyze theme code for conflicts
+    - performance: Performance metrics and slow resources
+    """
+    try:
+        # Get or create store
+        store = await get_or_create_store(db, request.shop)
+        
+        # Create new diagnosis record
+        diagnosis = Diagnosis(
+            store_id=store.id,
+            scan_type=request.scan_type,
+            status="pending"
+        )
+        db.add(diagnosis)
+        await db.flush()
+        
+        print(f"🔍 [Sherlock] Started {request.scan_type} scan for {request.shop}")
+        
+        # Trigger background scan
+        background_tasks.add_task(
+            run_scan_background, 
+            store.id, 
+            diagnosis.id, 
+            request.scan_type
+        )
+        
+        return DiagnosisResult(
+            diagnosis_id=diagnosis.id,
+            status="running",
+            scan_type=diagnosis.scan_type,
+            total_apps_scanned=0,
+            issues_found=0,
+            suspect_apps=None,
+            recommendations=None,
+            performance_score=None,
+            started_at=diagnosis.started_at,
+            completed_at=None
+        )
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Scan start error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start scan: {str(e)}")
+
+
+@app.get("/api/v1/scan/{diagnosis_id}", response_model=DiagnosisResult)
+async def get_scan_result(diagnosis_id: str, db: AsyncSession = Depends(get_db)):
+    """Get the results of a diagnostic scan"""
+    try:
+        result = await db.execute(
+            select(Diagnosis).where(Diagnosis.id == diagnosis_id)
+        )
+        diagnosis = result.scalar_one_or_none()
+        
+        if not diagnosis:
+            raise HTTPException(status_code=404, detail="Diagnosis not found")
+        
+        return DiagnosisResult(
+            diagnosis_id=diagnosis.id,
+            status=diagnosis.status,
+            scan_type=diagnosis.scan_type,
+            total_apps_scanned=diagnosis.total_apps_scanned or 0,
+            issues_found=diagnosis.issues_found or 0,
+            suspect_apps=diagnosis.suspect_apps,
+            recommendations=diagnosis.recommendations,
+            performance_score=diagnosis.performance_score,
+            started_at=diagnosis.started_at,
+            completed_at=diagnosis.completed_at
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Get scan error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get scan results")
+
+
+@app.get("/api/v1/scan/history/{shop}")
+async def get_scan_history(shop: str, limit: int = 10, db: AsyncSession = Depends(get_db)):
+    """Get scan history for a store"""
+    try:
+        store = await get_store_by_domain(db, shop)
+        if not store:
+            return {"scans": []}
+        
+        result = await db.execute(
+            select(Diagnosis)
+            .where(Diagnosis.store_id == store.id)
+            .order_by(Diagnosis.started_at.desc())
+            .limit(limit)
+        )
+        diagnoses = result.scalars().all()
+        
+        return {
+            "shop": shop,
+            "scans": [
+                {
+                    "diagnosis_id": d.id,
+                    "scan_type": d.scan_type,
+                    "status": d.status,
+                    "issues_found": d.issues_found or 0,
+                    "started_at": d.started_at.isoformat() if d.started_at else None,
+                    "completed_at": d.completed_at.isoformat() if d.completed_at else None
+                }
+                for d in diagnoses
+            ]
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Scan history error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get scan history")
+
+
+@app.get("/api/v1/scan/{diagnosis_id}/report")
+async def get_diagnosis_report(diagnosis_id: str, db: AsyncSession = Depends(get_db)):
+    """Get full diagnosis report with recommendations and summary"""
+    try:
+        diagnosis_service = DiagnosisService(db)
+        report = await diagnosis_service.get_diagnosis_report(diagnosis_id)
+        
+        if not report:
+            raise HTTPException(status_code=404, detail="Diagnosis not found")
+        
+        return report
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Get report error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get diagnosis report")
+
+
+# ==================== Apps Endpoints ====================
+
+@app.get("/api/v1/apps/{shop}")
+async def get_installed_apps(shop: str, db: AsyncSession = Depends(get_db)):
+    """Get all installed apps for a store with risk analysis"""
+    try:
+        store = await get_store_by_domain(db, shop)
+        if not store:
+            return {"shop": shop, "apps": [], "total": 0}
+        
+        result = await db.execute(
+            select(InstalledApp)
+            .where(InstalledApp.store_id == store.id)
+            .order_by(InstalledApp.installed_on.desc())
+        )
+        apps = result.scalars().all()
+        
+        return {
+            "shop": shop,
+            "total": len(apps),
+            "suspect_count": sum(1 for a in apps if a.is_suspect),
+            "apps": [
+                {
+                    "id": a.id,
+                    "app_name": a.app_name,
+                    "app_handle": a.app_handle,
+                    "installed_on": a.installed_on.isoformat() if a.installed_on else None,
+                    "is_suspect": a.is_suspect,
+                    "risk_score": a.risk_score,
+                    "risk_reasons": a.risk_reasons,
+                    "injects_scripts": a.injects_scripts,
+                    "injects_theme_code": a.injects_theme_code,
+                    "script_count": a.script_count,
+                    "last_scanned": a.last_scanned.isoformat() if a.last_scanned else None
+                }
+                for a in apps
+            ]
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Get apps error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get installed apps")
+
+
+@app.get("/api/v1/apps/{shop}/suspects")
+async def get_suspect_apps(shop: str, db: AsyncSession = Depends(get_db)):
+    """Get only suspect apps (flagged as potential issues)"""
+    try:
+        store = await get_store_by_domain(db, shop)
+        if not store:
+            return {"shop": shop, "suspects": []}
+        
+        result = await db.execute(
+            select(InstalledApp)
+            .where(InstalledApp.store_id == store.id)
+            .where(InstalledApp.is_suspect == True)
+            .order_by(InstalledApp.risk_score.desc())
+        )
+        apps = result.scalars().all()
+        
+        return {
+            "shop": shop,
+            "total_suspects": len(apps),
+            "suspects": [
+                {
+                    "app_name": a.app_name,
+                    "risk_score": a.risk_score,
+                    "risk_reasons": a.risk_reasons,
+                    "installed_on": a.installed_on.isoformat() if a.installed_on else None,
+                    "recommendation": "Consider uninstalling to test if this resolves your issue"
+                }
+                for a in apps
+            ]
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Get suspects error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get suspect apps")
+
+
+# ==================== Theme Issues Endpoints ====================
+
+@app.get("/api/v1/theme-issues/{shop}")
+async def get_theme_issues(shop: str, db: AsyncSession = Depends(get_db)):
+    """Get detected theme code issues/conflicts"""
+    try:
+        store = await get_store_by_domain(db, shop)
+        if not store:
+            return {"shop": shop, "issues": []}
+        
+        result = await db.execute(
+            select(ThemeIssue)
+            .where(ThemeIssue.store_id == store.id)
+            .where(ThemeIssue.is_resolved == False)
+            .order_by(ThemeIssue.severity.desc())
+        )
+        issues = result.scalars().all()
+        
+        severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        sorted_issues = sorted(issues, key=lambda x: severity_order.get(x.severity, 99))
+        
+        return {
+            "shop": shop,
+            "total_issues": len(sorted_issues),
+            "by_severity": {
+                "critical": sum(1 for i in sorted_issues if i.severity == "critical"),
+                "high": sum(1 for i in sorted_issues if i.severity == "high"),
+                "medium": sum(1 for i in sorted_issues if i.severity == "medium"),
+                "low": sum(1 for i in sorted_issues if i.severity == "low")
+            },
+            "issues": [
+                {
+                    "id": i.id,
+                    "file_path": i.file_path,
+                    "issue_type": i.issue_type,
+                    "severity": i.severity,
+                    "likely_source": i.likely_source,
+                    "confidence": i.confidence,
+                    "line_number": i.line_number,
+                    "code_snippet": i.code_snippet[:200] if i.code_snippet else None,
+                    "detected_at": i.detected_at.isoformat() if i.detected_at else None
+                }
+                for i in sorted_issues
+            ]
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Get theme issues error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get theme issues")
+
+
+# ==================== Performance Endpoints ====================
+
+@app.get("/api/v1/performance/{shop}")
+async def get_performance_history(shop: str, limit: int = 10, db: AsyncSession = Depends(get_db)):
+    """Get performance snapshots history"""
+    try:
+        store = await get_store_by_domain(db, shop)
+        if not store:
+            return {"shop": shop, "snapshots": []}
+        
+        result = await db.execute(
+            select(PerformanceSnapshot)
+            .where(PerformanceSnapshot.store_id == store.id)
+            .order_by(PerformanceSnapshot.tested_at.desc())
+            .limit(limit)
+        )
+        snapshots = result.scalars().all()
+        
+        return {
+            "shop": shop,
+            "total_snapshots": len(snapshots),
+            "latest": {
+                "performance_score": snapshots[0].performance_score if snapshots else None,
+                "load_time_ms": snapshots[0].load_time_ms if snapshots else None,
+                "tested_at": snapshots[0].tested_at.isoformat() if snapshots else None
+            } if snapshots else None,
+            "snapshots": [
+                {
+                    "id": s.id,
+                    "performance_score": s.performance_score,
+                    "load_time_ms": s.load_time_ms,
+                    "time_to_first_byte_ms": s.time_to_first_byte_ms,
+                    "time_to_interactive_ms": s.time_to_interactive_ms,
+                    "total_requests": s.total_requests,
+                    "total_size_kb": s.total_size_kb,
+                    "script_count": s.script_count,
+                    "third_party_script_count": s.third_party_script_count,
+                    "slow_resources": s.slow_resources,
+                    "blocking_scripts": s.blocking_scripts,
+                    "page_tested": s.page_tested,
+                    "tested_at": s.tested_at.isoformat() if s.tested_at else None
+                }
+                for s in snapshots
+            ]
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Get performance error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get performance history")
+
+
+@app.get("/api/v1/performance/{shop}/latest")
+async def get_latest_performance(shop: str, db: AsyncSession = Depends(get_db)):
+    """Get most recent performance snapshot"""
+    try:
+        store = await get_store_by_domain(db, shop)
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        result = await db.execute(
+            select(PerformanceSnapshot)
+            .where(PerformanceSnapshot.store_id == store.id)
+            .order_by(PerformanceSnapshot.tested_at.desc())
+            .limit(1)
+        )
+        snapshot = result.scalar_one_or_none()
+        
+        if not snapshot:
+            return {"shop": shop, "message": "No performance data yet. Run a scan first."}
+        
+        return {
+            "shop": shop,
+            "performance_score": snapshot.performance_score,
+            "load_time_ms": snapshot.load_time_ms,
+            "time_to_first_byte_ms": snapshot.time_to_first_byte_ms,
+            "time_to_interactive_ms": snapshot.time_to_interactive_ms,
+            "total_requests": snapshot.total_requests,
+            "total_size_kb": snapshot.total_size_kb,
+            "script_count": snapshot.script_count,
+            "third_party_script_count": snapshot.third_party_script_count,
+            "slow_resources": snapshot.slow_resources,
+            "blocking_scripts": snapshot.blocking_scripts,
+            "page_tested": snapshot.page_tested,
+            "tested_at": snapshot.tested_at.isoformat() if snapshot.tested_at else None
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Get latest performance error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get performance data")
+
+
+# ==================== Enhanced Diagnostic Endpoints ====================
+
+from app.services.conflict_database import ConflictDatabase
+from app.services.orphan_code_service import OrphanCodeService
+from app.services.timeline_service import TimelineService
+from app.services.community_reports_service import CommunityReportsService
+
+
+@app.post("/api/v1/conflicts/check")
+async def check_app_conflicts(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Check for known conflicts between installed apps.
+    Returns conflicts and duplicate functionality warnings.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        # Get installed apps
+        apps_result = await db.execute(
+            select(InstalledApp).where(InstalledApp.store_id == store.id)
+        )
+        installed_apps = [app.app_name for app in apps_result.scalars().all()]
+        
+        # Check conflicts
+        conflict_db = ConflictDatabase()
+        conflicts = conflict_db.check_conflicts(installed_apps)
+        duplicates = conflict_db.get_duplicate_functionality_apps(installed_apps)
+        
+        return {
+            "shop": shop,
+            "installed_apps_count": len(installed_apps),
+            "conflicts_found": len(conflicts),
+            "conflicts": conflicts,
+            "duplicate_functionality": duplicates,
+            "has_critical": any(c["severity"] == "critical" for c in conflicts)
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Check conflicts error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to check conflicts")
+
+
+@app.post("/api/v1/orphan-code/scan")
+async def scan_orphan_code(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Scan for leftover code from uninstalled apps.
+    This orphan code can slow down your store and cause issues.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        orphan_service = OrphanCodeService(db)
+        results = await orphan_service.scan_for_orphan_code(store)
+        
+        return results
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Orphan code scan error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to scan orphan code")
+
+
+@app.get("/api/v1/orphan-code/cleanup/{app_name}")
+async def get_cleanup_instructions(
+    app_name: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get detailed cleanup instructions for removing leftover code from an app.
+    """
+    try:
+        orphan_service = OrphanCodeService(db)
+        instructions = await orphan_service.get_cleanup_instructions(app_name)
+        
+        if not instructions:
+            return {
+                "app": app_name,
+                "instructions_available": False,
+                "message": "No cleanup instructions available for this app"
+            }
+        
+        return {
+            "app": app_name,
+            "instructions_available": True,
+            **instructions
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Get cleanup instructions error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get cleanup instructions")
+
+
+@app.get("/api/v1/timeline/{shop}")
+async def get_store_timeline(
+    shop: str,
+    days: int = 90,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get timeline of app installations and performance changes.
+    Shows correlations between installs and performance degradation.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        timeline_service = TimelineService(db)
+        timeline = await timeline_service.build_store_timeline(store, days=days)
+        
+        return timeline
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Get timeline error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get timeline")
+
+
+@app.get("/api/v1/timeline/{shop}/compare/{app_id}")
+async def compare_before_after(
+    shop: str,
+    app_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Compare store performance before and after a specific app was installed.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        timeline_service = TimelineService(db)
+        comparison = await timeline_service.compare_before_after(store, app_id)
+        
+        return comparison
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Compare before/after error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to compare")
+
+
+@app.get("/api/v1/timeline/{shop}/impact-ranking")
+async def get_impact_ranking(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get apps ranked by their estimated performance impact.
+    Most impactful (negative) apps are listed first.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        timeline_service = TimelineService(db)
+        rankings = await timeline_service.get_performance_impact_ranking(store)
+        
+        return {
+            "shop": shop,
+            "rankings": rankings
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Get impact ranking error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get rankings")
+
+
+@app.get("/api/v1/timeline/{shop}/removal-order")
+async def get_removal_order(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get suggested order for testing app removals.
+    Based on risk scores, performance impact, and install dates.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        timeline_service = TimelineService(db)
+        suggestions = await timeline_service.suggest_removal_order(store)
+        
+        return {
+            "shop": shop,
+            "removal_order": suggestions
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Get removal order error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get removal order")
+
+
+@app.post("/api/v1/community/insights")
+async def get_community_insights(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get community-reported issues for installed apps.
+    Surfaces known problems from Shopify forums, Reddit, etc.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        # Get installed apps
+        apps_result = await db.execute(
+            select(InstalledApp).where(InstalledApp.store_id == store.id)
+        )
+        installed_apps = [app.app_name for app in apps_result.scalars().all()]
+        
+        community_service = CommunityReportsService(db)
+        insights = community_service.generate_community_insights(installed_apps)
+        
+        return {
+            "shop": shop,
+            **insights
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Get community insights error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get community insights")
+
+
+@app.get("/api/v1/community/app/{app_name}")
+async def get_app_community_report(
+    app_name: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get detailed community report for a specific app.
+    Includes common issues, symptoms, and resolution rate.
+    """
+    try:
+        community_service = CommunityReportsService(db)
+        report = community_service.get_app_community_report(app_name)
+        
+        if not report:
+            return {
+                "app": app_name,
+                "found": False,
+                "message": "No community reports found for this app"
+            }
+        
+        return {
+            "app": app_name,
+            "found": True,
+            **report
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Get app community report error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get report")
+
+
+@app.get("/api/v1/community/trending")
+async def get_trending_issues(
+    months: int = 3,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get currently trending issues in the Shopify community.
+    """
+    try:
+        community_service = CommunityReportsService(db)
+        trending = community_service.get_trending_issues(months=months)
+        top_apps = community_service.get_apps_by_issue_count(limit=10)
+        
+        return {
+            "trending_issues": trending,
+            "most_reported_apps": top_apps
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Get trending issues error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get trending issues")
+
+
+class SymptomMatchRequest(BaseModel):
+    keywords: List[str]
+
+
+@app.post("/api/v1/community/match-symptoms")
+async def match_symptoms_to_apps(
+    request: SymptomMatchRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Find apps that match described symptoms.
+    Example keywords: ["slow", "mobile", "checkout"]
+    """
+    try:
+        community_service = CommunityReportsService(db)
+        matches = community_service.get_symptoms_matching(request.keywords)
+        
+        return {
+            "keywords": request.keywords,
+            "matches": matches
+        }
+    
+    except Exception as e:
+        print(f"❌ [Sherlock] Match symptoms error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to match symptoms")
+
+
+# ==================== GDPR Compliance Endpoints ====================
+
+class CustomerRedactRequest(BaseModel):
+    shopify_domain: str
+    customer_id: Optional[str] = None
+    customer_email: Optional[str] = None
+
+
+class ShopRedactRequest(BaseModel):
+    shopify_domain: str
+
+
+@app.post("/api/v1/gdpr/customers/redact")
+async def gdpr_redact_customer(payload: CustomerRedactRequest, db: AsyncSession = Depends(get_db)):
+    """
+    GDPR: Redact customer data.
+    Sherlock doesn't store customer PII, so this is a no-op acknowledgment.
+    """
+    print(f"📋 [GDPR] Customer redact request for {payload.shopify_domain}")
+    return {
+        "success": True,
+        "message": "Sherlock does not store customer PII. No action required."
+    }
+
+
+@app.post("/api/v1/gdpr/shop/redact")
+async def gdpr_redact_shop(payload: ShopRedactRequest, db: AsyncSession = Depends(get_db)):
+    """
+    GDPR: Redact all shop data.
+    Called 48 hours after app uninstall.
+    """
+    try:
+        store = await get_store_by_domain(db, payload.shopify_domain)
+        
+        if not store:
+            return {"success": True, "message": "Store not found or already deleted"}
+        
+        # Delete the store (cascades to all related data)
+        await db.delete(store)
+        await db.commit()
+        
+        print(f"🗑️ [GDPR] Deleted all data for {payload.shopify_domain}")
+        return {"success": True, "message": "All store data deleted"}
+    
+    except Exception as e:
+        print(f"❌ [GDPR] Shop redact error: {e}")
+        raise HTTPException(status_code=500, detail="Error redacting shop data")
+
+
+@app.post("/api/v1/stores/deregister")
+async def deregister_store(payload: ShopRedactRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Deregister a store (soft delete).
+    Called immediately when app is uninstalled.
+    """
+    try:
+        store = await get_store_by_domain(db, payload.shopify_domain)
+        
+        if not store:
+            return {"success": True, "message": "Store not found"}
+        
+        store.is_active = False
+        await db.commit()
+        
+        print(f"👋 [Store] Deregistered {payload.shopify_domain}")
+        return {"success": True, "message": "Store deregistered"}
+    
+    except Exception as e:
+        print(f"❌ [Store] Deregister error: {e}")
+        raise HTTPException(status_code=500, detail="Error deregistering store")
+
+
+# ==================== Run Server ====================
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.debug
+    )

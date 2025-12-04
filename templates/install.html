@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install Sherlock - Shopify App Diagnostics</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+    <style>
+        .install-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #5c6ac4 0%, #4959bd 100%);
+        }
+        
+        .install-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            padding: 48px;
+            max-width: 480px;
+            width: 100%;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        .install-logo {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+        
+        .install-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #212b36;
+        }
+        
+        .install-subtitle {
+            color: #637381;
+            margin-bottom: 32px;
+        }
+        
+        .install-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .install-input {
+            padding: 14px 18px;
+            font-size: 16px;
+            border: 2px solid #dfe3e8;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+        
+        .install-input:focus {
+            outline: none;
+            border-color: #5c6ac4;
+        }
+        
+        .install-btn {
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            background: #5c6ac4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .install-btn:hover {
+            background: #4959bd;
+        }
+        
+        .install-features {
+            margin-top: 32px;
+            text-align: left;
+        }
+        
+        .install-features h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #637381;
+            margin-bottom: 16px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .feature-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .feature-text {
+            font-size: 14px;
+            color: #212b36;
+        }
+        
+        .install-footer {
+            margin-top: 32px;
+            font-size: 13px;
+            color: #637381;
+        }
+        
+        .install-footer a {
+            color: #5c6ac4;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="install-page">
+        <div class="install-card">
+            <div class="install-logo">🔍</div>
+            <h1 class="install-title">Sherlock</h1>
+            <p class="install-subtitle">Find which Shopify app is causing issues in your store</p>
+            
+            <form class="install-form" onsubmit="installApp(event)">
+                <input 
+                    type="text" 
+                    id="shop-input"
+                    class="install-input" 
+                    placeholder="your-store.myshopify.com"
+                    required
+                    pattern="[a-zA-Z0-9\-]+\.myshopify\.com|[a-zA-Z0-9\-]+"
+                >
+                <button type="submit" class="install-btn">
+                    Install Sherlock
+                </button>
+            </form>
+            
+            <div class="install-features">
+                <h3>What Sherlock Does</h3>
+                <div class="feature-item">
+                    <span class="feature-icon">📱</span>
+                    <span class="feature-text">Scans all installed apps and identifies suspects based on risk factors</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🎨</span>
+                    <span class="feature-text">Analyzes theme code for conflicts and injected scripts</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">⚡</span>
+                    <span class="feature-text">Measures performance impact of third-party apps</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">💡</span>
+                    <span class="feature-text">Provides actionable recommendations to fix issues</span>
+                </div>
+            </div>
+            
+            <div class="install-footer">
+                <p>Already installed? <a href="/dashboard">Go to Dashboard</a></p>
+                <p style="margin-top: 8px;"><a href="/docs">API Documentation</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function installApp(e) {
+            e.preventDefault();
+            
+            let shop = document.getElementById('shop-input').value.trim();
+            
+            // Normalize shop domain
+            if (!shop.includes('.myshopify.com')) {
+                shop = shop + '.myshopify.com';
+            }
+            
+            // Redirect to OAuth flow
+            window.location.href = '/auth/shopify?shop=' + encodeURIComponent(shop);
+        }
+    </script>
+</body>
+</html>
