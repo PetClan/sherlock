@@ -27,7 +27,7 @@ async_session = async_sessionmaker(
     expire_on_commit=False
 )
 
-# Base class for models
+# Base class for model
 Base = declarative_base()
 
 
