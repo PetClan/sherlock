@@ -50,12 +50,20 @@ function init() {
     loadDashboard();
 }
 
-// Hide progress banner helper
-function hideProgressBanner() {
-    const progressBanner = document.getElementById('scan-progress');
-    if (progressBanner) {
-        progressBanner.classList.add('hidden');
-        progressBanner.innerHTML = '';
+// Show scan progress
+function showScanProgress(scan) {
+    const container = document.getElementById('scan-progress');
+    if (container) {
+        container.style.display = 'block';
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>
+                <div>
+                    <strong>Scan in progress...</strong>
+                    <p style="margin:0;">Running ${scan.scan_type} diagnostic. This may take a minute.</p>
+                </div>
+            </div>
+        `;
     }
 }
 
