@@ -45,7 +45,7 @@ async def shopify_auth_redirect(shop: str, db: AsyncSession = Depends(get_db)):
     auth_service = ShopifyAuthService(db)
     
     # Generate install URL
-    redirect_uri = f"{settings.app_url}/auth/callback"
+    redirect_uri = f"{settings.app_url}/api/v1/auth/callback"
     install_url, state = auth_service.generate_install_url(shop, redirect_uri)
     
     # Store state for verification
@@ -66,7 +66,7 @@ async def get_install_url(request: InstallRequest, db: AsyncSession = Depends(ge
     """
     auth_service = ShopifyAuthService(db)
     
-    redirect_uri = f"{settings.app_url}/auth/callback"
+    redirect_uri = f"{settings.app_url}/api/v1/auth/callback"
     install_url, state = auth_service.generate_install_url(request.shop, redirect_uri)
     
     # Store state for verification
