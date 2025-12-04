@@ -50,8 +50,14 @@ function init() {
 
 // Load dashboard data
 async function loadDashboard() {
+    // Always hide progress banner when loading dashboard
+    const progressBanner = document.getElementById('scan-progress');
+    if (progressBanner) {
+        progressBanner.classList.add('hidden');
+        progressBanner.innerHTML = '';
+    }
+
     try {
-        showLoading('dashboard-content');
         
         // Load in parallel
         const [apps, scanHistory, performance] = await Promise.all([
@@ -94,7 +100,7 @@ function renderStats(apps, scanHistory, performance) {
                 <div class="stat-label">Performance Score</div>
             </div>
             <div class="card stat-card">
-                <div class="stat-value">${scanHistory.scans?.length || 0}</div>
+                <div class="stat-value">${scanHistory.total_scans || scanHistory.scans?.length || 0}</div>
                 <div class="stat-label">Scans Run</div>
             </div>
         </div>
