@@ -1,5 +1,6 @@
 /**
  * Sherlock Dashboard - Main JavaScript
+ * Fixed version with proper scan handling
  */
 
 // Global state
@@ -7,6 +8,7 @@ const state = {
     shop: null,
     currentScan: null,
     pollInterval: null,
+    isScanning: false,
 };
 
 // API helper
@@ -19,11 +21,11 @@ async function api(endpoint, options = {}) {
         },
         ...options,
     });
-    
+
     if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
     }
-    
+
     return response.json();
 }
 
@@ -32,47 +34,59 @@ function init() {
     // Get shop from URL params
     const params = new URLSearchParams(window.location.search);
     state.shop = params.get('shop');
-    
+
     if (!state.shop) {
         showError('No shop specified. Please install the app first.');
         return;
     }
-    
+
     // Update shop name in header
     const shopNameEl = document.getElementById('shop-name');
     if (shopNameEl) {
         shopNameEl.textContent = state.shop;
     }
-    
+
     // Load initial data
     loadDashboard();
 }
 
-// Load dashboard data
-async function loadDashboard() {
-    // Always hide progress banner when loading dashboard
+// Hide progress banner helper
+function hideProgressBanner() {
     const progressBanner = document.getElementById('scan-progress');
     if (progressBanner) {
         progressBanner.classList.add('hidden');
         progressBanner.innerHTML = '';
     }
+}
+
+// Stop polling helper
+function stopPolling() {
+    if (state.pollInterval) {
+        clearInterval(state.pollInterval);
+        state.pollInterval = null;
+    }
+    state.isScanning = false;
+}
+
+// Load dashboard data
+async function loadDashboard() {
+    // Stop any running polls and hide banner
+    stopPolling();
+    hideProgressBanner();
 
     try {
-        
         // Load in parallel
         const [apps, scanHistory, performance] = await Promise.all([
             api(`/apps/${state.shop}`),
             api(`/scan/history/${state.shop}?limit=5`),
             api(`/performance/${state.shop}/latest`).catch(() => null),
         ]);
-        
+
         // Render dashboard
         renderStats(apps, scanHistory, performance);
         renderRecentScans(scanHistory.scans || []);
         renderSuspectApps(apps);
-        
-        hideLoading('dashboard-content');
-        
+
     } catch (error) {
         console.error('Dashboard load error:', error);
         showError('Failed to load dashboard. Please try again.');
@@ -81,6 +95,8 @@ async function loadDashboard() {
 
 // Render stats cards
 function renderStats(apps, scanHistory, performance) {
+    const totalScans = scanHistory.total_scans || scanHistory.scans?.length || 0;
+
     const statsHtml = `
         <div class="grid grid-4">
             <div class="card stat-card">
@@ -100,19 +116,19 @@ function renderStats(apps, scanHistory, performance) {
                 <div class="stat-label">Performance Score</div>
             </div>
             <div class="card stat-card">
-                <div class="stat-value">${scanHistory.total_scans || scanHistory.scans?.length || 0}</div>
+                <div class="stat-value">${totalScans}</div>
                 <div class="stat-label">Scans Run</div>
             </div>
         </div>
     `;
-    
+
     document.getElementById('stats-container').innerHTML = statsHtml;
 }
 
 // Render recent scans
 function renderRecentScans(scans) {
     const container = document.getElementById('recent-scans');
-    
+
     if (!scans.length) {
         container.innerHTML = `
             <div class="empty-state">
@@ -123,7 +139,7 @@ function renderRecentScans(scans) {
         `;
         return;
     }
-    
+
     const rows = scans.map(scan => `
         <tr onclick="viewScan('${scan.diagnosis_id}')" style="cursor: pointer;">
             <td>
@@ -142,7 +158,7 @@ function renderRecentScans(scans) {
             </td>
         </tr>
     `).join('');
-    
+
     container.innerHTML = `
         <div class="table-container">
             <table>
@@ -165,7 +181,7 @@ function renderRecentScans(scans) {
 function renderSuspectApps(appsData) {
     const container = document.getElementById('suspect-apps');
     const suspects = (appsData.apps || []).filter(a => a.is_suspect);
-    
+
     if (!suspects.length) {
         container.innerHTML = `
             <div class="empty-state">
@@ -176,7 +192,7 @@ function renderSuspectApps(appsData) {
         `;
         return;
     }
-    
+
     const rows = suspects.map(app => `
         <tr>
             <td>
@@ -207,7 +223,7 @@ function renderSuspectApps(appsData) {
             </td>
         </tr>
     `).join('');
-    
+
     container.innerHTML = `
         <div class="table-container">
             <table>
@@ -227,10 +243,21 @@ function renderSuspectApps(appsData) {
 
 // Start a new scan
 async function startScan(scanType = 'full') {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;margin:0;"></span> Starting...';
-    
+    // Prevent double-clicks and multiple scans
+    if (state.isScanning) {
+        console.log('Scan already in progress, ignoring click');
+        return;
+    }
+
+    state.isScanning = true;
+
+    // Get the button that was clicked
+    const btn = event?.target;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;margin:0;"></span> Starting...';
+    }
+
     try {
         const result = await api('/scan/start', {
             method: 'POST',
@@ -239,48 +266,43 @@ async function startScan(scanType = 'full') {
                 scan_type: scanType,
             }),
         });
-        
+
         state.currentScan = result.diagnosis_id;
-        
+
         // Show scan in progress
         showScanProgress(result);
-        
+
         // Start polling for results
         pollScanStatus(result.diagnosis_id);
-        
+
     } catch (error) {
         console.error('Scan start error:', error);
         showError('Failed to start scan. Please try again.');
+        state.isScanning = false;
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '🔍 Run Full Scan';
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '🔍 Run Full Scan';
+        }
     }
 }
 
 // Poll scan status
 function pollScanStatus(diagnosisId) {
-    // Clear any existing interval
-    if (state.pollInterval) {
-        clearInterval(state.pollInterval);
-    }
-    
+    // Clear any existing interval first
+    stopPolling();
+    state.isScanning = true;
+
     state.pollInterval = setInterval(async () => {
         try {
             const result = await api(`/scan/${diagnosisId}`);
-            
+
             if (result.status === 'completed' || result.status === 'failed') {
-                clearInterval(state.pollInterval);
-                state.pollInterval = null;
+                // Stop polling
+                stopPolling();
 
                 // Hide the progress banner
-                const progressBanner = document.getElementById('scan-progress');
-                if (progressBanner) {
-                    progressBanner.classList.add('hidden');
-                    progressBanner.innerHTML = '';
-                }
-
-                // Reload dashboard
-                loadDashboard();
+                hideProgressBanner();
 
                 // Show notification
                 if (result.status === 'completed') {
@@ -288,9 +310,16 @@ function pollScanStatus(diagnosisId) {
                 } else {
                     showError('Scan failed. Please try again.');
                 }
+
+                // Reload dashboard
+                loadDashboard();
             }
         } catch (error) {
             console.error('Poll error:', error);
+            // On error, stop polling to prevent infinite errors
+            stopPolling();
+            hideProgressBanner();
+            showError('Error checking scan status. Please refresh the page.');
         }
     }, 2000);
 }
@@ -298,27 +327,30 @@ function pollScanStatus(diagnosisId) {
 // Show scan progress
 function showScanProgress(scan) {
     const container = document.getElementById('scan-progress');
-    container.classList.remove('hidden');
-    container.innerHTML = `
-        <div class="alert alert-info">
-            <span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>
-            <div>
-                <strong>Scan in progress...</strong>
-                <p style="margin:0;">Running ${scan.scan_type} diagnostic. This may take a minute.</p>
+    if (container) {
+        container.classList.remove('hidden');
+        container.innerHTML = `
+            <div class="alert alert-info">
+                <span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>
+                <div>
+                    <strong>Scan in progress...</strong>
+                    <p style="margin:0;">Running ${scan.scan_type} diagnostic. This may take a minute.</p>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 }
 
 // View scan details
 async function viewScan(diagnosisId) {
     try {
-        showLoading('main-content');
-        
+        // Stop any ongoing scans when viewing
+        stopPolling();
+        hideProgressBanner();
+
         const report = await api(`/scan/${diagnosisId}/report`);
-        
         renderScanReport(report);
-        
+
     } catch (error) {
         console.error('View scan error:', error);
         showError('Failed to load scan report.');
@@ -328,11 +360,11 @@ async function viewScan(diagnosisId) {
 // Render scan report
 function renderScanReport(report) {
     const mainContent = document.getElementById('main-content');
-    
+
     const summaryClass = report.summary?.verdict === 'culprit_identified' ? 'danger' :
-                         report.summary?.verdict === 'suspects_found' ? 'warning' :
-                         report.summary?.verdict === 'no_issues' ? 'success' : '';
-    
+        report.summary?.verdict === 'suspects_found' ? 'warning' :
+            report.summary?.verdict === 'no_issues' ? 'success' : '';
+
     const recommendationsHtml = (report.recommendations || [])
         .filter(r => r.type !== 'guide')
         .slice(0, 5)
@@ -347,7 +379,7 @@ function renderScanReport(report) {
                 </div>
             </div>
         `).join('');
-    
+
     mainContent.innerHTML = `
         <div class="mb-2">
             <button class="btn btn-secondary" onclick="backToDashboard()">
@@ -413,9 +445,14 @@ function backToDashboard() {
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Recent Scans</h3>
-                    <button class="btn btn-primary btn-sm" onclick="startScan('full')">
-                        🔍 Run Full Scan
-                    </button>
+                    <div>
+                        <button class="btn btn-secondary btn-sm" onclick="startScan('quick')">
+                            ⚡ Quick
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="startScan('full')">
+                            🔍 Full Scan
+                        </button>
+                    </div>
                 </div>
                 <div id="recent-scans">
                     <div class="loading">
@@ -429,7 +466,7 @@ function backToDashboard() {
                 <div class="card-header">
                     <h3 class="card-title">Suspect Apps</h3>
                     <button class="btn btn-secondary btn-sm" onclick="viewAllApps()">
-                        View All
+                        View All Apps
                     </button>
                 </div>
                 <div id="suspect-apps">
@@ -441,19 +478,15 @@ function backToDashboard() {
             </div>
         </div>
     `;
-    
+
     loadDashboard();
 }
 
 // View all apps
 async function viewAllApps() {
     try {
-        showLoading('main-content');
-        
         const appsData = await api(`/apps/${state.shop}`);
-        
         renderAllApps(appsData);
-        
     } catch (error) {
         console.error('Load apps error:', error);
         showError('Failed to load apps.');
@@ -464,7 +497,7 @@ async function viewAllApps() {
 function renderAllApps(appsData) {
     const mainContent = document.getElementById('main-content');
     const apps = appsData.apps || [];
-    
+
     const rows = apps.map(app => `
         <tr>
             <td>
@@ -494,7 +527,7 @@ function renderAllApps(appsData) {
             </td>
         </tr>
     `).join('');
-    
+
     mainContent.innerHTML = `
         <div class="mb-2">
             <button class="btn btn-secondary" onclick="backToDashboard()">
@@ -527,42 +560,30 @@ function renderAllApps(appsData) {
 }
 
 // Utility functions
-function showLoading(containerId) {
-    const container = document.getElementById(containerId);
-    if (container) {
-        container.innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Loading...</p>
-            </div>
-        `;
-    }
-}
-
-function hideLoading(containerId) {
-    // Content already replaced by render functions
-}
-
 function showError(message) {
     const container = document.getElementById('notifications');
-    container.innerHTML = `
-        <div class="alert alert-danger">
-            <span class="alert-icon">❌</span>
-            <div>${escapeHtml(message)}</div>
-        </div>
-    `;
-    setTimeout(() => container.innerHTML = '', 5000);
+    if (container) {
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <span class="alert-icon">❌</span>
+                <div>${escapeHtml(message)}</div>
+            </div>
+        `;
+        setTimeout(() => container.innerHTML = '', 5000);
+    }
 }
 
 function showSuccess(message) {
     const container = document.getElementById('notifications');
-    container.innerHTML = `
-        <div class="alert alert-success">
-            <span class="alert-icon">✅</span>
-            <div>${escapeHtml(message)}</div>
-        </div>
-    `;
-    setTimeout(() => container.innerHTML = '', 5000);
+    if (container) {
+        container.innerHTML = `
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <div>${escapeHtml(message)}</div>
+            </div>
+        `;
+        setTimeout(() => container.innerHTML = '', 5000);
+    }
 }
 
 function capitalizeFirst(str) {
@@ -605,18 +626,20 @@ function getScoreClass(score) {
 function switchTab(tabName) {
     // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    
+
     // Deactivate all tabs
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-    
+
     // Show selected tab content
     const tabContent = document.getElementById(`tab-${tabName}`);
     if (tabContent) {
         tabContent.classList.remove('hidden');
     }
-    
+
     // Activate selected tab
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
 }
 
 // ==================== Conflicts Tab ====================
@@ -624,7 +647,7 @@ function switchTab(tabName) {
 async function checkConflicts() {
     const container = document.getElementById('conflicts-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Checking conflicts...</p></div>';
-    
+
     try {
         const result = await api(`/conflicts/check?shop=${state.shop}`, { method: 'POST' });
         renderConflicts(result);
@@ -636,9 +659,9 @@ async function checkConflicts() {
 
 function renderConflicts(data) {
     const container = document.getElementById('conflicts-content');
-    
+
     let html = '';
-    
+
     // Summary
     html += `
         <div class="alert ${data.conflicts_found > 0 ? 'alert-danger' : 'alert-success'}" style="margin-bottom: 20px;">
@@ -649,13 +672,13 @@ function renderConflicts(data) {
             </div>
         </div>
     `;
-    
+
     // Conflicts list
     if (data.conflicts && data.conflicts.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">⚡ App Conflicts</h4>';
         data.conflicts.forEach(conflict => {
-            const severityClass = conflict.severity === 'critical' ? 'danger' : 
-                                  conflict.severity === 'high' ? 'warning' : 'info';
+            const severityClass = conflict.severity === 'critical' ? 'danger' :
+                conflict.severity === 'high' ? 'warning' : 'info';
             html += `
                 <div class="recommendation" style="border-left: 4px solid var(--${severityClass === 'danger' ? 'danger' : severityClass === 'warning' ? 'warning' : 'info'});">
                     <div class="recommendation-priority ${severityClass === 'danger' ? 'high' : severityClass === 'warning' ? 'medium' : 'low'}">
@@ -671,7 +694,7 @@ function renderConflicts(data) {
             `;
         });
     }
-    
+
     // Duplicate functionality
     if (data.duplicate_functionality && Object.keys(data.duplicate_functionality).length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">📦 Duplicate Functionality</h4>';
@@ -687,7 +710,7 @@ function renderConflicts(data) {
             `;
         }
     }
-    
+
     container.innerHTML = html || '<div class="empty-state"><h3>No issues found!</h3></div>';
 }
 
@@ -696,7 +719,7 @@ function renderConflicts(data) {
 async function scanOrphanCode() {
     const container = document.getElementById('orphan-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Scanning for orphan code...</p></div>';
-    
+
     try {
         const result = await api(`/orphan-code/scan?shop=${state.shop}`, { method: 'POST' });
         renderOrphanCode(result);
@@ -708,9 +731,9 @@ async function scanOrphanCode() {
 
 function renderOrphanCode(data) {
     const container = document.getElementById('orphan-content');
-    
+
     let html = '';
-    
+
     // Summary
     html += `
         <div class="alert ${data.total_orphan_instances > 0 ? 'alert-warning' : 'alert-success'}" style="margin-bottom: 20px;">
@@ -721,7 +744,7 @@ function renderOrphanCode(data) {
             </div>
         </div>
     `;
-    
+
     // Orphan code by app
     if (data.orphan_code_by_app && data.orphan_code_by_app.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">🧹 Leftover Code by App</h4>';
@@ -739,7 +762,7 @@ function renderOrphanCode(data) {
             `;
         });
     }
-    
+
     container.innerHTML = html || '<div class="empty-state"><h3>No orphan code found!</h3></div>';
 }
 
@@ -748,7 +771,7 @@ function renderOrphanCode(data) {
 async function loadTimeline() {
     const container = document.getElementById('timeline-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading timeline...</p></div>';
-    
+
     try {
         const [timeline, rankings] = await Promise.all([
             api(`/timeline/${state.shop}?days=90`),
@@ -763,9 +786,9 @@ async function loadTimeline() {
 
 function renderTimeline(timeline, rankings) {
     const container = document.getElementById('timeline-content');
-    
+
     let html = '';
-    
+
     // Summary
     html += `
         <div class="grid grid-3" style="margin-bottom: 20px;">
@@ -785,7 +808,7 @@ function renderTimeline(timeline, rankings) {
             </div>
         </div>
     `;
-    
+
     // Performance correlations
     if (timeline.correlations && timeline.correlations.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">📉 Apps that Degraded Performance</h4>';
@@ -807,7 +830,7 @@ function renderTimeline(timeline, rankings) {
             `;
         });
     }
-    
+
     // Impact rankings
     if (rankings.rankings && rankings.rankings.length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">📊 App Impact Ranking</h4>';
@@ -825,7 +848,7 @@ function renderTimeline(timeline, rankings) {
         });
         html += '</tbody></table></div>';
     }
-    
+
     container.innerHTML = html || '<div class="empty-state"><h3>No timeline data yet</h3><p>Run some scans to build up performance history.</p></div>';
 }
 
@@ -834,7 +857,7 @@ function renderTimeline(timeline, rankings) {
 async function loadCommunityInsights() {
     const container = document.getElementById('community-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading community insights...</p></div>';
-    
+
     try {
         const [insights, trending] = await Promise.all([
             api(`/community/insights?shop=${state.shop}`, { method: 'POST' }),
@@ -849,12 +872,12 @@ async function loadCommunityInsights() {
 
 function renderCommunityInsights(insights, trending) {
     const container = document.getElementById('community-content');
-    
+
     let html = '';
-    
+
     // Overall risk
-    const riskClass = insights.overall_risk === 'high' ? 'danger' : 
-                      insights.overall_risk === 'medium' ? 'warning' : 'success';
+    const riskClass = insights.overall_risk === 'high' ? 'danger' :
+        insights.overall_risk === 'medium' ? 'warning' : 'success';
     html += `
         <div class="alert alert-${riskClass}" style="margin-bottom: 20px;">
             <span class="alert-icon">${insights.overall_risk === 'high' ? '🔴' : insights.overall_risk === 'medium' ? '🟡' : '🟢'}</span>
@@ -864,7 +887,7 @@ function renderCommunityInsights(insights, trending) {
             </div>
         </div>
     `;
-    
+
     // Known issues
     if (insights.known_issues && insights.known_issues.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">👥 Known Issues for Your Apps</h4>';
@@ -888,13 +911,13 @@ function renderCommunityInsights(insights, trending) {
             `;
         });
     }
-    
+
     // Trending issues
     if (trending.trending_issues && trending.trending_issues.length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">🔥 Trending Issues</h4>';
         trending.trending_issues.forEach(issue => {
-            const statusClass = issue.status === 'resolved' ? 'success' : 
-                               issue.status === 'investigating' ? 'warning' : 'info';
+            const statusClass = issue.status === 'resolved' ? 'success' :
+                issue.status === 'investigating' ? 'warning' : 'info';
             html += `
                 <div class="alert alert-${statusClass}">
                     <div>
@@ -905,7 +928,7 @@ function renderCommunityInsights(insights, trending) {
             `;
         });
     }
-    
+
     // Most reported apps
     if (trending.most_reported_apps && trending.most_reported_apps.length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">📊 Most Reported Apps</h4>';
@@ -922,7 +945,7 @@ function renderCommunityInsights(insights, trending) {
         });
         html += '</tbody></table></div>';
     }
-    
+
     container.innerHTML = html || '<div class="empty-state"><h3>No community data available</h3></div>';
 }
 
