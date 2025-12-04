@@ -1,6 +1,5 @@
 /**
  * Sherlock Dashboard - Main JavaScript
- * Fixed version with proper scan handling
  */
 
 // Global state
@@ -31,7 +30,6 @@ async function api(endpoint, options = {}) {
 
 // Initialize dashboard
 function init() {
-    // Get shop from URL params
     const params = new URLSearchParams(window.location.search);
     state.shop = params.get('shop');
 
@@ -40,30 +38,20 @@ function init() {
         return;
     }
 
-    // Update shop name in header
     const shopNameEl = document.getElementById('shop-name');
     if (shopNameEl) {
         shopNameEl.textContent = state.shop;
     }
 
-    // Load initial data
     loadDashboard();
 }
 
-// Show scan progress
-function showScanProgress(scan) {
-    const container = document.getElementById('scan-progress');
-    if (container) {
-        container.style.display = 'block';
-        container.innerHTML = `
-            <div class="alert alert-info">
-                <span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>
-                <div>
-                    <strong>Scan in progress...</strong>
-                    <p style="margin:0;">Running ${scan.scan_type} diagnostic. This may take a minute.</p>
-                </div>
-            </div>
-        `;
+// Hide progress banner helper
+function hideProgressBanner() {
+    const progressBanner = document.getElementById('scan-progress');
+    if (progressBanner) {
+        progressBanner.style.display = 'none';
+        progressBanner.innerHTML = '';
     }
 }
 
@@ -78,19 +66,16 @@ function stopPolling() {
 
 // Load dashboard data
 async function loadDashboard() {
-    // Stop any running polls and hide banner
     stopPolling();
     hideProgressBanner();
 
     try {
-        // Load in parallel
         const [apps, scanHistory, performance] = await Promise.all([
             api(`/apps/${state.shop}`),
             api(`/scan/history/${state.shop}?limit=5`),
             api(`/performance/${state.shop}/latest`).catch(() => null),
         ]);
 
-        // Render dashboard
         renderStats(apps, scanHistory, performance);
         renderRecentScans(scanHistory.scans || []);
         renderSuspectApps(apps);
@@ -251,15 +236,13 @@ function renderSuspectApps(appsData) {
 
 // Start a new scan
 async function startScan(scanType = 'full') {
-    // Prevent double-clicks and multiple scans
     if (state.isScanning) {
-        console.log('Scan already in progress, ignoring click');
+        console.log('Scan already in progress');
         return;
     }
 
     state.isScanning = true;
 
-    // Get the button that was clicked
     const btn = event?.target;
     if (btn) {
         btn.disabled = true;
@@ -276,11 +259,7 @@ async function startScan(scanType = 'full') {
         });
 
         state.currentScan = result.diagnosis_id;
-
-        // Show scan in progress
         showScanProgress(result);
-
-        // Start polling for results
         pollScanStatus(result.diagnosis_id);
 
     } catch (error) {
@@ -290,14 +269,13 @@ async function startScan(scanType = 'full') {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '🔍 Run Full Scan';
+            btn.innerHTML = scanType === 'quick' ? '⚡ Quick' : '🔍 Full Scan';
         }
     }
 }
 
 // Poll scan status
 function pollScanStatus(diagnosisId) {
-    // Clear any existing interval first
     stopPolling();
     state.isScanning = true;
 
@@ -306,25 +284,19 @@ function pollScanStatus(diagnosisId) {
             const result = await api(`/scan/${diagnosisId}`);
 
             if (result.status === 'completed' || result.status === 'failed') {
-                // Stop polling
                 stopPolling();
-
-                // Hide the progress banner
                 hideProgressBanner();
 
-                // Show notification
                 if (result.status === 'completed') {
                     showSuccess(`Scan complete! Found ${result.issues_found} issues.`);
                 } else {
                     showError('Scan failed. Please try again.');
                 }
 
-                // Reload dashboard
                 loadDashboard();
             }
         } catch (error) {
             console.error('Poll error:', error);
-            // On error, stop polling to prevent infinite errors
             stopPolling();
             hideProgressBanner();
             showError('Error checking scan status. Please refresh the page.');
@@ -336,7 +308,7 @@ function pollScanStatus(diagnosisId) {
 function showScanProgress(scan) {
     const container = document.getElementById('scan-progress');
     if (container) {
-        container.classList.remove('hidden');
+        container.style.display = 'block';
         container.innerHTML = `
             <div class="alert alert-info">
                 <span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>
@@ -352,7 +324,6 @@ function showScanProgress(scan) {
 // View scan details
 async function viewScan(diagnosisId) {
     try {
-        // Stop any ongoing scans when viewing
         stopPolling();
         hideProgressBanner();
 
@@ -446,7 +417,7 @@ function renderScanReport(report) {
 // Back to dashboard
 function backToDashboard() {
     document.getElementById('main-content').innerHTML = `
-        <div id="scan-progress" class="hidden"></div>
+        <div id="scan-progress" style="display:none;"></div>
         <div id="stats-container"></div>
         
         <div class="grid grid-2">
@@ -577,7 +548,7 @@ function showError(message) {
                 <div>${escapeHtml(message)}</div>
             </div>
         `;
-        setTimeout(() => container.innerHTML = '', 5000);
+        setTimeout(() => { container.innerHTML = ''; }, 5000);
     }
 }
 
@@ -590,7 +561,7 @@ function showSuccess(message) {
                 <div>${escapeHtml(message)}</div>
             </div>
         `;
-        setTimeout(() => container.innerHTML = '', 5000);
+        setTimeout(() => { container.innerHTML = ''; }, 5000);
     }
 }
 
@@ -629,35 +600,28 @@ function getScoreClass(score) {
     return 'danger';
 }
 
-// ==================== Tab Navigation ====================
-
+// Tab Navigation
 function switchTab(tabName) {
-    // Hide all tab contents
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-
-    // Deactivate all tabs
     document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
 
-    // Show selected tab content
-    const tabContent = document.getElementById(`tab-${tabName}`);
+    const tabContent = document.getElementById('tab-' + tabName);
     if (tabContent) {
         tabContent.classList.remove('hidden');
     }
 
-    // Activate selected tab
     if (event && event.target) {
         event.target.classList.add('active');
     }
 }
 
-// ==================== Conflicts Tab ====================
-
+// Conflicts Tab
 async function checkConflicts() {
     const container = document.getElementById('conflicts-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Checking conflicts...</p></div>';
 
     try {
-        const result = await api(`/conflicts/check?shop=${state.shop}`, { method: 'POST' });
+        const result = await api('/conflicts/check?shop=' + state.shop, { method: 'POST' });
         renderConflicts(result);
     } catch (error) {
         console.error('Check conflicts error:', error);
@@ -670,66 +634,48 @@ function renderConflicts(data) {
 
     let html = '';
 
-    // Summary
-    html += `
-        <div class="alert ${data.conflicts_found > 0 ? 'alert-danger' : 'alert-success'}" style="margin-bottom: 20px;">
-            <span class="alert-icon">${data.conflicts_found > 0 ? '⚠️' : '✅'}</span>
-            <div>
-                <strong>${data.conflicts_found > 0 ? `Found ${data.conflicts_found} conflict(s)!` : 'No conflicts found!'}</strong>
-                <p style="margin:0;">${data.installed_apps_count} apps analyzed</p>
-            </div>
-        </div>
-    `;
+    html += '<div class="alert ' + (data.conflicts_found > 0 ? 'alert-danger' : 'alert-success') + '" style="margin-bottom: 20px;">';
+    html += '<span class="alert-icon">' + (data.conflicts_found > 0 ? '⚠️' : '✅') + '</span>';
+    html += '<div><strong>' + (data.conflicts_found > 0 ? 'Found ' + data.conflicts_found + ' conflict(s)!' : 'No conflicts found!') + '</strong>';
+    html += '<p style="margin:0;">' + data.installed_apps_count + ' apps analyzed</p></div></div>';
 
-    // Conflicts list
     if (data.conflicts && data.conflicts.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">⚡ App Conflicts</h4>';
-        data.conflicts.forEach(conflict => {
-            const severityClass = conflict.severity === 'critical' ? 'danger' :
-                conflict.severity === 'high' ? 'warning' : 'info';
-            html += `
-                <div class="recommendation" style="border-left: 4px solid var(--${severityClass === 'danger' ? 'danger' : severityClass === 'warning' ? 'warning' : 'info'});">
-                    <div class="recommendation-priority ${severityClass === 'danger' ? 'high' : severityClass === 'warning' ? 'medium' : 'low'}">
-                        ${conflict.severity === 'critical' ? '!' : conflict.severity === 'high' ? '!!' : 'i'}
-                    </div>
-                    <div class="recommendation-content">
-                        <h4>${conflict.conflicting_apps.join(' ↔ ')}</h4>
-                        <p>${escapeHtml(conflict.description)}</p>
-                        <p style="color: var(--success); margin-top: 8px;"><strong>Solution:</strong> ${escapeHtml(conflict.solution)}</p>
-                        <small style="color: var(--gray);">Community reports: ${conflict.community_reports || 0}</small>
-                    </div>
-                </div>
-            `;
+        data.conflicts.forEach(function (conflict) {
+            var severityClass = conflict.severity === 'critical' ? 'danger' : conflict.severity === 'high' ? 'warning' : 'info';
+            html += '<div class="recommendation" style="border-left: 4px solid var(--' + severityClass + ');">';
+            html += '<div class="recommendation-priority ' + (severityClass === 'danger' ? 'high' : severityClass === 'warning' ? 'medium' : 'low') + '">';
+            html += conflict.severity === 'critical' ? '!' : conflict.severity === 'high' ? '!!' : 'i';
+            html += '</div><div class="recommendation-content">';
+            html += '<h4>' + conflict.conflicting_apps.join(' ↔ ') + '</h4>';
+            html += '<p>' + escapeHtml(conflict.description) + '</p>';
+            html += '<p style="color: var(--success); margin-top: 8px;"><strong>Solution:</strong> ' + escapeHtml(conflict.solution) + '</p>';
+            html += '<small style="color: var(--gray);">Community reports: ' + (conflict.community_reports || 0) + '</small>';
+            html += '</div></div>';
         });
     }
 
-    // Duplicate functionality
     if (data.duplicate_functionality && Object.keys(data.duplicate_functionality).length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">📦 Duplicate Functionality</h4>';
-        for (const [category, apps] of Object.entries(data.duplicate_functionality)) {
-            html += `
-                <div class="alert alert-warning">
-                    <span class="alert-icon">📦</span>
-                    <div>
-                        <strong>Multiple ${category.replace('_', ' ')} apps</strong>
-                        <p style="margin:0;">You have ${apps.length} apps doing the same thing: ${apps.join(', ')}</p>
-                    </div>
-                </div>
-            `;
+        for (var category in data.duplicate_functionality) {
+            var apps = data.duplicate_functionality[category];
+            html += '<div class="alert alert-warning"><span class="alert-icon">📦</span><div>';
+            html += '<strong>Multiple ' + category.replace('_', ' ') + ' apps</strong>';
+            html += '<p style="margin:0;">You have ' + apps.length + ' apps doing the same thing: ' + apps.join(', ') + '</p>';
+            html += '</div></div>';
         }
     }
 
     container.innerHTML = html || '<div class="empty-state"><h3>No issues found!</h3></div>';
 }
 
-// ==================== Orphan Code Tab ====================
-
+// Orphan Code Tab
 async function scanOrphanCode() {
     const container = document.getElementById('orphan-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Scanning for orphan code...</p></div>';
 
     try {
-        const result = await api(`/orphan-code/scan?shop=${state.shop}`, { method: 'POST' });
+        const result = await api('/orphan-code/scan?shop=' + state.shop, { method: 'POST' });
         renderOrphanCode(result);
     } catch (error) {
         console.error('Orphan code scan error:', error);
@@ -742,48 +688,40 @@ function renderOrphanCode(data) {
 
     let html = '';
 
-    // Summary
-    html += `
-        <div class="alert ${data.total_orphan_instances > 0 ? 'alert-warning' : 'alert-success'}" style="margin-bottom: 20px;">
-            <span class="alert-icon">${data.total_orphan_instances > 0 ? '🧹' : '✅'}</span>
-            <div>
-                <strong>${data.total_orphan_instances > 0 ? `Found ${data.total_orphan_instances} orphan code instance(s)!` : 'No orphan code found!'}</strong>
-                <p style="margin:0;">${data.files_scanned || 0} files scanned, ${data.uninstalled_apps_with_leftover_code || 0} uninstalled apps left code behind</p>
-            </div>
-        </div>
-    `;
+    html += '<div class="alert ' + (data.total_orphan_instances > 0 ? 'alert-warning' : 'alert-success') + '" style="margin-bottom: 20px;">';
+    html += '<span class="alert-icon">' + (data.total_orphan_instances > 0 ? '🧹' : '✅') + '</span>';
+    html += '<div><strong>' + (data.total_orphan_instances > 0 ? 'Found ' + data.total_orphan_instances + ' orphan code instance(s)!' : 'No orphan code found!') + '</strong>';
+    html += '<p style="margin:0;">' + (data.files_scanned || 0) + ' files scanned, ' + (data.uninstalled_apps_with_leftover_code || 0) + ' uninstalled apps left code behind</p></div></div>';
 
-    // Orphan code by app
     if (data.orphan_code_by_app && data.orphan_code_by_app.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">🧹 Leftover Code by App</h4>';
-        data.orphan_code_by_app.forEach(app => {
-            html += `
-                <div class="card" style="margin-bottom: 12px; padding: 16px;">
-                    <h4 style="margin-bottom: 8px;">📦 ${escapeHtml(app.app)} (uninstalled)</h4>
-                    <p style="margin-bottom: 8px; color: var(--gray);">Found ${app.total_occurrences} code fragment(s) in ${app.files_affected.length} file(s)</p>
-                    <p style="margin-bottom: 8px;"><strong>Files affected:</strong></p>
-                    <ul style="margin-left: 20px; margin-bottom: 8px;">
-                        ${app.files_affected.slice(0, 5).map(f => `<li><code>${escapeHtml(f)}</code></li>`).join('')}
-                    </ul>
-                    <p style="color: var(--success);"><strong>How to fix:</strong> ${escapeHtml(app.cleanup_guide)}</p>
-                </div>
-            `;
+        data.orphan_code_by_app.forEach(function (app) {
+            html += '<div class="card" style="margin-bottom: 12px; padding: 16px;">';
+            html += '<h4 style="margin-bottom: 8px;">📦 ' + escapeHtml(app.app) + ' (uninstalled)</h4>';
+            html += '<p style="margin-bottom: 8px; color: var(--gray);">Found ' + app.total_occurrences + ' code fragment(s) in ' + app.files_affected.length + ' file(s)</p>';
+            html += '<p style="margin-bottom: 8px;"><strong>Files affected:</strong></p>';
+            html += '<ul style="margin-left: 20px; margin-bottom: 8px;">';
+            app.files_affected.slice(0, 5).forEach(function (f) {
+                html += '<li><code>' + escapeHtml(f) + '</code></li>';
+            });
+            html += '</ul>';
+            html += '<p style="color: var(--success);"><strong>How to fix:</strong> ' + escapeHtml(app.cleanup_guide) + '</p>';
+            html += '</div>';
         });
     }
 
     container.innerHTML = html || '<div class="empty-state"><h3>No orphan code found!</h3></div>';
 }
 
-// ==================== Timeline Tab ====================
-
+// Timeline Tab
 async function loadTimeline() {
     const container = document.getElementById('timeline-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading timeline...</p></div>';
 
     try {
         const [timeline, rankings] = await Promise.all([
-            api(`/timeline/${state.shop}?days=90`),
-            api(`/timeline/${state.shop}/impact-ranking`)
+            api('/timeline/' + state.shop + '?days=90'),
+            api('/timeline/' + state.shop + '/impact-ranking')
         ]);
         renderTimeline(timeline, rankings);
     } catch (error) {
@@ -797,62 +735,36 @@ function renderTimeline(timeline, rankings) {
 
     let html = '';
 
-    // Summary
-    html += `
-        <div class="grid grid-3" style="margin-bottom: 20px;">
-            <div class="card stat-card">
-                <div class="stat-value">${timeline.app_installs || 0}</div>
-                <div class="stat-label">Apps Installed (90 days)</div>
-            </div>
-            <div class="card stat-card">
-                <div class="stat-value">${timeline.performance_snapshots || 0}</div>
-                <div class="stat-label">Performance Tests</div>
-            </div>
-            <div class="card stat-card">
-                <div class="stat-value ${(timeline.correlations?.length || 0) > 0 ? 'danger' : 'success'}">
-                    ${timeline.correlations?.length || 0}
-                </div>
-                <div class="stat-label">Negative Correlations</div>
-            </div>
-        </div>
-    `;
+    html += '<div class="grid grid-3" style="margin-bottom: 20px;">';
+    html += '<div class="card stat-card"><div class="stat-value">' + (timeline.app_installs || 0) + '</div><div class="stat-label">Apps Installed (90 days)</div></div>';
+    html += '<div class="card stat-card"><div class="stat-value">' + (timeline.performance_snapshots || 0) + '</div><div class="stat-label">Performance Tests</div></div>';
+    html += '<div class="card stat-card"><div class="stat-value ' + ((timeline.correlations?.length || 0) > 0 ? 'danger' : 'success') + '">' + (timeline.correlations?.length || 0) + '</div><div class="stat-label">Negative Correlations</div></div>';
+    html += '</div>';
 
-    // Performance correlations
     if (timeline.correlations && timeline.correlations.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">📉 Apps that Degraded Performance</h4>';
-        timeline.correlations.forEach(corr => {
-            html += `
-                <div class="recommendation">
-                    <div class="recommendation-priority high">!</div>
-                    <div class="recommendation-content">
-                        <h4>${escapeHtml(corr.app_name)}</h4>
-                        <p><strong>Verdict:</strong> ${escapeHtml(corr.verdict)}</p>
-                        <div style="display: flex; gap: 20px; margin-top: 8px;">
-                            <span>Score: ${corr.changes?.performance_score?.before || '?'} → ${corr.changes?.performance_score?.after || '?'} 
-                                  (${corr.changes?.performance_score?.change > 0 ? '+' : ''}${corr.changes?.performance_score?.change || 0})</span>
-                            <span>Load time: ${corr.changes?.load_time_ms?.change > 0 ? '+' : ''}${corr.changes?.load_time_ms?.change || 0}ms</span>
-                        </div>
-                        <small style="color: var(--gray);">Installed: ${formatDate(corr.installed_on)} | Confidence: ${corr.confidence}%</small>
-                    </div>
-                </div>
-            `;
+        timeline.correlations.forEach(function (corr) {
+            html += '<div class="recommendation"><div class="recommendation-priority high">!</div><div class="recommendation-content">';
+            html += '<h4>' + escapeHtml(corr.app_name) + '</h4>';
+            html += '<p><strong>Verdict:</strong> ' + escapeHtml(corr.verdict) + '</p>';
+            html += '<div style="display: flex; gap: 20px; margin-top: 8px;">';
+            html += '<span>Score: ' + (corr.changes?.performance_score?.before || '?') + ' → ' + (corr.changes?.performance_score?.after || '?') + '</span>';
+            html += '<span>Load time: ' + (corr.changes?.load_time_ms?.change > 0 ? '+' : '') + (corr.changes?.load_time_ms?.change || 0) + 'ms</span>';
+            html += '</div>';
+            html += '<small style="color: var(--gray);">Installed: ' + formatDate(corr.installed_on) + ' | Confidence: ' + corr.confidence + '%</small>';
+            html += '</div></div>';
         });
     }
 
-    // Impact rankings
     if (rankings.rankings && rankings.rankings.length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">📊 App Impact Ranking</h4>';
         html += '<div class="table-container"><table><thead><tr><th>App</th><th>Impact Score</th><th>Perf Change</th><th>Load Time</th></tr></thead><tbody>';
-        rankings.rankings.slice(0, 10).forEach(r => {
-            const impactClass = r.is_negative_impact ? 'danger' : 'success';
-            html += `
-                <tr>
-                    <td><strong>${escapeHtml(r.app_name)}</strong></td>
-                    <td><span class="badge badge-${impactClass}">${r.impact_score > 0 ? '+' : ''}${r.impact_score}</span></td>
-                    <td>${r.performance_change > 0 ? '+' : ''}${r.performance_change}</td>
-                    <td>${r.load_time_change_ms > 0 ? '+' : ''}${r.load_time_change_ms}ms</td>
-                </tr>
-            `;
+        rankings.rankings.slice(0, 10).forEach(function (r) {
+            var impactClass = r.is_negative_impact ? 'danger' : 'success';
+            html += '<tr><td><strong>' + escapeHtml(r.app_name) + '</strong></td>';
+            html += '<td><span class="badge badge-' + impactClass + '">' + (r.impact_score > 0 ? '+' : '') + r.impact_score + '</span></td>';
+            html += '<td>' + (r.performance_change > 0 ? '+' : '') + r.performance_change + '</td>';
+            html += '<td>' + (r.load_time_change_ms > 0 ? '+' : '') + r.load_time_change_ms + 'ms</td></tr>';
         });
         html += '</tbody></table></div>';
     }
@@ -860,16 +772,15 @@ function renderTimeline(timeline, rankings) {
     container.innerHTML = html || '<div class="empty-state"><h3>No timeline data yet</h3><p>Run some scans to build up performance history.</p></div>';
 }
 
-// ==================== Community Tab ====================
-
+// Community Tab
 async function loadCommunityInsights() {
     const container = document.getElementById('community-content');
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading community insights...</p></div>';
 
     try {
         const [insights, trending] = await Promise.all([
-            api(`/community/insights?shop=${state.shop}`, { method: 'POST' }),
-            api(`/community/trending?months=3`)
+            api('/community/insights?shop=' + state.shop, { method: 'POST' }),
+            api('/community/trending?months=3')
         ]);
         renderCommunityInsights(insights, trending);
     } catch (error) {
@@ -883,73 +794,54 @@ function renderCommunityInsights(insights, trending) {
 
     let html = '';
 
-    // Overall risk
-    const riskClass = insights.overall_risk === 'high' ? 'danger' :
-        insights.overall_risk === 'medium' ? 'warning' : 'success';
-    html += `
-        <div class="alert alert-${riskClass}" style="margin-bottom: 20px;">
-            <span class="alert-icon">${insights.overall_risk === 'high' ? '🔴' : insights.overall_risk === 'medium' ? '🟡' : '🟢'}</span>
-            <div>
-                <strong>Overall Risk: ${insights.overall_risk.toUpperCase()}</strong>
-                <p style="margin:0;">${insights.apps_analyzed} apps analyzed, ${insights.apps_with_known_issues} have known community issues</p>
-            </div>
-        </div>
-    `;
+    var riskClass = insights.overall_risk === 'high' ? 'danger' : insights.overall_risk === 'medium' ? 'warning' : 'success';
+    var riskIcon = insights.overall_risk === 'high' ? '🔴' : insights.overall_risk === 'medium' ? '🟡' : '🟢';
 
-    // Known issues
+    html += '<div class="alert alert-' + riskClass + '" style="margin-bottom: 20px;">';
+    html += '<span class="alert-icon">' + riskIcon + '</span>';
+    html += '<div><strong>Overall Risk: ' + insights.overall_risk.toUpperCase() + '</strong>';
+    html += '<p style="margin:0;">' + insights.apps_analyzed + ' apps analyzed, ' + insights.apps_with_known_issues + ' have known community issues</p></div></div>';
+
     if (insights.known_issues && insights.known_issues.length > 0) {
         html += '<h4 style="margin-bottom: 12px;">👥 Known Issues for Your Apps</h4>';
-        insights.known_issues.forEach(issue => {
-            html += `
-                <div class="card" style="margin-bottom: 12px; padding: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <h4>📦 ${escapeHtml(issue.app)}</h4>
-                        <span class="badge badge-${issue.severity === 'high' ? 'danger' : issue.severity === 'medium' ? 'warning' : 'info'}">
-                            ${issue.severity} severity
-                        </span>
-                    </div>
-                    <p style="margin-bottom: 8px; color: var(--gray);">${issue.total_community_reports} community reports</p>
-                    <p style="margin-bottom: 8px;"><strong>Common symptoms:</strong></p>
-                    <ul style="margin-left: 20px; margin-bottom: 8px;">
-                        ${issue.top_symptoms.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
-                    </ul>
-                    <p style="color: var(--success);"><strong>Resolution:</strong> ${escapeHtml(issue.typical_resolution)}</p>
-                    <small style="color: var(--gray);">Resolution rate: ${(issue.resolution_rate * 100).toFixed(0)}%</small>
-                </div>
-            `;
+        insights.known_issues.forEach(function (issue) {
+            html += '<div class="card" style="margin-bottom: 12px; padding: 16px;">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">';
+            html += '<h4>📦 ' + escapeHtml(issue.app) + '</h4>';
+            html += '<span class="badge badge-' + (issue.severity === 'high' ? 'danger' : issue.severity === 'medium' ? 'warning' : 'info') + '">' + issue.severity + ' severity</span>';
+            html += '</div>';
+            html += '<p style="margin-bottom: 8px; color: var(--gray);">' + issue.total_community_reports + ' community reports</p>';
+            html += '<p style="margin-bottom: 8px;"><strong>Common symptoms:</strong></p>';
+            html += '<ul style="margin-left: 20px; margin-bottom: 8px;">';
+            issue.top_symptoms.forEach(function (s) {
+                html += '<li>' + escapeHtml(s) + '</li>';
+            });
+            html += '</ul>';
+            html += '<p style="color: var(--success);"><strong>Resolution:</strong> ' + escapeHtml(issue.typical_resolution) + '</p>';
+            html += '<small style="color: var(--gray);">Resolution rate: ' + (issue.resolution_rate * 100).toFixed(0) + '%</small>';
+            html += '</div>';
         });
     }
 
-    // Trending issues
     if (trending.trending_issues && trending.trending_issues.length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">🔥 Trending Issues</h4>';
-        trending.trending_issues.forEach(issue => {
-            const statusClass = issue.status === 'resolved' ? 'success' :
-                issue.status === 'investigating' ? 'warning' : 'info';
-            html += `
-                <div class="alert alert-${statusClass}">
-                    <div>
-                        <strong>${escapeHtml(issue.app)}</strong> - ${escapeHtml(issue.issue)}
-                        <p style="margin:0;"><small>${issue.affected_users} affected users | Status: ${issue.status}</small></p>
-                    </div>
-                </div>
-            `;
+        trending.trending_issues.forEach(function (issue) {
+            var statusClass = issue.status === 'resolved' ? 'success' : issue.status === 'investigating' ? 'warning' : 'info';
+            html += '<div class="alert alert-' + statusClass + '"><div>';
+            html += '<strong>' + escapeHtml(issue.app) + '</strong> - ' + escapeHtml(issue.issue);
+            html += '<p style="margin:0;"><small>' + issue.affected_users + ' affected users | Status: ' + issue.status + '</small></p>';
+            html += '</div></div>';
         });
     }
 
-    // Most reported apps
     if (trending.most_reported_apps && trending.most_reported_apps.length > 0) {
         html += '<h4 style="margin: 20px 0 12px;">📊 Most Reported Apps</h4>';
         html += '<div class="table-container"><table><thead><tr><th>App</th><th>Reports</th><th>Severity</th><th>Resolution Rate</th></tr></thead><tbody>';
-        trending.most_reported_apps.slice(0, 5).forEach(app => {
-            html += `
-                <tr>
-                    <td><strong>${escapeHtml(app.app)}</strong></td>
-                    <td>${app.total_reports}</td>
-                    <td><span class="badge badge-${app.severity === 'high' ? 'danger' : 'warning'}">${app.severity}</span></td>
-                    <td>${(app.resolution_rate * 100).toFixed(0)}%</td>
-                </tr>
-            `;
+        trending.most_reported_apps.slice(0, 5).forEach(function (app) {
+            html += '<tr><td><strong>' + escapeHtml(app.app) + '</strong></td>';
+            html += '<td>' + app.total_reports + '</td>';
+            html += '<td><span class="badge badge-' + (app.severity === 'high' ? 'danger' : 'warning') + '">' + app.severity + '</span></td>';
+            html += '<td>' + (app.resolution_rate * 100).toFixed(0) + '%</td></tr>';
         });
         html += '</tbody></table></div>';
     }
