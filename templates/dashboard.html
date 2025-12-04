@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sherlock - Shopify App Diagnostics</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
@@ -16,17 +19,20 @@
             <span class="shop-name" id="shop-name"></span>
         </h1>
         <div>
+            <button class="btn btn-secondary" onclick="openReportModal()">
+                🚨 Report an App
+            </button>
             <button class="btn btn-primary" onclick="startScan('full')">
                 🔍 Run Full Scan
             </button>
         </div>
     </header>
-    
+
     <!-- Notifications -->
     <div class="container">
         <div id="notifications"></div>
     </div>
-    
+
     <!-- Tabs -->
     <div class="container">
         <div class="tabs">
@@ -37,14 +43,14 @@
             <button class="tab" onclick="switchTab('community')">👥 Community</button>
         </div>
     </div>
-    
+
     <!-- Main Content -->
     <main class="container" id="main-content">
         <!-- Dashboard Tab -->
         <div id="tab-dashboard" class="tab-content">
             <!-- Scan Progress (hidden by default) -->
             <div id="scan-progress" style="display:none;"></div>
-            
+
             <!-- Stats Cards -->
             <div id="stats-container">
                 <div class="grid grid-4">
@@ -70,7 +76,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Two Column Layout -->
             <div class="grid grid-2">
                 <!-- Recent Scans -->
@@ -78,7 +84,8 @@
                     <div class="card-header">
                         <h3 class="card-title">Recent Scans</h3>
                         <div>
-                            <button class="btn btn-secondary btn-sm" onclick="startScan('quick')" title="Quick scan - recently installed apps only">
+                            <button class="btn btn-secondary btn-sm" onclick="startScan('quick')"
+                                title="Quick scan - recently installed apps only">
                                 ⚡ Quick
                             </button>
                             <button class="btn btn-primary btn-sm" onclick="startScan('full')">
@@ -93,7 +100,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Suspect Apps -->
                 <div class="card">
                     <div class="card-header">
@@ -111,7 +118,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Conflicts Tab -->
         <div id="tab-conflicts" class="tab-content hidden">
             <div class="card">
@@ -125,12 +132,13 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">⚡</div>
                         <h3>Check for Conflicts</h3>
-                        <p>Click "Check Conflicts" to see if any of your installed apps have known conflicts with each other.</p>
+                        <p>Click "Check Conflicts" to see if any of your installed apps have known conflicts with each
+                            other.</p>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Orphan Code Tab -->
         <div id="tab-orphan" class="tab-content hidden">
             <div class="card">
@@ -144,12 +152,13 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">🧹</div>
                         <h3>Find Leftover Code</h3>
-                        <p>Scan your theme for code left behind by uninstalled apps. This orphan code can slow down your store.</p>
+                        <p>Scan your theme for code left behind by uninstalled apps. This orphan code can slow down your
+                            store.</p>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Timeline Tab -->
         <div id="tab-timeline" class="tab-content hidden">
             <div class="card">
@@ -168,33 +177,141 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Community Tab -->
         <div id="tab-community" class="tab-content hidden">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">👥 Community Insights</h3>
-                    <button class="btn btn-primary btn-sm" onclick="loadCommunityInsights()">
-                        Load Insights
-                    </button>
+                    <div>
+                        <button class="btn btn-secondary btn-sm" onclick="openReportModal()">
+                            🚨 Report App
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="loadCommunityInsights()">
+                            Load Insights
+                        </button>
+                    </div>
                 </div>
                 <div id="community-content">
                     <div class="empty-state">
                         <div class="empty-state-icon">👥</div>
                         <h3>Community-Reported Issues</h3>
-                        <p>See known issues for your installed apps based on reports from Shopify forums and communities.</p>
+                        <p>See known issues for your installed apps based on reports from Reddit and community forums.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Most Reported Apps -->
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <h3 class="card-title">🔥 Most Reported Apps</h3>
+                    <button class="btn btn-secondary btn-sm" onclick="loadMostReportedApps()">
+                        Refresh
+                    </button>
+                </div>
+                <div id="most-reported-apps">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <h3>Loading...</h3>
+                        <p>Fetching community-reported apps...</p>
                     </div>
                 </div>
             </div>
         </div>
     </main>
-    
+
+    <!-- Report App Modal -->
+    <div id="report-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🚨 Report a Problematic App</h2>
+                <button class="modal-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Help the Sherlock community by reporting apps causing issues. We'll search Reddit for similar
+                    reports.</p>
+
+                <div class="form-group">
+                    <label for="report-app-name">App Name *</label>
+                    <input type="text" id="report-app-name" placeholder="e.g., Klaviyo, PageFly, Loox" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="report-issue-type">Issue Type *</label>
+                    <select id="report-issue-type" required>
+                        <option value="">Select an issue type...</option>
+                        <option value="slowdown">🐌 Slowing down my store</option>
+                        <option value="conflict">⚡ Conflicts with other apps</option>
+                        <option value="checkout">🛒 Checkout issues</option>
+                        <option value="theme">🎨 Theme/display problems</option>
+                        <option value="support">📞 Poor support</option>
+                        <option value="other">❓ Other issue</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="report-when">When did this start? *</label>
+                    <select id="report-when" required>
+                        <option value="">Select when...</option>
+                        <option value="today">Today</option>
+                        <option value="this_week">This week</option>
+                        <option value="after_install">After installing a new app</option>
+                        <option value="after_update">After an app update</option>
+                        <option value="after_theme_change">After changing theme</option>
+                        <option value="not_sure">Not sure</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="report-doing">What were you doing? *</label>
+                    <select id="report-doing" required>
+                        <option value="">Select activity...</option>
+                        <option value="browsing">Browsing the store</option>
+                        <option value="checkout">Checking out</option>
+                        <option value="admin">In Shopify admin</option>
+                        <option value="editing_theme">Editing theme</option>
+                        <option value="installing_app">Installing an app</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="report-other-apps">Other apps installed (one per line)</label>
+                    <textarea id="report-other-apps" rows="4" placeholder="List your other installed apps, e.g.:
+Klaviyo
+PageFly
+Loox
+Judge.me"></textarea>
+                    <small class="form-hint">This helps us identify potential conflicts</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="report-description">Description (optional)</label>
+                    <textarea id="report-description" rows="3"
+                        placeholder="Describe the issue you're experiencing..."></textarea>
+                </div>
+
+                <div id="report-results" class="hidden">
+                    <!-- Results will be shown here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReportModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitAppReport()" id="report-submit-btn">
+                    🔍 Search & Report
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
         <p>Sherlock v2.0 · Enhanced Shopify App Diagnostics · <a href="/docs" target="_blank">API Docs</a></p>
     </footer>
-    
+
     <!-- JavaScript -->
     <script src="/static/js/app.js"></script>
 </body>
+
 </html>

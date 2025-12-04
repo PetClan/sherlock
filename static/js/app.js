@@ -851,3 +851,148 @@ function renderCommunityInsights(insights, trending) {
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', init);
+// ===== REPORT APP MODAL FUNCTIONS =====
+
+function openReportModal() {
+    const modal = document.getElementById('report-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        // Reset form
+        document.getElementById('report-app-name').value = '';
+        document.getElementById('report-issue-type').value = '';
+        document.getElementById('report-when').value = '';
+        document.getElementById('report-doing').value = '';
+        document.getElementById('report-other-apps').value = '';
+        document.getElementById('report-description').value = '';
+        document.getElementById('report-results').classList.add('hidden');
+        document.getElementById('report-submit-btn').classList.remove('loading');
+    }
+}
+
+function closeReportModal() {
+    const modal = document.getElementById('report-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function (e) {
+    const modal = document.getElementById('report-modal');
+    if (e.target === modal) {
+        closeReportModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+        closeReportModal();
+    }
+});
+
+async function submitAppReport() {
+    const appName = document.getElementById('report-app-name').value.trim();
+    const issueType = document.getElementById('report-issue-type').value;
+    const when = document.getElementById('report-when').value;
+    const doing = document.getElementById('report-doing').value;
+    const otherApps = document.getElementById('report-other-apps').value.trim();
+    const description = document.getElementById('report-description').value.trim();
+
+    // Validation
+    if (!appName) {
+        alert('Please enter the app name');
+        return;
+    }
+    if (!issueType) {
+        alert('Please select an issue type');
+        return;
+    }
+    if (!when) {
+        alert('Please select when the issue started');
+        return;
+    }
+    if (!doing) {
+        alert('Please select what you were doing');
+        return;
+    }
+
+    // Build description with context
+    let fullDescription = description || '';
+    fullDescription += `\n\nContext: Issue started ${when.replace('_', ' ')}. Activity: ${doing.replace('_', ' ')}.`;
+    if (otherApps) {
+        fullDescription += `\n\nOther installed apps:\n${otherApps}`;
+    }
+
+    // Show loading state
+    const submitBtn = document.getElementById('report-submit-btn');
+    submitBtn.classList.add('loading');
+    submitBtn.textContent = 'Searching...';
+
+    try {
+        const params = new URLSearchParams({
+            app_name: appName,
+            shop: state.shop || 'anonymous',
+            issue_type: issueType,
+            description: fullDescription.trim()
+        });
+
+        const response = await fetch(`/api/v1/reports/app?${params}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showReportResults(result);
+        } else {
+            showReportError(result.detail || 'Failed to submit report');
+        }
+    } catch (error) {
+        console.error('Report error:', error);
+        showReportError('Network error. Please try again.');
+    } finally {
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = '🔍 Search & Report';
+    }
+}
+
+function showReportResults(result) {
+    const resultsDiv = document.getElementById('report-results');
+    resultsDiv.classList.remove('hidden', 'error');
+
+    const redditData = result.reddit_data || {};
+    const riskScore = redditData.risk_score || 0;
+    const postsFound = redditData.posts_found || 0;
+    const sentiment = redditData.sentiment || 'unknown';
+    const commonIssues = redditData.common_issues || [];
+
+    // Determine risk level
+    let riskLevel = 'low';
+    let riskText = 'Low Risk';
+    if (riskScore >= 70) {
+        riskLevel = 'high';
+        riskText = 'High Risk';
+    } else if (riskScore >= 40) {
+        riskLevel = 'medium';
+        riskText = 'Medium Risk';
+    }
+
+    let issuesHtml = '';
+    if (commonIssues.length > 0) {
+        issuesHtml = `
+            <div class="issue-list">
+                ${commonIssues.slice(0, 5).map(i =>
+            `<span class="issue-tag">${i.issue} (${i.mentions})</span>`
+        ).join('')}
+            </div>
+        `;
+    }
+
+    resultsDiv.innerHTML = `
+        <h4>✅ Report Submitted - Reddit Findings</h4>
+        <div class="reddit-findings">
+            <div style="display: flex; justify-content: space-between; align-items:
