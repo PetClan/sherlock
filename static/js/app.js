@@ -265,10 +265,17 @@ function pollScanStatus(diagnosisId) {
             if (result.status === 'completed' || result.status === 'failed') {
                 clearInterval(state.pollInterval);
                 state.pollInterval = null;
-                
+
+                // Hide the progress banner
+                const progressBanner = document.getElementById('scan-progress');
+                if (progressBanner) {
+                    progressBanner.classList.add('hidden');
+                    progressBanner.innerHTML = '';
+                }
+
                 // Reload dashboard
                 loadDashboard();
-                
+
                 // Show notification
                 if (result.status === 'completed') {
                     showSuccess(`Scan complete! Found ${result.issues_found} issues.`);
