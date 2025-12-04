@@ -283,7 +283,7 @@ async def start_scan(
             status="pending"
         )
         db.add(diagnosis)
-        await db.flush()
+        await db.commit()
         
         print(f"🔍 [Sherlock] Started {request.scan_type} scan for {request.shop}")
         
