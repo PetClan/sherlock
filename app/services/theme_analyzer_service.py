@@ -43,10 +43,7 @@ APP_INJECTION_PATTERNS = [
     (r'{%\s*include\s+["\']pagefly[^"\']*["\']', "PageFly", "liquid_include"),
     (r'{%\s*include\s+["\']gempages[^"\']*["\']', "GemPages", "liquid_include"),
     
-    # App blocks
-    (r'{%\s*section\s+["\'][^"\']*app[^"\']*["\']', "Unknown App", "app_section"),
-    (r'{% schema %}.*?"type"\s*:\s*"@app".*?{% endschema %}', "App Block", "app_block"),
-    
+       
     # Common problematic patterns
     (r'<script[^>]*>.*?document\.write', "Unknown", "document_write"),
     (r'<script[^>]*>.*?eval\s*\(', "Unknown", "eval_usage"),
