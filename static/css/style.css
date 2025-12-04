@@ -1,4 +1,4 @@
-/* Sherlock Dashboard - Main Stylesheet */
+/* Sherlock Dashboard - Responsive Stylesheet */
 
 :root {
     --primary: #5c6ac4;
@@ -28,15 +28,17 @@ body {
     background: var(--lighter-gray);
     color: var(--dark);
     line-height: 1.5;
+    min-height: 100vh;
 }
 
-/* Layout */
+/* ==================== LAYOUT ==================== */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
+/* Header */
 .header {
     background: var(--white);
     border-bottom: 1px solid var(--light-gray);
@@ -44,6 +46,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .header h1 {
@@ -64,7 +68,20 @@ body {
     font-weight: normal;
 }
 
-/* Cards */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ==================== CARDS ==================== */
 .card {
     background: var(--white);
     border-radius: var(--radius);
@@ -80,6 +97,8 @@ body {
     margin-bottom: 16px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--light-gray);
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .card-title {
@@ -87,7 +106,7 @@ body {
     font-weight: 600;
 }
 
-/* Grid */
+/* ==================== GRID SYSTEM ==================== */
 .grid {
     display: grid;
     gap: 20px;
@@ -105,16 +124,10 @@ body {
     grid-template-columns: repeat(4, 1fr);
 }
 
-@media (max-width: 768px) {
-    .grid-2, .grid-3, .grid-4 {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Stats */
+/* ==================== STATS ==================== */
 .stat-card {
     text-align: center;
-    padding: 24px;
+    padding: 24px 16px;
 }
 
 .stat-value {
@@ -124,19 +137,28 @@ body {
     margin-bottom: 4px;
 }
 
-.stat-value.danger { color: var(--danger); }
-.stat-value.warning { color: var(--warning); }
-.stat-value.success { color: var(--success); }
+.stat-value.danger {
+    color: var(--danger);
+}
+
+.stat-value.warning {
+    color: var(--warning);
+}
+
+.stat-value.success {
+    color: var(--success);
+}
 
 .stat-label {
     font-size: 14px;
     color: var(--gray);
 }
 
-/* Buttons */
+/* ==================== BUTTONS ==================== */
 .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 10px 20px;
     font-size: 14px;
@@ -145,6 +167,7 @@ body {
     border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .btn-primary {
@@ -181,17 +204,20 @@ body {
     cursor: not-allowed;
 }
 
-/* Tables */
+/* ==================== TABLES ==================== */
 .table-container {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 500px;
 }
 
-th, td {
+th,
+td {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--light-gray);
@@ -203,19 +229,21 @@ th {
     color: var(--gray);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 tr:hover {
     background: var(--lighter-gray);
 }
 
-/* Badges */
+/* ==================== BADGES ==================== */
 .badge {
     display: inline-block;
     padding: 4px 10px;
     font-size: 12px;
     font-weight: 500;
     border-radius: 20px;
+    white-space: nowrap;
 }
 
 .badge-danger {
@@ -243,7 +271,7 @@ tr:hover {
     color: var(--gray);
 }
 
-/* Risk Score Bar */
+/* ==================== RISK BAR ==================== */
 .risk-bar {
     width: 100px;
     height: 8px;
@@ -258,11 +286,19 @@ tr:hover {
     transition: width 0.3s;
 }
 
-.risk-bar-fill.low { background: var(--success); }
-.risk-bar-fill.medium { background: var(--warning); }
-.risk-bar-fill.high { background: var(--danger); }
+.risk-bar-fill.low {
+    background: var(--success);
+}
 
-/* Progress */
+.risk-bar-fill.medium {
+    background: var(--warning);
+}
+
+.risk-bar-fill.high {
+    background: var(--danger);
+}
+
+/* ==================== PROGRESS RING ==================== */
 .progress-ring {
     width: 120px;
     height: 120px;
@@ -286,11 +322,19 @@ tr:hover {
     transition: stroke-dashoffset 0.5s;
 }
 
-.progress-ring .progress.success { stroke: var(--success); }
-.progress-ring .progress.warning { stroke: var(--warning); }
-.progress-ring .progress.danger { stroke: var(--danger); }
+.progress-ring .progress.success {
+    stroke: var(--success);
+}
 
-/* Alerts */
+.progress-ring .progress.warning {
+    stroke: var(--warning);
+}
+
+.progress-ring .progress.danger {
+    stroke: var(--danger);
+}
+
+/* ==================== ALERTS ==================== */
 .alert {
     padding: 16px 20px;
     border-radius: var(--radius);
@@ -325,7 +369,7 @@ tr:hover {
     color: #006d6b;
 }
 
-/* Loading */
+/* ==================== LOADING ==================== */
 .loading {
     display: flex;
     flex-direction: column;
@@ -346,10 +390,12 @@ tr:hover {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-/* Recommendations List */
+/* ==================== RECOMMENDATIONS ==================== */
 .recommendation {
     padding: 16px;
     border: 1px solid var(--light-gray);
@@ -386,6 +432,11 @@ tr:hover {
     color: var(--success);
 }
 
+.recommendation-content {
+    flex: 1;
+    min-width: 0;
+}
+
 .recommendation-content h4 {
     font-size: 14px;
     font-weight: 600;
@@ -395,9 +446,10 @@ tr:hover {
 .recommendation-content p {
     font-size: 13px;
     color: var(--gray);
+    word-wrap: break-word;
 }
 
-/* App Row */
+/* ==================== APP ROW ==================== */
 .app-row {
     display: flex;
     align-items: center;
@@ -413,12 +465,20 @@ tr:hover {
     align-items: center;
     justify-content: center;
     font-size: 20px;
+    flex-shrink: 0;
+}
+
+.app-info {
+    min-width: 0;
 }
 
 .app-info h4 {
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .app-info p {
@@ -426,12 +486,19 @@ tr:hover {
     color: var(--gray);
 }
 
-/* Tabs */
+/* ==================== TABS ==================== */
 .tabs {
     display: flex;
     gap: 4px;
     margin-bottom: 20px;
     border-bottom: 1px solid var(--light-gray);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .tab {
@@ -445,6 +512,8 @@ tr:hover {
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .tab:hover {
@@ -456,7 +525,7 @@ tr:hover {
     border-bottom-color: var(--primary);
 }
 
-/* Empty State */
+/* ==================== EMPTY STATE ==================== */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -474,7 +543,7 @@ tr:hover {
     margin-bottom: 8px;
 }
 
-/* Scan Status */
+/* ==================== SCAN STATUS ==================== */
 .scan-status {
     display: inline-flex;
     align-items: center;
@@ -501,11 +570,18 @@ tr:hover {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
 }
 
-/* Summary Box */
+/* ==================== SUMMARY BOX ==================== */
 .summary-box {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: var(--white);
@@ -536,7 +612,7 @@ tr:hover {
     background: linear-gradient(135deg, var(--danger), #b52a10);
 }
 
-/* Footer */
+/* ==================== FOOTER ==================== */
 .footer {
     text-align: center;
     padding: 20px;
@@ -544,16 +620,42 @@ tr:hover {
     font-size: 13px;
 }
 
-/* Utility */
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.mt-1 { margin-top: 8px; }
-.mt-2 { margin-top: 16px; }
-.mt-3 { margin-top: 24px; }
-.mb-1 { margin-bottom: 8px; }
-.mb-2 { margin-bottom: 16px; }
-.mb-3 { margin-bottom: 24px; }
-.hidden { display: none !important; }
+/* ==================== UTILITIES ==================== */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mt-1 {
+    margin-top: 8px;
+}
+
+.mt-2 {
+    margin-top: 16px;
+}
+
+.mt-3 {
+    margin-top: 24px;
+}
+
+.mb-1 {
+    margin-bottom: 8px;
+}
+
+.mb-2 {
+    margin-bottom: 16px;
+}
+
+.mb-3 {
+    margin-bottom: 24px;
+}
+
+.hidden {
+    display: none !important;
+}
 
 /* Tab Content */
 .tab-content {
@@ -561,8 +663,15 @@ tr:hover {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Code blocks */
@@ -572,4 +681,347 @@ code {
     border-radius: 4px;
     font-family: 'Monaco', 'Consolas', monospace;
     font-size: 13px;
+    word-break: break-all;
+}
+
+/* ==================== TABLET (577px - 992px) ==================== */
+@media (max-width: 992px) {
+    .container {
+        padding: 16px;
+    }
+
+    .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-value {
+        font-size: 30px;
+    }
+
+    .header {
+        padding: 12px 16px;
+    }
+
+    .header h1 {
+        font-size: 18px;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .tab {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+}
+
+/* ==================== MOBILE (0 - 576px) ==================== */
+@media (max-width: 576px) {
+    .container {
+        padding: 12px;
+    }
+
+    /* Header responsive */
+    .header {
+        padding: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header h1 {
+        font-size: 16px;
+    }
+
+    .header h1 .icon {
+        font-size: 20px;
+    }
+
+    .shop-name {
+        font-size: 12px;
+        display: block;
+        margin-top: 4px;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .header-right .btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* Grid responsive */
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .grid {
+        gap: 12px;
+    }
+
+    /* Stats responsive */
+    .stat-card {
+        padding: 16px 12px;
+    }
+
+    .stat-value {
+        font-size: 28px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+
+    /* Cards responsive */
+    .card {
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+    }
+
+    .card-header .btn,
+    .card-header>div {
+        width: 100%;
+    }
+
+    .card-header>div {
+        display: flex;
+        gap: 8px;
+    }
+
+    .card-header>div .btn {
+        flex: 1;
+    }
+
+    /* Tabs responsive */
+    .tabs {
+        margin-bottom: 12px;
+        gap: 0;
+    }
+
+    .tab {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    /* Tables responsive */
+    table {
+        min-width: 400px;
+    }
+
+    th,
+    td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    th {
+        font-size: 11px;
+    }
+
+    /* Buttons responsive */
+    .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    /* Alerts responsive */
+    .alert {
+        padding: 12px;
+        font-size: 13px;
+    }
+
+    .alert-icon {
+        font-size: 18px;
+    }
+
+    /* Recommendations responsive */
+    .recommendation {
+        padding: 12px;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .recommendation-priority {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .recommendation-content h4 {
+        font-size: 13px;
+    }
+
+    .recommendation-content p {
+        font-size: 12px;
+    }
+
+    /* App row responsive */
+    .app-row {
+        gap: 12px;
+    }
+
+    .app-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+
+    .app-info h4 {
+        font-size: 13px;
+    }
+
+    .app-info p {
+        font-size: 11px;
+    }
+
+    /* Risk bar responsive */
+    .risk-bar {
+        width: 60px;
+    }
+
+    /* Summary box responsive */
+    .summary-box {
+        padding: 16px;
+    }
+
+    .summary-box h2 {
+        font-size: 16px;
+    }
+
+    .summary-box p {
+        font-size: 13px;
+    }
+
+    /* Empty state responsive */
+    .empty-state {
+        padding: 40px 16px;
+    }
+
+    .empty-state-icon {
+        font-size: 36px;
+    }
+
+    .empty-state h3 {
+        font-size: 16px;
+    }
+
+    /* Loading responsive */
+    .loading {
+        padding: 40px 16px;
+    }
+
+    .spinner {
+        width: 32px;
+        height: 32px;
+    }
+
+    /* Footer responsive */
+    .footer {
+        padding: 16px;
+        font-size: 12px;
+    }
+
+    /* Badges responsive */
+    .badge {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+}
+
+/* ==================== EXTRA SMALL (0 - 375px) ==================== */
+@media (max-width: 375px) {
+    .header h1 {
+        font-size: 14px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .tab {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    th,
+    td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+
+/* ==================== LANDSCAPE MOBILE ==================== */
+@media (max-width: 576px) and (orientation: landscape) {
+    .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ==================== TOUCH DEVICE IMPROVEMENTS ==================== */
+@media (hover: none) and (pointer: coarse) {
+    .btn {
+        min-height: 44px;
+    }
+
+    .tab {
+        min-height: 44px;
+    }
+
+    tr:hover {
+        background: transparent;
+    }
+
+    tr:active {
+        background: var(--lighter-gray);
+    }
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+
+    .header,
+    .tabs,
+    .btn,
+    .footer {
+        display: none;
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid var(--light-gray);
+        break-inside: avoid;
+    }
 }
