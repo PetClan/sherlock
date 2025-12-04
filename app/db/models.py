@@ -193,3 +193,47 @@ class PerformanceSnapshot(Base):
         Index("idx_performance_store", "store_id"),
         Index("idx_performance_time", "store_id", "tested_at"),
     )
+
+
+class ReportedApp(Base):
+    """Community-reported problematic apps (global, not per-store)"""
+    __tablename__ = "reported_apps"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    
+    # App identification
+    app_name = Column(String(255), nullable=False, index=True)
+    app_handle = Column(String(255), nullable=True)  # URL-friendly name
+    
+    # Risk data from Reddit
+    reddit_risk_score = Column(Float, default=0.0)  # 0-100
+    reddit_posts_found = Column(Integer, default=0)
+    reddit_sentiment = Column(String(50), nullable=True)  # positive, negative, mixed
+    reddit_common_issues = Column(JSON, nullable=True)  # List of common issues
+    reddit_sample_posts = Column(JSON, nullable=True)  # Sample post URLs
+    
+    # Report counts
+    total_reports = Column(Integer, default=1)  # How many users reported this
+    report_reasons = Column(JSON, nullable=True)  # Aggregated reasons
+    
+    # Issue types reported
+    causes_slowdown = Column(Boolean, default=False)
+    causes_conflicts = Column(Boolean, default=False)
+    causes_checkout_issues = Column(Boolean, default=False)
+    causes_theme_issues = Column(Boolean, default=False)
+    poor_support = Column(Boolean, default=False)
+    
+    # Status
+    is_verified = Column(Boolean, default=False)  # Manually verified by admin
+    is_active = Column(Boolean, default=True)  # Still being reported
+    
+    # Timestamps
+    first_reported = Column(DateTime(timezone=True), server_default=func.now())
+    last_reported = Column(DateTime(timezone=True), server_default=func.now())
+    last_reddit_check = Column(DateTime(timezone=True), nullable=True)
+    
+    __table_args__ = (
+        Index("idx_reported_apps_name", "app_name"),
+        Index("idx_reported_apps_risk", "reddit_risk_score"),
+    )
+    
