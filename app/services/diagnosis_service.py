@@ -16,6 +16,7 @@ from app.services.conflict_database import ConflictDatabase
 from app.services.orphan_code_service import OrphanCodeService
 from app.services.timeline_service import TimelineService
 from app.services.community_reports_service import CommunityReportsService
+from app.services.reddit_service import reddit_service
 
 
 class DiagnosisService:
@@ -105,11 +106,6 @@ class DiagnosisService:
         performance_results = await self.performance_service.run_full_performance_audit(store)
         results["performance"] = performance_results
         
-        # 4. Cross-reference findings
-        results["correlations"] = await self._find_correlations(
-            app_results, theme_results, performance_results
-        )
-        
         # ===== NEW ENHANCED ANALYSES =====
         
         # 5. Check for known app conflicts
@@ -136,6 +132,15 @@ class DiagnosisService:
         # 10. Get suggested removal order
         removal_suggestions = await self.timeline_service.suggest_removal_order(store)
         results["suggested_removal_order"] = removal_suggestions
+        
+        # 11. NEW: Fetch live Reddit data for installed apps
+        reddit_insights = await self._fetch_reddit_insights(installed_app_names)
+        results["reddit_insights"] = reddit_insights
+        
+        # 4. Cross-reference findings (including Reddit data)
+        results["correlations"] = await self._find_correlations(
+            app_results, theme_results, performance_results, reddit_insights
+        )
         
         # Calculate totals (enhanced)
         results["total_issues"] = (
@@ -199,16 +204,89 @@ class DiagnosisService:
         results["total_issues"] = len(performance_results.get("recommendations", []))
         return results
     
+    async def _fetch_reddit_insights(self, app_names: List[str]) -> Dict[str, Any]:
+        """
+        Fetch live Reddit data for installed apps
+        Returns reputation scores and community feedback
+        """
+        print(f"🔍 [Reddit] Fetching insights for {len(app_names)} apps...")
+        
+        app_insights = []
+        high_risk_apps = []
+        total_reddit_issues = 0
+        
+        for app_name in app_names[:10]:  # Limit to 10 apps to avoid rate limiting
+            try:
+                reputation = await reddit_service.check_app_reputation(app_name)
+                
+                app_insight = {
+                    "app_name": app_name,
+                    "reddit_risk_score": reputation.get("reddit_risk_score", 0),
+                    "posts_found": reputation.get("posts_found", 0),
+                    "sentiment": reputation.get("sentiment", "unknown"),
+                    "severity": reputation.get("severity", "low"),
+                    "common_issues": reputation.get("common_issues", []),
+                    "recommendation": reputation.get("recommendation", ""),
+                    "sample_posts": reputation.get("sample_posts", [])[:3],
+                }
+                
+                app_insights.append(app_insight)
+                
+                # Track high-risk apps
+                if reputation.get("reddit_risk_score", 0) >= 50:
+                    high_risk_apps.append({
+                        "app_name": app_name,
+                        "risk_score": reputation.get("reddit_risk_score", 0),
+                        "sentiment": reputation.get("sentiment", "unknown"),
+                        "posts_found": reputation.get("posts_found", 0),
+                        "top_issues": [i["issue"] for i in reputation.get("common_issues", [])[:3]]
+                    })
+                
+                # Count issues mentioned
+                total_reddit_issues += len(reputation.get("common_issues", []))
+                
+            except Exception as e:
+                print(f"⚠️ [Reddit] Error fetching data for {app_name}: {e}")
+                continue
+        
+        # Sort by risk score
+        app_insights.sort(key=lambda x: x["reddit_risk_score"], reverse=True)
+        high_risk_apps.sort(key=lambda x: x["risk_score"], reverse=True)
+        
+        print(f"✅ [Reddit] Found {len(high_risk_apps)} high-risk apps from Reddit data")
+        
+        return {
+            "apps_analyzed": len(app_insights),
+            "app_insights": app_insights,
+            "high_risk_apps": high_risk_apps,
+            "total_reddit_issues": total_reddit_issues,
+            "summary": self._generate_reddit_summary(high_risk_apps)
+        }
+    
+    def _generate_reddit_summary(self, high_risk_apps: List[Dict]) -> str:
+        """Generate a summary of Reddit findings"""
+        if not high_risk_apps:
+            return "No significant issues found in Reddit community discussions."
+        
+        if len(high_risk_apps) == 1:
+            app = high_risk_apps[0]
+            return f"⚠️ Reddit users frequently report issues with {app['app_name']} (Risk: {app['risk_score']}/100)"
+        
+        app_names = [a["app_name"] for a in high_risk_apps[:3]]
+        return f"⚠️ Reddit users report issues with: {', '.join(app_names)}. Review these apps carefully."
+    
     async def _find_correlations(
         self,
         app_results: Dict,
         theme_results: Dict,
-        performance_results: Dict
+        performance_results: Dict,
+        reddit_insights: Dict = None
     ) -> List[Dict[str, Any]]:
         """
         Cross-reference findings to identify patterns:
         - Apps detected in both app list AND theme code
         - Apps that appear in blocking scripts
+        - Apps with negative Reddit sentiment
         - Multiple signals pointing to same culprit
         """
         correlations = []
@@ -228,31 +306,64 @@ class DiagnosisService:
                 if app.lower() in domain:
                     blocking_apps.add(app)
         
+        # NEW: Get high-risk apps from Reddit
+        reddit_risk_apps = {}
+        if reddit_insights:
+            for app_data in reddit_insights.get("high_risk_apps", []):
+                reddit_risk_apps[app_data["app_name"]] = app_data
+        
         # Find apps that appear in multiple places
-        all_apps = suspect_apps | theme_apps | blocking_apps
+        all_apps = suspect_apps | theme_apps | blocking_apps | set(reddit_risk_apps.keys())
         
         for app in all_apps:
             signals = []
             confidence = 0
+            reddit_data = None
             
             if app in suspect_apps:
                 signals.append("Flagged as high-risk app")
-                confidence += 30
+                confidence += 25
             
             if app in theme_apps:
                 signals.append("Detected injecting code into theme")
-                confidence += 35
+                confidence += 30
             
             if app in blocking_apps:
                 signals.append("Identified as blocking/slow script")
-                confidence += 35
+                confidence += 30
             
-            if len(signals) >= 2:
+            # NEW: Reddit signals
+            if app in reddit_risk_apps:
+                reddit_info = reddit_risk_apps[app]
+                reddit_score = reddit_info.get("risk_score", 0)
+                posts_found = reddit_info.get("posts_found", 0)
+                sentiment = reddit_info.get("sentiment", "unknown")
+                
+                if reddit_score >= 70:
+                    signals.append(f"HIGH Reddit risk ({reddit_score}/100) - {posts_found} complaints found")
+                    confidence += 35
+                elif reddit_score >= 50:
+                    signals.append(f"Moderate Reddit risk ({reddit_score}/100) - {posts_found} posts found")
+                    confidence += 20
+                
+                if sentiment == "negative":
+                    signals.append("Negative sentiment in Reddit community")
+                    confidence += 15
+                
+                reddit_data = {
+                    "risk_score": reddit_score,
+                    "posts_found": posts_found,
+                    "sentiment": sentiment,
+                    "top_issues": reddit_info.get("top_issues", [])
+                }
+            
+            if len(signals) >= 1:  # Include apps with at least 1 signal
                 correlations.append({
                     "app_name": app,
                     "signals": signals,
                     "confidence": min(confidence, 100),
-                    "verdict": "HIGHLY LIKELY CULPRIT" if confidence >= 70 else "POSSIBLE CULPRIT"
+                    "verdict": "HIGHLY LIKELY CULPRIT" if confidence >= 70 else "POSSIBLE CULPRIT" if confidence >= 40 else "LOW RISK",
+                    "reddit_data": reddit_data
                 })
         
         # Sort by confidence
@@ -391,6 +502,28 @@ class DiagnosisService:
                     "solution": comm_rec.get("solution", ""),
                 })
         
+        # ===== NEW: Reddit-based recommendations =====
+        reddit_insights = results.get("reddit_insights", {})
+        for app_insight in reddit_insights.get("high_risk_apps", [])[:3]:
+            app_name = app_insight.get("app_name")
+            if app_name not in [r.get("app_name") for r in recommendations]:
+                risk_score = app_insight.get("risk_score", 0)
+                sentiment = app_insight.get("sentiment", "unknown")
+                posts_found = app_insight.get("posts_found", 0)
+                top_issues = app_insight.get("top_issues", [])
+                
+                recommendations.append({
+                    "priority": 1 if risk_score >= 70 else 2,
+                    "type": "reddit_warning",
+                    "app_name": app_name,
+                    "action": f"⚠️ Review '{app_name}' - Reddit users report issues",
+                    "reason": f"Reddit risk score: {risk_score}/100, {posts_found} posts found, sentiment: {sentiment}",
+                    "common_issues": top_issues,
+                    "source": "Reddit r/shopify community",
+                    "confidence": risk_score,
+                    "reversible": True
+                })
+        
         # Sort by priority
         recommendations.sort(key=lambda x: x["priority"])
         
@@ -431,19 +564,35 @@ class DiagnosisService:
             "confidence": 0,
             "primary_suspect": None,
             "total_issues": results.get("total_issues", 0),
-            "quick_summary": ""
+            "quick_summary": "",
+            "reddit_summary": None
         }
         
         correlations = results.get("correlations", [])
+        
+        # Include Reddit insights in summary
+        reddit_insights = results.get("reddit_insights", {})
+        if reddit_insights.get("high_risk_apps"):
+            top_reddit = reddit_insights["high_risk_apps"][0]
+            summary["reddit_summary"] = (
+                f"📢 Reddit community reports issues with {top_reddit['app_name']} "
+                f"(Risk: {top_reddit['risk_score']}/100, {top_reddit['posts_found']} posts)"
+            )
         
         if correlations and correlations[0]["confidence"] >= 70:
             top = correlations[0]
             summary["verdict"] = "culprit_identified"
             summary["confidence"] = top["confidence"]
             summary["primary_suspect"] = top["app_name"]
+            
+            # Add Reddit context if available
+            reddit_note = ""
+            if top.get("reddit_data"):
+                reddit_note = f" Reddit confirms issues ({top['reddit_data']['posts_found']} posts)."
+            
             summary["quick_summary"] = (
                 f"🎯 Primary suspect: {top['app_name']} "
-                f"(Confidence: {top['confidence']}%). "
+                f"(Confidence: {top['confidence']}%).{reddit_note} "
                 f"Recommendation: Try uninstalling this app first."
             )
         elif correlations:
