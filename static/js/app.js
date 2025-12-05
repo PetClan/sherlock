@@ -12,17 +12,16 @@ const state = {
 
 // API helper
 async function api(endpoint, options = {}) {
-    const url = `/api/v1${endpoint}`;
+    const url = '/api/v1' + endpoint;
     const response = await fetch(url, {
         headers: {
             'Content-Type': 'application/json',
-            ...options.headers,
         },
         ...options,
     });
 
     if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        throw new Error('API error: ' + response.status);
     }
 
     return response.json();
@@ -70,11 +69,14 @@ async function loadDashboard() {
     hideProgressBanner();
 
     try {
-        const [apps, scanHistory, performance] = await Promise.all([
-            api(`/apps/${state.shop}`),
-            api(`/scan/history/${state.shop}?limit=5`),
-            api(`/performance/${state.shop}/latest`).catch(() => null),
-        ]);
+        const apps = await api('/apps/' + state.shop);
+        const scanHistory = await api('/scan/history/' + state.shop + '?limit=5');
+        let performance = null;
+        try {
+            performance = await api('/performance/' + state.shop + '/latest');
+        } catch (e) {
+            // Performance data may not exist
+        }
 
         renderStats(apps, scanHistory, performance);
         renderRecentScans(scanHistory.scans || []);
@@ -90,30 +92,29 @@ async function loadDashboard() {
 function renderStats(apps, scanHistory, performance) {
     const totalScans = scanHistory.total_scans || scanHistory.scans?.length || 0;
 
-    const statsHtml = `
-        <div class="grid grid-4">
-            <div class="card stat-card">
-                <div class="stat-value">${apps.total || 0}</div>
-                <div class="stat-label">Installed Apps</div>
-            </div>
-            <div class="card stat-card">
-                <div class="stat-value ${apps.suspect_count > 0 ? 'danger' : 'success'}">
-                    ${apps.suspect_count || 0}
-                </div>
-                <div class="stat-label">Suspect Apps</div>
-            </div>
-            <div class="card stat-card">
-                <div class="stat-value ${getScoreClass(performance?.performance_score)}">
-                    ${performance?.performance_score ? Math.round(performance.performance_score) : '—'}
-                </div>
-                <div class="stat-label">Performance Score</div>
-            </div>
-            <div class="card stat-card">
-                <div class="stat-value">${totalScans}</div>
-                <div class="stat-label">Scans Run</div>
-            </div>
-        </div>
-    `;
+    const statsHtml =
+        '<div class="grid grid-4">' +
+        '<div class="card stat-card">' +
+        '<div class="stat-value">' + (apps.total || 0) + '</div>' +
+        '<div class="stat-label">Installed Apps</div>' +
+        '</div>' +
+        '<div class="card stat-card">' +
+        '<div class="stat-value ' + (apps.suspect_count > 0 ? 'danger' : 'success') + '">' +
+        (apps.suspect_count || 0) +
+        '</div>' +
+        '<div class="stat-label">Suspect Apps</div>' +
+        '</div>' +
+        '<div class="card stat-card">' +
+        '<div class="stat-value ' + getScoreClass(performance?.performance_score) + '">' +
+        (performance?.performance_score ? Math.round(performance.performance_score) : '—') +
+        '</div>' +
+        '<div class="stat-label">Performance Score</div>' +
+        '</div>' +
+        '<div class="card stat-card">' +
+        '<div class="stat-value">' + totalScans + '</div>' +
+        '<div class="stat-label">Scans Run</div>' +
+        '</div>' +
+        '</div>';
 
     document.getElementById('stats-container').innerHTML = statsHtml;
 }
@@ -123,131 +124,122 @@ function renderRecentScans(scans) {
     const container = document.getElementById('recent-scans');
 
     if (!scans.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🔍</div>
-                <h3>No scans yet</h3>
-                <p>Run your first diagnostic scan to find issues</p>
-            </div>
-        `;
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">🔍</div>' +
+            '<h3>No scans yet</h3>' +
+            '<p>Run your first diagnostic scan to find issues</p>' +
+            '</div>';
         return;
     }
 
-    const rows = scans.map(scan => `
-        <tr onclick="viewScan('${scan.diagnosis_id}')" style="cursor: pointer;">
-            <td>
-                <span class="scan-status">
-                    <span class="scan-status-dot ${scan.status}"></span>
-                    ${capitalizeFirst(scan.status)}
-                </span>
-            </td>
-            <td><span class="badge badge-info">${scan.scan_type}</span></td>
-            <td>${scan.issues_found} issues</td>
-            <td>${formatDate(scan.started_at)}</td>
-            <td class="text-right">
-                <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); viewScan('${scan.diagnosis_id}')">
-                    View
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    let rows = '';
+    scans.forEach(function (scan) {
+        rows += '<tr onclick="viewScan(\'' + scan.diagnosis_id + '\')" style="cursor: pointer;">' +
+            '<td>' +
+            '<span class="scan-status">' +
+            '<span class="scan-status-dot ' + scan.status + '"></span>' +
+            capitalizeFirst(scan.status) +
+            '</span>' +
+            '</td>' +
+            '<td><span class="badge badge-info">' + scan.scan_type + '</span></td>' +
+            '<td>' + scan.issues_found + ' issues</td>' +
+            '<td>' + formatDate(scan.started_at) + '</td>' +
+            '<td class="text-right">' +
+            '<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); viewScan(\'' + scan.diagnosis_id + '\')">View</button>' +
+            '</td>' +
+            '</tr>';
+    });
 
-    container.innerHTML = `
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Type</th>
-                        <th>Issues</th>
-                        <th>Date</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>
-    `;
+    container.innerHTML =
+        '<div class="table-container">' +
+        '<table>' +
+        '<thead>' +
+        '<tr>' +
+        '<th>Status</th>' +
+        '<th>Type</th>' +
+        '<th>Issues</th>' +
+        '<th>Date</th>' +
+        '<th></th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '</div>';
 }
 
 // Render suspect apps
 function renderSuspectApps(appsData) {
     const container = document.getElementById('suspect-apps');
-    const suspects = (appsData.apps || []).filter(a => a.is_suspect);
+    const apps = appsData.apps || [];
+    const suspects = apps.filter(function (a) { return a.is_suspect; });
 
     if (!suspects.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">✅</div>
-                <h3>No suspect apps</h3>
-                <p>All installed apps look healthy</p>
-            </div>
-        `;
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">✅</div>' +
+            '<h3>No suspect apps</h3>' +
+            '<p>All installed apps look healthy</p>' +
+            '</div>';
         return;
     }
 
-    const rows = suspects.map(app => `
-        <tr>
-            <td>
-                <div class="app-row">
-                    <div class="app-icon">📦</div>
-                    <div class="app-info">
-                        <h4>${escapeHtml(app.app_name)}</h4>
-                        <p>Installed: ${app.installed_on ? formatDate(app.installed_on) : 'Unknown'}</p>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="risk-bar">
-                    <div class="risk-bar-fill ${getRiskClass(app.risk_score)}" 
-                         style="width: ${app.risk_score}%"></div>
-                </div>
-                <span style="font-size: 12px; color: var(--gray);">${Math.round(app.risk_score)}%</span>
-            </td>
-            <td>
-                <span class="badge ${app.risk_score >= 60 ? 'badge-danger' : 'badge-warning'}">
-                    ${app.risk_score >= 60 ? 'High Risk' : 'Medium Risk'}
-                </span>
-            </td>
-            <td style="max-width: 300px;">
-                <small style="color: var(--gray);">
-                    ${app.risk_reasons ? app.risk_reasons.join(', ') : '—'}
-                </small>
-            </td>
-        </tr>
-    `).join('');
+    let rows = '';
+    suspects.forEach(function (app) {
+        rows += '<tr>' +
+            '<td>' +
+            '<div class="app-row">' +
+            '<div class="app-icon">📦</div>' +
+            '<div class="app-info">' +
+            '<h4>' + escapeHtml(app.app_name) + '</h4>' +
+            '<p>Installed: ' + (app.installed_on ? formatDate(app.installed_on) : 'Unknown') + '</p>' +
+            '</div>' +
+            '</div>' +
+            '</td>' +
+            '<td>' +
+            '<div class="risk-bar">' +
+            '<div class="risk-bar-fill ' + getRiskClass(app.risk_score) + '" style="width: ' + app.risk_score + '%"></div>' +
+            '</div>' +
+            '<span style="font-size: 12px; color: var(--gray);">' + Math.round(app.risk_score) + '%</span>' +
+            '</td>' +
+            '<td>' +
+            '<span class="badge ' + (app.risk_score >= 60 ? 'badge-danger' : 'badge-warning') + '">' +
+            (app.risk_score >= 60 ? 'High Risk' : 'Medium Risk') +
+            '</span>' +
+            '</td>' +
+            '<td style="max-width: 300px;">' +
+            '<small style="color: var(--gray);">' +
+            (app.risk_reasons ? app.risk_reasons.join(', ') : '—') +
+            '</small>' +
+            '</td>' +
+            '</tr>';
+    });
 
-    container.innerHTML = `
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>App</th>
-                        <th>Risk Score</th>
-                        <th>Status</th>
-                        <th>Reasons</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>
-    `;
+    container.innerHTML =
+        '<div class="table-container">' +
+        '<table>' +
+        '<thead>' +
+        '<tr>' +
+        '<th>App</th>' +
+        '<th>Risk Score</th>' +
+        '<th>Status</th>' +
+        '<th>Reasons</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '</div>';
 }
 
 // Start a new scan
-async function startScan(scanType = 'full') {
+async function startScan(scanType) {
     if (state.isScanning) {
         console.log('Scan already in progress');
         return;
     }
 
     state.isScanning = true;
-
-    const btn = event?.target;
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;margin:0;"></span> Starting...';
-    }
+    scanType = scanType || 'full';
 
     try {
         const result = await api('/scan/start', {
@@ -266,11 +258,6 @@ async function startScan(scanType = 'full') {
         console.error('Scan start error:', error);
         showError('Failed to start scan. Please try again.');
         state.isScanning = false;
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = scanType === 'quick' ? '⚡ Quick' : '🔍 Full Scan';
-        }
     }
 }
 
@@ -279,16 +266,16 @@ function pollScanStatus(diagnosisId) {
     stopPolling();
     state.isScanning = true;
 
-    state.pollInterval = setInterval(async () => {
+    state.pollInterval = setInterval(async function () {
         try {
-            const result = await api(`/scan/${diagnosisId}`);
+            const result = await api('/scan/' + diagnosisId);
 
             if (result.status === 'completed' || result.status === 'failed') {
                 stopPolling();
                 hideProgressBanner();
 
                 if (result.status === 'completed') {
-                    showSuccess(`Scan complete! Found ${result.issues_found} issues.`);
+                    showSuccess('Scan complete! Found ' + result.issues_found + ' issues.');
                 } else {
                     showError('Scan failed. Please try again.');
                 }
@@ -309,15 +296,14 @@ function showScanProgress(scan) {
     const container = document.getElementById('scan-progress');
     if (container) {
         container.style.display = 'block';
-        container.innerHTML = `
-            <div class="alert alert-info">
-                <span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>
-                <div>
-                    <strong>Scan in progress...</strong>
-                    <p style="margin:0;">Running ${scan.scan_type} diagnostic. This may take a minute.</p>
-                </div>
-            </div>
-        `;
+        container.innerHTML =
+            '<div class="alert alert-info">' +
+            '<span class="spinner" style="width:20px;height:20px;border-width:2px;"></span>' +
+            '<div>' +
+            '<strong>Scan in progress...</strong>' +
+            '<p style="margin:0;">Running ' + scan.scan_type + ' diagnostic. This may take a minute.</p>' +
+            '</div>' +
+            '</div>';
     }
 }
 
@@ -327,7 +313,7 @@ async function viewScan(diagnosisId) {
         stopPolling();
         hideProgressBanner();
 
-        const report = await api(`/scan/${diagnosisId}/report`);
+        const report = await api('/scan/' + diagnosisId + '/report');
         renderScanReport(report);
 
     } catch (error) {
@@ -344,119 +330,85 @@ function renderScanReport(report) {
         report.summary?.verdict === 'suspects_found' ? 'warning' :
             report.summary?.verdict === 'no_issues' ? 'success' : '';
 
-    const recommendationsHtml = (report.recommendations || [])
-        .filter(r => r.type !== 'guide')
-        .slice(0, 5)
-        .map(r => `
-            <div class="recommendation">
-                <div class="recommendation-priority ${r.priority === 1 ? 'high' : r.priority === 2 ? 'medium' : 'low'}">
-                    ${r.priority}
-                </div>
-                <div class="recommendation-content">
-                    <h4>${escapeHtml(r.action)}</h4>
-                    <p>${escapeHtml(r.reason || '')}</p>
-                </div>
-            </div>
-        `).join('');
+    let recommendationsHtml = '';
+    const recs = (report.recommendations || []).filter(function (r) { return r.type !== 'guide'; }).slice(0, 5);
+    recs.forEach(function (r) {
+        recommendationsHtml +=
+            '<div class="recommendation">' +
+            '<div class="recommendation-priority ' + (r.priority === 1 ? 'high' : r.priority === 2 ? 'medium' : 'low') + '">' +
+            r.priority +
+            '</div>' +
+            '<div class="recommendation-content">' +
+            '<h4>' + escapeHtml(r.action) + '</h4>' +
+            '<p>' + escapeHtml(r.reason || '') + '</p>' +
+            '</div>' +
+            '</div>';
+    });
 
-    mainContent.innerHTML = `
-        <div class="mb-2">
-            <button class="btn btn-secondary" onclick="backToDashboard()">
-                ← Back to Dashboard
-            </button>
-        </div>
-        
-        <div class="summary-box ${summaryClass}">
-            <h2>Diagnosis Summary</h2>
-            <p>${report.summary?.quick_summary || 'Scan completed.'}</p>
-        </div>
-        
-        <div class="grid grid-3 mb-2">
-            <div class="card stat-card">
-                <div class="stat-value">${report.total_apps_scanned || 0}</div>
-                <div class="stat-label">Apps Scanned</div>
-            </div>
-            <div class="card stat-card">
-                <div class="stat-value ${report.issues_found > 0 ? 'danger' : 'success'}">
-                    ${report.issues_found || 0}
-                </div>
-                <div class="stat-label">Issues Found</div>
-            </div>
-            <div class="card stat-card">
-                <div class="stat-value ${getScoreClass(report.performance_score)}">
-                    ${report.performance_score ? Math.round(report.performance_score) : '—'}
-                </div>
-                <div class="stat-label">Performance</div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">Recommendations</h3>
-            </div>
-            ${recommendationsHtml || '<p style="color:var(--gray);">No specific recommendations.</p>'}
-        </div>
-        
-        ${report.suspect_apps?.length ? `
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Suspect Apps</h3>
-                </div>
-                <ul style="list-style:none;">
-                    ${report.suspect_apps.map(app => `
-                        <li style="padding:8px 0;border-bottom:1px solid var(--light-gray);">
-                            📦 <strong>${escapeHtml(app)}</strong>
-                        </li>
-                    `).join('')}
-                </ul>
-            </div>
-        ` : ''}
-    `;
+    let suspectsHtml = '';
+    if (report.suspect_apps && report.suspect_apps.length) {
+        suspectsHtml = '<div class="card"><div class="card-header"><h3 class="card-title">Suspect Apps</h3></div><ul style="list-style:none;">';
+        report.suspect_apps.forEach(function (app) {
+            suspectsHtml += '<li style="padding:8px 0;border-bottom:1px solid var(--light-gray);">📦 <strong>' + escapeHtml(app) + '</strong></li>';
+        });
+        suspectsHtml += '</ul></div>';
+    }
+
+    mainContent.innerHTML =
+        '<div class="mb-2">' +
+        '<button class="btn btn-secondary" onclick="backToDashboard()">← Back to Dashboard</button>' +
+        '</div>' +
+        '<div class="summary-box ' + summaryClass + '">' +
+        '<h2>Diagnosis Summary</h2>' +
+        '<p>' + (report.summary?.quick_summary || 'Scan completed.') + '</p>' +
+        '</div>' +
+        '<div class="grid grid-3 mb-2">' +
+        '<div class="card stat-card">' +
+        '<div class="stat-value">' + (report.total_apps_scanned || 0) + '</div>' +
+        '<div class="stat-label">Apps Scanned</div>' +
+        '</div>' +
+        '<div class="card stat-card">' +
+        '<div class="stat-value ' + (report.issues_found > 0 ? 'danger' : 'success') + '">' + (report.issues_found || 0) + '</div>' +
+        '<div class="stat-label">Issues Found</div>' +
+        '</div>' +
+        '<div class="card stat-card">' +
+        '<div class="stat-value ' + getScoreClass(report.performance_score) + '">' + (report.performance_score ? Math.round(report.performance_score) : '—') + '</div>' +
+        '<div class="stat-label">Performance</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="card">' +
+        '<div class="card-header"><h3 class="card-title">Recommendations</h3></div>' +
+        (recommendationsHtml || '<p style="color:var(--gray);">No specific recommendations.</p>') +
+        '</div>' +
+        suspectsHtml;
 }
 
 // Back to dashboard
 function backToDashboard() {
-    document.getElementById('main-content').innerHTML = `
-        <div id="scan-progress" style="display:none;"></div>
-        <div id="stats-container"></div>
-        
-        <div class="grid grid-2">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Recent Scans</h3>
-                    <div>
-                        <button class="btn btn-secondary btn-sm" onclick="startScan('quick')">
-                            ⚡ Quick
-                        </button>
-                        <button class="btn btn-primary btn-sm" onclick="startScan('full')">
-                            🔍 Full Scan
-                        </button>
-                    </div>
-                </div>
-                <div id="recent-scans">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Loading...</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Suspect Apps</h3>
-                    <button class="btn btn-secondary btn-sm" onclick="viewAllApps()">
-                        View All Apps
-                    </button>
-                </div>
-                <div id="suspect-apps">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Loading...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+    document.getElementById('main-content').innerHTML =
+        '<div id="tab-dashboard" class="tab-content">' +
+        '<div id="scan-progress" style="display:none;"></div>' +
+        '<div id="stats-container"><div class="loading"><div class="spinner"></div></div></div>' +
+        '<div class="grid grid-2">' +
+        '<div class="card">' +
+        '<div class="card-header">' +
+        '<h3 class="card-title">Recent Scans</h3>' +
+        '<div>' +
+        '<button class="btn btn-secondary btn-sm" onclick="startScan(\'quick\')">⚡ Quick</button>' +
+        '<button class="btn btn-primary btn-sm" onclick="startScan(\'full\')">🔍 Full Scan</button>' +
+        '</div>' +
+        '</div>' +
+        '<div id="recent-scans"><div class="loading"><div class="spinner"></div><p>Loading...</p></div></div>' +
+        '</div>' +
+        '<div class="card">' +
+        '<div class="card-header">' +
+        '<h3 class="card-title">Suspect Apps</h3>' +
+        '<button class="btn btn-secondary btn-sm" onclick="viewAllApps()">View All Apps</button>' +
+        '</div>' +
+        '<div id="suspect-apps"><div class="loading"><div class="spinner"></div><p>Loading...</p></div></div>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
 
     loadDashboard();
 }
@@ -464,7 +416,7 @@ function backToDashboard() {
 // View all apps
 async function viewAllApps() {
     try {
-        const appsData = await api(`/apps/${state.shop}`);
+        const appsData = await api('/apps/' + state.shop);
         renderAllApps(appsData);
     } catch (error) {
         console.error('Load apps error:', error);
@@ -477,91 +429,74 @@ function renderAllApps(appsData) {
     const mainContent = document.getElementById('main-content');
     const apps = appsData.apps || [];
 
-    const rows = apps.map(app => `
-        <tr>
-            <td>
-                <div class="app-row">
-                    <div class="app-icon">${app.is_suspect ? '⚠️' : '📦'}</div>
-                    <div class="app-info">
-                        <h4>${escapeHtml(app.app_name)}</h4>
-                        <p>Installed: ${app.installed_on ? formatDate(app.installed_on) : 'Unknown'}</p>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="risk-bar">
-                    <div class="risk-bar-fill ${getRiskClass(app.risk_score)}" 
-                         style="width: ${app.risk_score}%"></div>
-                </div>
-                <span style="font-size: 12px;">${Math.round(app.risk_score)}%</span>
-            </td>
-            <td>
-                ${app.injects_scripts ? '<span class="badge badge-warning">Scripts</span>' : ''}
-                ${app.injects_theme_code ? '<span class="badge badge-warning">Theme</span>' : ''}
-            </td>
-            <td style="max-width: 300px;">
-                <small style="color: var(--gray);">
-                    ${app.risk_reasons?.join(', ') || '—'}
-                </small>
-            </td>
-        </tr>
-    `).join('');
+    let rows = '';
+    apps.forEach(function (app) {
+        rows += '<tr>' +
+            '<td>' +
+            '<div class="app-row">' +
+            '<div class="app-icon">' + (app.is_suspect ? '⚠️' : '📦') + '</div>' +
+            '<div class="app-info">' +
+            '<h4>' + escapeHtml(app.app_name) + '</h4>' +
+            '<p>Installed: ' + (app.installed_on ? formatDate(app.installed_on) : 'Unknown') + '</p>' +
+            '</div>' +
+            '</div>' +
+            '</td>' +
+            '<td>' +
+            '<div class="risk-bar">' +
+            '<div class="risk-bar-fill ' + getRiskClass(app.risk_score) + '" style="width: ' + app.risk_score + '%"></div>' +
+            '</div>' +
+            '<span style="font-size: 12px;">' + Math.round(app.risk_score) + '%</span>' +
+            '</td>' +
+            '<td>' +
+            (app.injects_scripts ? '<span class="badge badge-warning">Scripts</span>' : '') +
+            (app.injects_theme_code ? '<span class="badge badge-warning">Theme</span>' : '') +
+            '</td>' +
+            '<td style="max-width: 300px;">' +
+            '<small style="color: var(--gray);">' + (app.risk_reasons?.join(', ') || '—') + '</small>' +
+            '</td>' +
+            '</tr>';
+    });
 
-    mainContent.innerHTML = `
-        <div class="mb-2">
-            <button class="btn btn-secondary" onclick="backToDashboard()">
-                ← Back to Dashboard
-            </button>
-        </div>
-        
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">All Installed Apps (${apps.length})</h3>
-                <span class="badge ${appsData.suspect_count > 0 ? 'badge-danger' : 'badge-success'}">
-                    ${appsData.suspect_count} suspects
-                </span>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>App</th>
-                            <th>Risk Score</th>
-                            <th>Injections</th>
-                            <th>Risk Reasons</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>
-        </div>
-    `;
+    mainContent.innerHTML =
+        '<div class="mb-2">' +
+        '<button class="btn btn-secondary" onclick="backToDashboard()">← Back to Dashboard</button>' +
+        '</div>' +
+        '<div class="card">' +
+        '<div class="card-header">' +
+        '<h3 class="card-title">All Installed Apps (' + apps.length + ')</h3>' +
+        '<span class="badge ' + (appsData.suspect_count > 0 ? 'badge-danger' : 'badge-success') + '">' + appsData.suspect_count + ' suspects</span>' +
+        '</div>' +
+        '<div class="table-container">' +
+        '<table>' +
+        '<thead><tr><th>App</th><th>Risk Score</th><th>Injections</th><th>Risk Reasons</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '</div>' +
+        '</div>';
 }
 
 // Utility functions
 function showError(message) {
     const container = document.getElementById('notifications');
     if (container) {
-        container.innerHTML = `
-            <div class="alert alert-danger">
-                <span class="alert-icon">❌</span>
-                <div>${escapeHtml(message)}</div>
-            </div>
-        `;
-        setTimeout(() => { container.innerHTML = ''; }, 5000);
+        container.innerHTML =
+            '<div class="alert alert-danger">' +
+            '<span class="alert-icon">❌</span>' +
+            '<div>' + escapeHtml(message) + '</div>' +
+            '</div>';
+        setTimeout(function () { container.innerHTML = ''; }, 5000);
     }
 }
 
 function showSuccess(message) {
     const container = document.getElementById('notifications');
     if (container) {
-        container.innerHTML = `
-            <div class="alert alert-success">
-                <span class="alert-icon">✅</span>
-                <div>${escapeHtml(message)}</div>
-            </div>
-        `;
-        setTimeout(() => { container.innerHTML = ''; }, 5000);
+        container.innerHTML =
+            '<div class="alert alert-success">' +
+            '<span class="alert-icon">✅</span>' +
+            '<div>' + escapeHtml(message) + '</div>' +
+            '</div>';
+        setTimeout(function () { container.innerHTML = ''; }, 5000);
     }
 }
 
@@ -602,8 +537,12 @@ function getScoreClass(score) {
 
 // Tab Navigation
 function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(function (el) {
+        el.classList.add('hidden');
+    });
+    document.querySelectorAll('.tab').forEach(function (el) {
+        el.classList.remove('active');
+    });
 
     const tabContent = document.getElementById('tab-' + tabName);
     if (tabContent) {
@@ -612,6 +551,11 @@ function switchTab(tabName) {
 
     if (event && event.target) {
         event.target.classList.add('active');
+    }
+
+    // Load community data when tab opens
+    if (tabName === 'community') {
+        loadMostReportedApps();
     }
 }
 
@@ -719,10 +663,8 @@ async function loadTimeline() {
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading timeline...</p></div>';
 
     try {
-        const [timeline, rankings] = await Promise.all([
-            api('/timeline/' + state.shop + '?days=90'),
-            api('/timeline/' + state.shop + '/impact-ranking')
-        ]);
+        const timeline = await api('/timeline/' + state.shop + '?days=90');
+        const rankings = await api('/timeline/' + state.shop + '/impact-ranking');
         renderTimeline(timeline, rankings);
     } catch (error) {
         console.error('Load timeline error:', error);
@@ -778,10 +720,8 @@ async function loadCommunityInsights() {
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading community insights...</p></div>';
 
     try {
-        const [insights, trending] = await Promise.all([
-            api('/community/insights?shop=' + state.shop, { method: 'POST' }),
-            api('/community/trending?months=3')
-        ]);
+        const insights = await api('/community/insights?shop=' + state.shop, { method: 'POST' });
+        const trending = await api('/community/trending?months=3');
         renderCommunityInsights(insights, trending);
     } catch (error) {
         console.error('Load community insights error:', error);
@@ -834,23 +774,10 @@ function renderCommunityInsights(insights, trending) {
         });
     }
 
-    if (trending.most_reported_apps && trending.most_reported_apps.length > 0) {
-        html += '<h4 style="margin: 20px 0 12px;">📊 Most Reported Apps</h4>';
-        html += '<div class="table-container"><table><thead><tr><th>App</th><th>Reports</th><th>Severity</th><th>Resolution Rate</th></tr></thead><tbody>';
-        trending.most_reported_apps.slice(0, 5).forEach(function (app) {
-            html += '<tr><td><strong>' + escapeHtml(app.app) + '</strong></td>';
-            html += '<td>' + app.total_reports + '</td>';
-            html += '<td><span class="badge badge-' + (app.severity === 'high' ? 'danger' : 'warning') + '">' + app.severity + '</span></td>';
-            html += '<td>' + (app.resolution_rate * 100).toFixed(0) + '%</td></tr>';
-        });
-        html += '</tbody></table></div>';
-    }
-
     container.innerHTML = html || '<div class="empty-state"><h3>No community data available</h3></div>';
 }
 
-// Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', init);
+
 // ===== REPORT APP MODAL FUNCTIONS =====
 
 function openReportModal() {
@@ -866,6 +793,7 @@ function openReportModal() {
         document.getElementById('report-description').value = '';
         document.getElementById('report-results').classList.add('hidden');
         document.getElementById('report-submit-btn').classList.remove('loading');
+        document.getElementById('report-submit-btn').textContent = '🔍 Search & Report';
     }
 }
 
@@ -918,10 +846,10 @@ async function submitAppReport() {
     }
 
     // Build description with context
-    let fullDescription = description || '';
-    fullDescription += `\n\nContext: Issue started ${when.replace('_', ' ')}. Activity: ${doing.replace('_', ' ')}.`;
+    var fullDescription = description || '';
+    fullDescription += '\n\nContext: Issue started ' + when.replace(/_/g, ' ') + '. Activity: ' + doing.replace(/_/g, ' ') + '.';
     if (otherApps) {
-        fullDescription += `\n\nOther installed apps:\n${otherApps}`;
+        fullDescription += '\n\nOther installed apps:\n' + otherApps;
     }
 
     // Show loading state
@@ -937,7 +865,7 @@ async function submitAppReport() {
             description: fullDescription.trim()
         });
 
-        const response = await fetch(`/api/v1/reports/app?${params}`, {
+        const response = await fetch('/api/v1/reports/app?' + params.toString(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -970,9 +898,8 @@ function showReportResults(result) {
     const sentiment = redditData.sentiment || 'unknown';
     const commonIssues = redditData.common_issues || [];
 
-    // Determine risk level
-    let riskLevel = 'low';
-    let riskText = 'Low Risk';
+    var riskLevel = 'low';
+    var riskText = 'Low Risk';
     if (riskScore >= 70) {
         riskLevel = 'high';
         riskText = 'High Risk';
@@ -981,18 +908,85 @@ function showReportResults(result) {
         riskText = 'Medium Risk';
     }
 
-    let issuesHtml = '';
+    var issuesHtml = '';
     if (commonIssues.length > 0) {
-        issuesHtml = `
-            <div class="issue-list">
-                ${commonIssues.slice(0, 5).map(i =>
-            `<span class="issue-tag">${i.issue} (${i.mentions})</span>`
-        ).join('')}
-            </div>
-        `;
+        issuesHtml = '<div class="issue-list">';
+        commonIssues.slice(0, 5).forEach(function (i) {
+            issuesHtml += '<span class="issue-tag">' + i.issue + ' (' + i.mentions + ')</span>';
+        });
+        issuesHtml += '</div>';
     }
 
-    resultsDiv.innerHTML = `
-        <h4>✅ Report Submitted - Reddit Findings</h4>
-        <div class="reddit-findings">
-            <div style="display: flex; justify-content: space-between; align-items:
+    resultsDiv.innerHTML =
+        '<h4>✅ Report Submitted - Reddit Findings</h4>' +
+        '<div class="reddit-findings">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
+        '<span><strong>' + result.app_name + '</strong></span>' +
+        '<span class="risk-badge ' + riskLevel + '">' + riskText + ' (' + riskScore + '/100)</span>' +
+        '</div>' +
+        '<p style="margin: 0; font-size: 0.9rem; color: #6b7280;">📊 ' + postsFound + ' Reddit posts found • Sentiment: ' + sentiment + '</p>' +
+        issuesHtml +
+        (redditData.recommendation ? '<p style="margin: 12px 0 0 0; font-size: 0.85rem; color: #374151;">💡 ' + redditData.recommendation + '</p>' : '') +
+        '</div>' +
+        '<p style="margin-top: 15px; font-size: 0.85rem; color: #059669;">' +
+        (result.is_new_report ? 'This is the first report for this app.' : 'Total reports: ' + result.total_reports) +
+        '</p>';
+}
+
+function showReportError(message) {
+    const resultsDiv = document.getElementById('report-results');
+    resultsDiv.classList.remove('hidden');
+    resultsDiv.classList.add('error');
+    resultsDiv.innerHTML = '<h4>❌ Error</h4><p>' + message + '</p>';
+}
+
+async function loadMostReportedApps() {
+    const container = document.getElementById('most-reported-apps');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading reported apps...</p></div>';
+
+    try {
+        const response = await fetch('/api/v1/reports/most-reported?limit=10');
+        const result = await response.json();
+
+        if (result.apps && result.apps.length > 0) {
+            var html = '';
+            result.apps.forEach(function (app) {
+                var riskClass = app.reddit_risk_score >= 70 ? 'high' : app.reddit_risk_score >= 40 ? 'medium' : 'low';
+                html += '<div class="reported-app-item">' +
+                    '<div class="reported-app-info">' +
+                    '<div class="reported-app-name">' + app.app_name + '</div>' +
+                    '<div class="reported-app-meta">' +
+                    app.total_reports + ' report' + (app.total_reports !== 1 ? 's' : '') + ' • ' +
+                    (app.reddit_posts_found || 0) + ' Reddit posts • Sentiment: ' + (app.reddit_sentiment || 'unknown') +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="reported-app-score">' +
+                    '<span class="risk-badge ' + riskClass + '">' + (app.reddit_risk_score || 0) + '/100</span>' +
+                    '</div>' +
+                    '</div>';
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML =
+                '<div class="empty-state">' +
+                '<div class="empty-state-icon">📭</div>' +
+                '<h3>No Reports Yet</h3>' +
+                '<p>Be the first to report a problematic app!</p>' +
+                '<button class="btn btn-primary btn-sm" onclick="openReportModal()" style="margin-top: 10px;">🚨 Report an App</button>' +
+                '</div>';
+        }
+    } catch (error) {
+        console.error('Error loading reported apps:', error);
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">❌</div>' +
+            '<h3>Error Loading</h3>' +
+            '<p>Could not load reported apps. Please try again.</p>' +
+            '</div>';
+    }
+}
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', init);
