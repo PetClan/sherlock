@@ -924,7 +924,7 @@ function showReportResults(result) {
         '<span><strong>' + result.app_name + '</strong></span>' +
         '<span class="risk-badge ' + riskLevel + '">' + riskText + ' (' + riskScore + '/100)</span>' +
         '</div>' +
-        '<p style="margin: 0; font-size: 0.9rem; color: #6b7280;">📊 ' + postsFound + ' Reddit posts found • Sentiment: ' + sentiment + '</p>' +
+        '<p style="margin: 0; font-size: 0.9rem; color: #6b7280;">📊 ' + postsFound + ' Reddit posts found (past 12 months) • Sentiment: ' + sentiment + '</p>' +
         issuesHtml +
         (redditData.recommendation ? '<p style="margin: 12px 0 0 0; font-size: 0.85rem; color: #374151;">💡 ' + redditData.recommendation + '</p>' : '') +
         '</div>' +
