@@ -1,6 +1,6 @@
 """
 Google Search API Router
-Endpoints for searching web for app reviews and issues
+Endpoints for searching web for app reviews and issues arising
 """
 
 from fastapi import APIRouter, HTTPException
