@@ -1274,3 +1274,257 @@ code {
         transform: rotate(360deg);
     }
 }
+/* ==================== MONITORING STYLES ==================== */
+
+.monitoring-summary {
+    padding: 20px;
+}
+
+.monitoring-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.risk-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.risk-indicator.success {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.risk-indicator.warning {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.risk-indicator.danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.risk-icon {
+    font-size: 1.2rem;
+}
+
+.risk-text {
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.scan-time {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.monitoring-summary-text {
+    font-size: 0.95rem;
+    color: #374151;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.risk-reasons {
+    margin: 0 0 20px 0;
+    padding-left: 20px;
+}
+
+.risk-reasons li {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.monitoring-stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.monitoring-stat {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.monitoring-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.monitoring-stat-value.warning {
+    color: #d97706;
+}
+
+.monitoring-stat-value.danger {
+    color: #dc2626;
+}
+
+.monitoring-stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* File List */
+.file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.85rem;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item.new .file-path {
+    color: #059669;
+}
+
+.file-item.changed .file-path {
+    color: #d97706;
+}
+
+.file-icon {
+    flex-shrink: 0;
+}
+
+.file-path {
+    flex: 1;
+    font-family: monospace;
+    font-size: 0.8rem;
+    word-break: break-all;
+}
+
+/* CSS Issues List */
+.css-issues-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.css-issue {
+    padding: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.css-issue:last-child {
+    border-bottom: none;
+}
+
+.css-issue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.css-selector {
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #dc2626;
+}
+
+.css-issue-file {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-family: monospace;
+    margin-bottom: 4px;
+}
+
+.css-issue-desc {
+    font-size: 0.8rem;
+    color: #374151;
+}
+
+/* Scripts List */
+.scripts-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.script-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.script-item:last-child {
+    border-bottom: none;
+}
+
+.script-icon {
+    flex-shrink: 0;
+}
+
+.script-src {
+    flex: 1;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #374151;
+    word-break: break-all;
+}
+
+/* Text utilities */
+.text-muted {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.text-success {
+    color: #059669 !important;
+}
+
+/* Responsive monitoring */
+@media (max-width: 768px) {
+    .monitoring-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .monitoring-stats {
+        gap: 10px;
+    }
+
+    .monitoring-stat {
+        min-width: 60px;
+        padding: 8px;
+    }
+
+    .monitoring-stat-value {
+        font-size: 1.2rem;
+    }
+}

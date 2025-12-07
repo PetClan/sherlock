@@ -988,6 +988,304 @@ async function loadMostReportedApps() {
             '</div>';
     }
 }
+// ==================== Monitoring Functions ====================
+
+async function runMonitoringScan() {
+    const btn = document.getElementById('monitoring-scan-btn');
+    btn.classList.add('loading');
+    btn.textContent = 'Scanning...';
+    btn.disabled = true;
+
+    const latestContainer = document.getElementById('monitoring-latest');
+    latestContainer.innerHTML =
+        '<div class="loading">' +
+        '<div class="spinner"></div>' +
+        '<p>Running monitoring scan... This may take a minute.</p>' +
+        '</div>';
+
+    try {
+        const response = await fetch('/api/v1/monitoring/scan/' + state.shop, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            renderMonitoringResults(result);
+            loadMonitoringHistory();
+            showNotification('Monitoring scan completed!', 'success');
+        } else {
+            throw new Error(result.detail || 'Scan failed');
+        }
+    } catch (error) {
+        console.error('Monitoring scan error:', error);
+        latestContainer.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">❌</div>' +
+            '<h3>Scan Failed</h3>' +
+            '<p>' + error.message + '</p>' +
+            '</div>';
+        showNotification('Monitoring scan failed: ' + error.message, 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.textContent = '📸 Run Monitoring Scan';
+        btn.disabled = false;
+    }
+}
+
+function renderMonitoringResults(result) {
+    const latestContainer = document.getElementById('monitoring-latest');
+    const detailsContainer = document.getElementById('monitoring-details');
+    const scriptsCard = document.getElementById('monitoring-scripts-card');
+
+    // Risk level styling
+    var riskClass = 'success';
+    var riskIcon = '✅';
+    if (result.risk_level === 'high') {
+        riskClass = 'danger';
+        riskIcon = '⚠️';
+    } else if (result.risk_level === 'medium') {
+        riskClass = 'warning';
+        riskIcon = '⚡';
+    }
+
+    // Build risk reasons list
+    var reasonsHtml = '';
+    if (result.risk_reasons && result.risk_reasons.length > 0) {
+        reasonsHtml = '<ul class="risk-reasons">';
+        result.risk_reasons.forEach(function (reason) {
+            reasonsHtml += '<li>' + reason + '</li>';
+        });
+        reasonsHtml += '</ul>';
+    }
+
+    // Latest scan summary
+    latestContainer.innerHTML =
+        '<div class="monitoring-summary">' +
+        '<div class="monitoring-header">' +
+        '<div class="risk-indicator ' + riskClass + '">' +
+        '<span class="risk-icon">' + riskIcon + '</span>' +
+        '<span class="risk-text">' + (result.risk_level || 'low').toUpperCase() + ' RISK</span>' +
+        '</div>' +
+        '<div class="scan-time">Scanned: ' + formatDate(result.completed_at) + '</div>' +
+        '</div>' +
+        '<div class="monitoring-summary-text">' + (result.summary || 'No summary available.') + '</div>' +
+        reasonsHtml +
+        '<div class="monitoring-stats">' +
+        '<div class="monitoring-stat">' +
+        '<div class="monitoring-stat-value">' + (result.files_total || 0) + '</div>' +
+        '<div class="monitoring-stat-label">Total Files</div>' +
+        '</div>' +
+        '<div class="monitoring-stat">' +
+        '<div class="monitoring-stat-value ' + (result.files_new > 0 ? 'warning' : '') + '">' + (result.files_new || 0) + '</div>' +
+        '<div class="monitoring-stat-label">New Files</div>' +
+        '</div>' +
+        '<div class="monitoring-stat">' +
+        '<div class="monitoring-stat-value ' + (result.files_changed > 0 ? 'warning' : '') + '">' + (result.files_changed || 0) + '</div>' +
+        '<div class="monitoring-stat-label">Changed Files</div>' +
+        '</div>' +
+        '<div class="monitoring-stat">' +
+        '<div class="monitoring-stat-value ' + (result.css_issues_found > 0 ? 'danger' : '') + '">' + (result.css_issues_found || 0) + '</div>' +
+        '<div class="monitoring-stat-label">CSS Issues</div>' +
+        '</div>' +
+        '<div class="monitoring-stat">' +
+        '<div class="monitoring-stat-value">' + (result.scripts_total || 0) + '</div>' +
+        '<div class="monitoring-stat-label">Scripts</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+
+    // Show details section
+    detailsContainer.style.display = 'grid';
+    scriptsCard.style.display = 'block';
+
+    // Load detailed data
+    loadMonitoringScanDetails(result.scan_id);
+}
+
+async function loadMonitoringScanDetails(scanId) {
+    try {
+        const response = await fetch('/api/v1/monitoring/scan/' + scanId);
+        const data = await response.json();
+
+        // Render file changes
+        const filesContainer = document.getElementById('monitoring-files');
+        if (data.changed_files && data.changed_files.length > 0) {
+            var filesHtml = '<ul class="file-list">';
+            data.changed_files.forEach(function (file) {
+                filesHtml += '<li class="file-item changed">' +
+                    '<span class="file-icon">📝</span>' +
+                    '<span class="file-path">' + file.file_path + '</span>' +
+                    (file.is_app_owned ? '<span class="badge badge-warning">App-owned</span>' : '') +
+                    '</li>';
+            });
+            filesHtml += '</ul>';
+            filesContainer.innerHTML = filesHtml;
+        } else if (data.new_files && data.new_files.length > 0) {
+            var filesHtml = '<ul class="file-list">';
+            data.new_files.slice(0, 20).forEach(function (file) {
+                filesHtml += '<li class="file-item new">' +
+                    '<span class="file-icon">🆕</span>' +
+                    '<span class="file-path">' + file.file_path + '</span>' +
+                    (file.is_app_owned ? '<span class="badge badge-warning">App-owned</span>' : '') +
+                    '</li>';
+            });
+            if (data.new_files.length > 20) {
+                filesHtml += '<li class="file-item">... and ' + (data.new_files.length - 20) + ' more files</li>';
+            }
+            filesHtml += '</ul>';
+            filesContainer.innerHTML = filesHtml;
+        } else {
+            filesContainer.innerHTML = '<p class="text-muted">No file changes in this scan.</p>';
+        }
+
+        // Render CSS issues
+        const cssContainer = document.getElementById('monitoring-css');
+        if (data.non_namespaced_css && data.non_namespaced_css.length > 0) {
+            var cssHtml = '<ul class="css-issues-list">';
+            data.non_namespaced_css.slice(0, 10).forEach(function (issue) {
+                var severityClass = issue.severity === 'high' ? 'danger' : issue.severity === 'medium' ? 'warning' : 'info';
+                cssHtml += '<li class="css-issue">' +
+                    '<div class="css-issue-header">' +
+                    '<code class="css-selector">' + escapeHtml(issue.selector) + '</code>' +
+                    '<span class="badge badge-' + severityClass + '">' + issue.severity + '</span>' +
+                    '</div>' +
+                    '<div class="css-issue-file">' + issue.file + '</div>' +
+                    '<div class="css-issue-desc">' + issue.description + '</div>' +
+                    '</li>';
+            });
+            if (data.non_namespaced_css.length > 10) {
+                cssHtml += '<li class="css-issue">... and ' + (data.non_namespaced_css.length - 10) + ' more issues</li>';
+            }
+            cssHtml += '</ul>';
+            cssContainer.innerHTML = cssHtml;
+        } else {
+            cssContainer.innerHTML = '<p class="text-muted text-success">✅ No CSS conflict risks detected.</p>';
+        }
+
+        // Render scripts
+        const scriptsContainer = document.getElementById('monitoring-scripts');
+        if (data.new_scripts && data.new_scripts.length > 0) {
+            var scriptsHtml = '<ul class="scripts-list">';
+            data.new_scripts.forEach(function (script) {
+                scriptsHtml += '<li class="script-item new">' +
+                    '<span class="script-icon">🆕</span>' +
+                    '<span class="script-src">' + truncateUrl(script.src) + '</span>' +
+                    (script.likely_app ? '<span class="badge badge-info">' + script.likely_app + '</span>' : '') +
+                    '</li>';
+            });
+            scriptsHtml += '</ul>';
+            scriptsContainer.innerHTML = scriptsHtml;
+        } else {
+            scriptsContainer.innerHTML = '<p class="text-muted">No new scripts detected in this scan.</p>';
+        }
+
+    } catch (error) {
+        console.error('Error loading scan details:', error);
+    }
+}
+
+async function loadMonitoringHistory() {
+    const container = document.getElementById('monitoring-history');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading history...</p></div>';
+
+    try {
+        const response = await fetch('/api/v1/monitoring/scans/' + state.shop + '?limit=10');
+        const data = await response.json();
+
+        if (data.scans && data.scans.length > 0) {
+            var html = '<div class="table-container"><table><thead><tr>' +
+                '<th>Date</th><th>Risk</th><th>Files Changed</th><th>New Files</th><th>CSS Issues</th><th>Scripts</th>' +
+                '</tr></thead><tbody>';
+
+            data.scans.forEach(function (scan) {
+                var riskClass = scan.risk_level === 'high' ? 'danger' : scan.risk_level === 'medium' ? 'warning' : 'success';
+                html += '<tr onclick="viewMonitoringScan(\'' + scan.id + '\')" style="cursor: pointer;">' +
+                    '<td>' + formatDate(scan.scan_date) + '</td>' +
+                    '<td><span class="badge badge-' + riskClass + '">' + (scan.risk_level || 'low').toUpperCase() + '</span></td>' +
+                    '<td>' + (scan.files_changed || 0) + '</td>' +
+                    '<td>' + (scan.files_new || 0) + '</td>' +
+                    '<td>' + (scan.css_issues_found || 0) + '</td>' +
+                    '<td>' + (scan.scripts_new || 0) + ' new</td>' +
+                    '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        } else {
+            container.innerHTML =
+                '<div class="empty-state">' +
+                '<div class="empty-state-icon">📅</div>' +
+                '<h3>No Scan History</h3>' +
+                '<p>Run your first monitoring scan to start tracking changes.</p>' +
+                '</div>';
+        }
+    } catch (error) {
+        console.error('Error loading monitoring history:', error);
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">❌</div>' +
+            '<h3>Error Loading History</h3>' +
+            '<p>Could not load scan history.</p>' +
+            '</div>';
+    }
+}
+
+async function loadLatestMonitoringScan() {
+    try {
+        const response = await fetch('/api/v1/monitoring/latest/' + state.shop);
+        const data = await response.json();
+
+        if (data.has_scan && data.scan) {
+            renderMonitoringResults(data.scan);
+        }
+    } catch (error) {
+        console.error('Error loading latest scan:', error);
+    }
+}
+
+async function viewMonitoringScan(scanId) {
+    try {
+        const response = await fetch('/api/v1/monitoring/scan/' + scanId);
+        const data = await response.json();
+
+        // Format the data to match renderMonitoringResults expectations
+        const result = {
+            scan_id: data.id,
+            risk_level: data.risk_level,
+            risk_reasons: data.risk_reasons,
+            summary: data.summary,
+            files_total: data.files_total,
+            files_new: data.files_new,
+            files_changed: data.files_changed,
+            css_issues_found: data.css_issues_found,
+            scripts_total: data.scripts_total,
+            scripts_new: data.scripts_new,
+            completed_at: data.completed_at
+        };
+
+        renderMonitoringResults(result);
+    } catch (error) {
+        console.error('Error viewing scan:', error);
+        showNotification('Failed to load scan details', 'error');
+    }
+}
+
+function truncateUrl(url) {
+    if (!url) return '';
+    if (url.length > 60) {
+        return url.substring(0, 30) + '...' + url.substring(url.length - 25);
+    }
+    return url;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', init);
