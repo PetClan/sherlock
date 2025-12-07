@@ -272,7 +272,7 @@ class DailyScan(Base):
     
     # Summary
     summary = Column(Text, nullable=True)  # Human-readable summary
-    metadata = Column(JSON, nullable=True)  # Additional data
+    scan_metadata = Column(JSON, nullable=True)  # Additional data
     
     # Status
     status = Column(String(20), default="pending")  # "pending", "running", "completed", "failed"
