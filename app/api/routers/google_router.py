@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from typing import Optional
 from app.services.google_search_service import google_search_service
 
-router = APIRouter(prefix="/api/v1/google", tags=["Google Search"])
+router = APIRouter(prefix="/google", tags=["Google Search"])
 
 
 @router.get("/search/{app_name}")
