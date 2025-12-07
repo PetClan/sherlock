@@ -1,5 +1,5 @@
 """
-Sherlocks - API Routers:  app/api/__init__.py
+Sherlock - API Routers
 """
 
 from fastapi import APIRouter
