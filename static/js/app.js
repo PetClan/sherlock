@@ -27,6 +27,32 @@ async function api(endpoint, options = {}) {
     return response.json();
 }
 
+// Show notification
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notifications');
+    if (!container) return;
+
+    const notification = document.createElement('div');
+    notification.className = 'notification notification-' + type;
+    notification.innerHTML =
+        '<span>' + message + '</span>' +
+        '<button class="notification-close" onclick="this.parentElement.remove()">&times;</button>';
+
+    container.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(function () {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Show error
+function showError(message) {
+    showNotification(message, 'error');
+}
+
 // Initialize dashboard
 function init() {
     const params = new URLSearchParams(window.location.search);
