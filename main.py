@@ -135,13 +135,15 @@ async def install_page(request: Request):
 @app.get("/robots.txt", include_in_schema=False)
 async def robots():
     """Serve robots.txt for search engines"""
-    return FileResponse("static/robots.txt", media_type="text/plain")
+    file_path = os.path.join(os.path.dirname(__file__), "static", "robots.txt")
+    return FileResponse(file_path, media_type="text/plain")
 
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
     """Serve sitemap.xml for search engines"""
-    return FileResponse("static/sitemap.xml", media_type="application/xml")
+    file_path = os.path.join(os.path.dirname(__file__), "static", "sitemap.xml")
+    return FileResponse(file_path, media_type="application/xml")
 
 # ==================== Pydantic Models ====================
 
