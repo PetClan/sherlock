@@ -1,0 +1,19 @@
+# Sherlock - Robots.txt
+# https://sherlock-production-ae4c.up.railway.app
+
+User-agent: *
+Allow: /
+Allow: /install
+Allow: /docs
+
+# Disallow admin and API routes from indexing
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard
+Disallow: /admin
+
+# Sitemap location
+Sitemap: https://sherlock-production-ae4c.up.railway.app/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

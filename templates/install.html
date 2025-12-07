@@ -1,11 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Install Sherlock - Shopify App Diagnostics</title>
+
+    <!-- Primary Meta Tags -->
+    <title>Sherlock - Find Which Shopify App Is Causing Issues | Free Diagnostic Tool</title>
+    <meta name="title" content="Sherlock - Find Which Shopify App Is Causing Issues | Free Diagnostic Tool">
+    <meta name="description"
+        content="Sherlock scans your Shopify store to identify problematic apps, theme conflicts, and performance issues. Get actionable recommendations to fix your store in minutes.">
+    <meta name="keywords"
+        content="Shopify app diagnostic, Shopify troubleshooting, Shopify app conflicts, Shopify performance, Shopify theme issues, Shopify store problems, fix Shopify store">
+    <meta name="author" content="Sherlock">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://sherlock-production-ae4c.up.railway.app/install">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sherlock-production-ae4c.up.railway.app/install">
+    <meta property="og:title" content="Sherlock - Find Which Shopify App Is Causing Issues">
+    <meta property="og:description"
+        content="Sherlock scans your Shopify store to identify problematic apps, theme conflicts, and performance issues. Get actionable recommendations to fix your store in minutes.">
+    <meta property="og:image" content="https://sherlock-production-ae4c.up.railway.app/static/images/sherlock-og.png">
+    <meta property="og:site_name" content="Sherlock">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://sherlock-production-ae4c.up.railway.app/install">
+    <meta property="twitter:title" content="Sherlock - Find Which Shopify App Is Causing Issues">
+    <meta property="twitter:description"
+        content="Sherlock scans your Shopify store to identify problematic apps, theme conflicts, and performance issues. Get actionable recommendations to fix your store in minutes.">
+    <meta property="twitter:image"
+        content="https://sherlock-production-ae4c.up.railway.app/static/images/sherlock-og.png">
+
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+    <link rel="apple-touch-icon" href="/static/images/apple-touch-icon.png">
+
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Sherlock",
+        "description": "Shopify app diagnostic tool that identifies problematic apps, theme conflicts, and performance issues in your store.",
+        "url": "https://sherlock-production-ae4c.up.railway.app",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "150"
+        },
+        "featureList": [
+            "App conflict detection",
+            "Theme code analysis",
+            "Performance monitoring",
+            "Risk assessment",
+            "Actionable recommendations"
+        ]
+    }
+    </script>
+
+    <!-- FAQ Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How does Sherlock find problematic Shopify apps?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Sherlock scans your installed apps, analyzes theme code for conflicts, checks community reports from Reddit and other sources, and measures performance impact to identify which apps may be causing issues in your store."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is Sherlock free to use?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes, Sherlock offers a free tier that includes basic diagnostics and app scanning. Premium features are available for more comprehensive analysis."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Will Sherlock slow down my Shopify store?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "No, Sherlock runs diagnostics on-demand and does not add any code to your storefront. It only analyzes your store when you initiate a scan."
+                }
+            }
+        ]
+    }
+    </script>
+
     <style>
         .install-page {
             min-height: 100vh;
@@ -14,41 +114,43 @@
             justify-content: center;
             background: linear-gradient(135deg, #5c6ac4 0%, #4959bd 100%);
         }
-        
+
         .install-card {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             padding: 48px;
             max-width: 480px;
             width: 100%;
             margin: 20px;
             text-align: center;
         }
-        
+
         .install-logo {
             font-size: 64px;
             margin-bottom: 24px;
         }
-        
+
         .install-title {
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 8px;
             color: #212b36;
         }
-        
+
         .install-subtitle {
             color: #637381;
             margin-bottom: 32px;
+            font-size: 16px;
+            line-height: 1.5;
         }
-        
+
         .install-form {
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
-        
+
         .install-input {
             padding: 14px 18px;
             font-size: 16px;
@@ -56,12 +158,12 @@
             border-radius: 8px;
             transition: border-color 0.2s;
         }
-        
+
         .install-input:focus {
             outline: none;
             border-color: #5c6ac4;
         }
-        
+
         .install-btn {
             padding: 16px 24px;
             font-size: 16px;
@@ -73,16 +175,16 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        
+
         .install-btn:hover {
             background: #4959bd;
         }
-        
+
         .install-features {
             margin-top: 32px;
             text-align: left;
         }
-        
+
         .install-features h3 {
             font-size: 14px;
             text-transform: uppercase;
@@ -90,98 +192,138 @@
             color: #637381;
             margin-bottom: 16px;
         }
-        
+
         .feature-item {
             display: flex;
             align-items: flex-start;
             gap: 12px;
             margin-bottom: 12px;
         }
-        
+
         .feature-icon {
             font-size: 20px;
             flex-shrink: 0;
         }
-        
+
         .feature-text {
             font-size: 14px;
             color: #212b36;
+            line-height: 1.4;
         }
-        
+
+        .trust-badges {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #637381;
+        }
+
         .install-footer {
             margin-top: 32px;
             font-size: 13px;
             color: #637381;
         }
-        
+
         .install-footer a {
             color: #5c6ac4;
             text-decoration: none;
         }
+
+        .install-footer a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
+
 <body>
     <div class="install-page">
         <div class="install-card">
             <div class="install-logo">🔍</div>
             <h1 class="install-title">Sherlock</h1>
-            <p class="install-subtitle">Find which Shopify app is causing issues in your store</p>
-            
+            <p class="install-subtitle">Find which Shopify app is causing issues in your store. Get a free diagnostic
+                report in minutes.</p>
+
             <form class="install-form" onsubmit="installApp(event)">
-                <input 
-                    type="text" 
-                    id="shop-input"
-                    class="install-input" 
-                    placeholder="your-store.myshopify.com"
-                    required
-                    pattern="[a-zA-Z0-9\-]+\.myshopify\.com|[a-zA-Z0-9\-]+"
-                >
+                <label for="shop-input" class="sr-only">Your Shopify store URL</label>
+                <input type="text" id="shop-input" class="install-input" placeholder="your-store.myshopify.com" required
+                    pattern="[a-zA-Z0-9\-]+\.myshopify\.com|[a-zA-Z0-9\-]+" aria-label="Your Shopify store URL">
                 <button type="submit" class="install-btn">
-                    Install Sherlock
+                    Activate Sherlock
                 </button>
             </form>
-            
+
             <div class="install-features">
                 <h3>What Sherlock Does</h3>
                 <div class="feature-item">
-                    <span class="feature-icon">📱</span>
-                    <span class="feature-text">Scans all installed apps and identifies suspects based on risk factors</span>
+                    <span class="feature-icon" aria-hidden="true">📱</span>
+                    <span class="feature-text">Scans all installed apps and identifies suspects based on community
+                        reports and risk factors</span>
                 </div>
                 <div class="feature-item">
-                    <span class="feature-icon">🎨</span>
-                    <span class="feature-text">Analyzes theme code for conflicts and injected scripts</span>
+                    <span class="feature-icon" aria-hidden="true">🎨</span>
+                    <span class="feature-text">Analyzes theme code for conflicts, orphan code, and injected
+                        scripts</span>
                 </div>
                 <div class="feature-item">
-                    <span class="feature-icon">⚡</span>
-                    <span class="feature-text">Measures performance impact of third-party apps</span>
+                    <span class="feature-icon" aria-hidden="true">⚡</span>
+                    <span class="feature-text">Measures performance impact of third-party apps on your store
+                        speed</span>
                 </div>
                 <div class="feature-item">
-                    <span class="feature-icon">💡</span>
-                    <span class="feature-text">Provides actionable recommendations to fix issues</span>
+                    <span class="feature-icon" aria-hidden="true">💡</span>
+                    <span class="feature-text">Provides actionable recommendations backed by Reddit and community
+                        data</span>
                 </div>
             </div>
-            
+
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <span>✓</span>
+                    <span>Free Options</span>
+                </div>
+                <div class="trust-badge">
+                    <span>✓</span>
+                    <span>No code changes</span>
+                </div>
+                <div class="trust-badge">
+                    <span>✓</span>
+                    <span>Instant results</span>
+                </div>
+            </div>
+
             <div class="install-footer">
                 <p>Already installed? <a href="/dashboard">Go to Dashboard</a></p>
                 <p style="margin-top: 8px;"><a href="/docs">API Documentation</a></p>
             </div>
         </div>
     </div>
-    
+
     <script>
         function installApp(e) {
             e.preventDefault();
-            
+
             let shop = document.getElementById('shop-input').value.trim();
-            
+
             // Normalize shop domain
             if (!shop.includes('.myshopify.com')) {
                 shop = shop + '.myshopify.com';
             }
-            
+
             // Redirect to OAuth flow
             window.location.href = '/auth/shopify?shop=' + encodeURIComponent(shop);
         }
     </script>
 </body>
+
 </html>

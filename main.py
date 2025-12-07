@@ -130,6 +130,18 @@ async def install_page(request: Request):
         </html>
     """, status_code=500)
 
+# ==================== SEO Routes ====================
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots():
+    """Serve robots.txt for search engines"""
+    return FileResponse("static/robots.txt", media_type="text/plain")
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    """Serve sitemap.xml for search engines"""
+    return FileResponse("static/sitemap.xml", media_type="application/xml")
 
 # ==================== Pydantic Models ====================
 
