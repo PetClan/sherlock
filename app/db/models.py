@@ -239,8 +239,11 @@ class ReportedApp(Base):
         Index("idx_reported_apps_name", "app_name"),
         Index("idx_reported_apps_risk", "reddit_risk_score"),
     )
-    class DailyScan(Base):
+
+
+class DailyScan(Base):
     """Daily automated scan results"""
+
     __tablename__ = "daily_scans"
     
     id = Column(String(36), primary_key=True, default=generate_uuid)
