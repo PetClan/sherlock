@@ -39,6 +39,7 @@ class Store(Base):
     theme_file_versions = relationship("ThemeFileVersion", back_populates="store", cascade="all, delete-orphan")
     script_tag_snapshots = relationship("ScriptTagSnapshot", back_populates="store", cascade="all, delete-orphan")
     daily_scans = relationship("DailyScan", back_populates="store", cascade="all, delete-orphan")
+    rollback_actions = relationship("RollbackAction", back_populates="store", cascade="all, delete-orphan")
 
 
 class InstalledApp(Base):
@@ -370,3 +371,45 @@ class ScriptTagSnapshot(Base):
         Index("idx_script_tags_src", "store_id", "src"),
     )
     
+class RollbackAction(Base):
+    """Track rollback actions performed"""
+    __tablename__ = "rollback_actions"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    store_id = Column(String(36), ForeignKey("stores.id", ondelete="CASCADE"), nullable=False)
+    
+    # Target info
+    theme_id = Column(String(50), nullable=False)
+    file_path = Column(String(255), nullable=False)
+    
+    # Version info
+    rolled_back_from_version_id = Column(String(36), nullable=True)  # Current version before rollback
+    rolled_back_to_version_id = Column(String(36), nullable=False)  # Version restored to
+    
+    # Rollback mode
+    mode = Column(String(20), default="direct_live")  # "direct_live" or "draft_theme"
+    
+    # Status
+    status = Column(String(20), default="pending")  # "pending", "completed", "failed"
+    error_message = Column(Text, nullable=True)
+    
+    # App ownership warning
+    was_app_owned = Column(Boolean, default=False)
+    app_owner_guess = Column(String(255), nullable=True)
+    user_confirmed = Column(Boolean, default=False)  # User confirmed despite warning
+    
+    # Metadata
+    performed_by = Column(String(255), nullable=True)  # User or "system"
+    notes = Column(Text, nullable=True)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relationships
+    store = relationship("Store", back_populates="rollback_actions")
+    
+    __table_args__ = (
+        Index("idx_rollback_store", "store_id"),
+        Index("idx_rollback_file", "store_id", "file_path"),
+    )
