@@ -36,6 +36,9 @@ class Store(Base):
     diagnoses = relationship("Diagnosis", back_populates="store", cascade="all, delete-orphan")
     theme_issues = relationship("ThemeIssue", back_populates="store", cascade="all, delete-orphan")
     performance_snapshots = relationship("PerformanceSnapshot", back_populates="store", cascade="all, delete-orphan")
+    theme_file_versions = relationship("ThemeFileVersion", back_populates="store", cascade="all, delete-orphan")
+    script_tag_snapshots = relationship("ScriptTagSnapshot", back_populates="store", cascade="all, delete-orphan")
+    daily_scans = relationship("DailyScan", back_populates="store", cascade="all, delete-orphan")
 
 
 class InstalledApp(Base):
@@ -235,5 +238,132 @@ class ReportedApp(Base):
     __table_args__ = (
         Index("idx_reported_apps_name", "app_name"),
         Index("idx_reported_apps_risk", "reddit_risk_score"),
+    )
+    class DailyScan(Base):
+    """Daily automated scan results"""
+    __tablename__ = "daily_scans"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    store_id = Column(String(36), ForeignKey("stores.id", ondelete="CASCADE"), nullable=False)
+    
+    # Scan date
+    scan_date = Column(DateTime(timezone=True), nullable=False)
+    
+    # Change summary
+    files_total = Column(Integer, default=0)
+    files_changed = Column(Integer, default=0)
+    files_new = Column(Integer, default=0)
+    files_deleted = Column(Integer, default=0)
+    
+    scripts_total = Column(Integer, default=0)
+    scripts_new = Column(Integer, default=0)
+    scripts_removed = Column(Integer, default=0)
+    
+    # Risk assessment
+    risk_level = Column(String(20), default="low")  # "low", "medium", "high"
+    risk_reasons = Column(JSON, nullable=True)  # List of reasons for risk level
+    
+    # CSS risk detection
+    css_issues_found = Column(Integer, default=0)
+    non_namespaced_css = Column(JSON, nullable=True)  # List of global CSS patterns found
+    
+    # Summary
+    summary = Column(Text, nullable=True)  # Human-readable summary
+    metadata = Column(JSON, nullable=True)  # Additional data
+    
+    # Status
+    status = Column(String(20), default="pending")  # "pending", "running", "completed", "failed"
+    error_message = Column(Text, nullable=True)
+    
+    # Timestamps
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relationships
+    store = relationship("Store", back_populates="daily_scans")
+    
+    __table_args__ = (
+        Index("idx_daily_scans_store", "store_id"),
+        Index("idx_daily_scans_date", "store_id", "scan_date"),
+        Index("idx_daily_scans_risk", "store_id", "risk_level"),
+    )
+
+
+class ThemeFileVersion(Base):
+    """Snapshots of theme files for versioning and rollback"""
+    __tablename__ = "theme_file_versions"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    store_id = Column(String(36), ForeignKey("stores.id", ondelete="CASCADE"), nullable=False)
+    
+    # Theme info
+    theme_id = Column(String(50), nullable=False)
+    theme_name = Column(String(255), nullable=True)
+    
+    # File info
+    file_path = Column(String(255), nullable=False)  # e.g., "snippets/app-widget.liquid"
+    content_hash = Column(String(64), nullable=False)  # SHA256 hash
+    content = Column(Text, nullable=True)  # Full file content
+    file_size = Column(Integer, nullable=True)  # Size in bytes
+    
+    # App ownership detection
+    is_app_owned = Column(Boolean, default=False)
+    app_owner_guess = Column(String(255), nullable=True)  # Best guess at which app owns it
+    
+    # Change tracking
+    is_new = Column(Boolean, default=False)  # First time seeing this file
+    is_changed = Column(Boolean, default=False)  # Changed since last scan
+    previous_version_id = Column(String(36), nullable=True)  # Link to previous version
+    
+    # Scan reference
+    scan_id = Column(String(36), ForeignKey("daily_scans.id", ondelete="SET NULL"), nullable=True)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    store = relationship("Store", back_populates="theme_file_versions")
+    
+    __table_args__ = (
+        Index("idx_theme_files_store", "store_id"),
+        Index("idx_theme_files_theme", "store_id", "theme_id"),
+        Index("idx_theme_files_path", "store_id", "theme_id", "file_path"),
+        Index("idx_theme_files_hash", "content_hash"),
+    )
+
+
+class ScriptTagSnapshot(Base):
+    """Track script tags injected by apps"""
+    __tablename__ = "script_tag_snapshots"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    store_id = Column(String(36), ForeignKey("stores.id", ondelete="CASCADE"), nullable=False)
+    
+    # Script tag info (from Shopify API)
+    shopify_script_id = Column(String(50), nullable=True)  # Shopify's ID for the script tag
+    src = Column(String(500), nullable=False)  # Script URL
+    display_scope = Column(String(50), nullable=True)  # "online_store", "order_status", "all"
+    event = Column(String(50), nullable=True)  # "onload" etc.
+    
+    # Attribution
+    likely_app = Column(String(255), nullable=True)  # Which app likely added this
+    
+    # Change tracking
+    is_new = Column(Boolean, default=False)  # First time seeing this script
+    is_removed = Column(Boolean, default=False)  # Was present before, now gone
+    
+    # Scan reference
+    scan_id = Column(String(36), ForeignKey("daily_scans.id", ondelete="SET NULL"), nullable=True)
+    
+    # Timestamps
+    first_seen = Column(DateTime(timezone=True), server_default=func.now())
+    last_seen = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    store = relationship("Store", back_populates="script_tag_snapshots")
+    
+    __table_args__ = (
+        Index("idx_script_tags_store", "store_id"),
+        Index("idx_script_tags_src", "store_id", "src"),
     )
     
