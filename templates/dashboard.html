@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sherlock - Shopify App Diagnostics</title>
+    <title>Sherlock - Your Store's Detective</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
@@ -13,62 +13,221 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <h1>
-            <span class="icon">🔍</span>
-            Sherlock
-            <span class="shop-name" id="shop-name"></span>
-        </h1>
-        <div>
-            <button class="btn btn-secondary" onclick="openReportModal()">
-                🚨 Report an App
-            </button>
-            <button class="btn btn-primary" onclick="startScan('full')">
-                🔍 Run Full Scan
-            </button>
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">🔍</span>
+                <div class="logo-text">
+                    <span class="logo-name">SHERLOCK</span>
+                    <span class="logo-tagline">Your Store's Detective</span>
+                </div>
+            </div>
+            <span class="shop-badge" id="shop-name"></span>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="openReportModal()">
+                    🚨 Report an App
+                </button>
+                <button class="btn btn-primary" onclick="startScan('full')">
+                    🔍 Run Full Scan
+                </button>
+            </div>
         </div>
     </header>
 
     <!-- Notifications -->
-    <div class="container">
-        <div id="notifications"></div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="container">
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
-            <button class="tab" onclick="switchTab('conflicts', this)">⚡ Conflicts</button>
-            <button class="tab" onclick="switchTab('orphan', this)">🧹 Orphan Code</button>
-            <button class="tab" onclick="switchTab('timeline', this)">📈 Timeline</button>
-            <button class="tab" onclick="switchTab('community', this)">👥 Community</button>
-        </div>
-    </div>
+    <div id="notifications"></div>
 
     <!-- Main Content -->
-    <main class="container" id="main-content">
+    <main class="main-container" id="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-icon">🕵️</div>
+            <h1 class="hero-title">Your Store is Under <span class="highlight">Protection</span></h1>
+            <p class="hero-subtitle">
+                Sherlock monitors your store 24/7 — diagnosing app conflicts, detecting invisible problems,
+                and watching for suspicious changes so nothing catches you by surprise.
+            </p>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('dashboard', this)">🏠 Dashboard</button>
+                <button class="tab" onclick="switchTab('conflicts', this)">⚡ Conflicts</button>
+                <button class="tab" onclick="switchTab('orphan', this)">🧹 Orphan Code</button>
+                <button class="tab" onclick="switchTab('timeline', this)">📈 Timeline</button>
+                <button class="tab" onclick="switchTab('community', this)">👥 Community</button>
+            </div>
+        </div>
+
         <!-- Dashboard Tab -->
         <div id="tab-dashboard" class="tab-content">
             <!-- Scan Progress (hidden by default) -->
             <div id="scan-progress" style="display:none;"></div>
 
-            <!-- Site Health Status -->
-            <div id="site-health-container" class="card site-health-card">
-                <div class="site-health-header">
-                    <div class="site-health-title">
-                        <span class="shield-icon">🛡️</span>
-                        <h3>Site Health Status</h3>
+            <!-- Protection Status Card -->
+            <div class="protection-card" id="protection-card">
+                <div class="protection-header">
+                    <div class="protection-title">
+                        <span class="protection-title-icon">🛡️</span>
+                        <h2>Store Protection Status</h2>
                     </div>
                     <button class="btn btn-primary btn-sm" onclick="runMonitoringScan()" id="monitoring-scan-btn">
-                        🔍 Run Health Scan
+                        🔍 Run Investigation
                     </button>
                 </div>
-                <div id="site-health-content">
+                <div class="protection-body" id="protection-body">
                     <div class="loading">
                         <div class="spinner"></div>
-                        <p>Loading site health...</p>
+                        <p>Sherlock is analyzing your store...</p>
                     </div>
                 </div>
             </div>
+
+            <!-- Case Files Section -->
+            <section class="case-files-section">
+                <div class="section-header">
+                    <span class="section-icon">📁</span>
+                    <h2>Active Case Files</h2>
+                </div>
+                <div class="case-files-grid" id="case-files-grid">
+                    <!-- Case File: Theme Files -->
+                    <div class="case-file status-clean" id="case-theme">
+                        <div class="case-file-header">
+                            <div class="case-file-number">
+                                <span class="case-icon">📄</span>
+                                <span>Case #001</span>
+                            </div>
+                            <span class="case-file-status clean" id="case-theme-status">✓ Clean</span>
+                        </div>
+                        <div class="case-file-body">
+                            <h3 class="case-file-title">Theme Files</h3>
+                            <p class="case-file-desc">Tracking all files in your theme for unauthorized changes or
+                                suspicious additions.</p>
+                            <div class="case-file-metric">
+                                <span class="metric-value" id="case-theme-value">—</span>
+                                <span class="metric-label">files tracked</span>
+                            </div>
+                            <div class="case-file-action">
+                                <span class="tooltip">
+                                    <span style="color: var(--slate-400); font-size: 13px; cursor: help;">ℹ️ What's
+                                        this?</span>
+                                    <span class="tooltip-text">
+                                        <strong>Theme Files</strong><br>
+                                        Every file in your Shopify theme (liquid, CSS, JS, images). Sherlock tracks
+                                        changes to detect if apps modify your theme without permission.
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case File: Script Tags -->
+                    <div class="case-file status-clean" id="case-scripts">
+                        <div class="case-file-header">
+                            <div class="case-file-number">
+                                <span class="case-icon">⚡</span>
+                                <span>Case #002</span>
+                            </div>
+                            <span class="case-file-status clean" id="case-scripts-status">✓ Clean</span>
+                        </div>
+                        <div class="case-file-body">
+                            <h3 class="case-file-title">Script Injections</h3>
+                            <p class="case-file-desc">Monitoring scripts injected by apps. These can slow your store or
+                                cause conflicts.</p>
+                            <div class="case-file-metric">
+                                <span class="metric-value" id="case-scripts-value">—</span>
+                                <span class="metric-label">scripts detected</span>
+                            </div>
+                            <div class="case-file-action">
+                                <span class="tooltip">
+                                    <span style="color: var(--slate-400); font-size: 13px; cursor: help;">ℹ️ What's
+                                        this?</span>
+                                    <span class="tooltip-text">
+                                        <strong>Script Tags</strong><br>
+                                        Apps inject JavaScript into your store via Shopify's Script Tags API. Too many
+                                        scripts slow down your site. Sherlock tracks which apps add scripts.
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case File: CSS Conflicts -->
+                    <div class="case-file status-clean" id="case-css">
+                        <div class="case-file-header">
+                            <div class="case-file-number">
+                                <span class="case-icon">🎨</span>
+                                <span>Case #003</span>
+                            </div>
+                            <span class="case-file-status clean" id="case-css-status">✓ Clean</span>
+                        </div>
+                        <div class="case-file-body">
+                            <h3 class="case-file-title">CSS Conflicts</h3>
+                            <p class="case-file-desc">Detecting non-namespaced CSS that could conflict with your theme
+                                or other apps.</p>
+                            <div class="case-file-metric">
+                                <span class="metric-value" id="case-css-value">—</span>
+                                <span class="metric-label">issues found</span>
+                            </div>
+                            <div class="case-file-action">
+                                <span class="tooltip">
+                                    <span style="color: var(--slate-400); font-size: 13px; cursor: help;">ℹ️ What's
+                                        this?</span>
+                                    <span class="tooltip-text">
+                                        <strong>CSS Conflicts</strong><br>
+                                        CSS without proper namespacing (like .button instead of .app-name-button) can
+                                        override your theme styles, causing visual bugs.
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sherlock's Capabilities -->
+            <section class="capabilities-section">
+                <div class="section-header">
+                    <span class="section-icon">🔍</span>
+                    <h2>Sherlock's Capabilities</h2>
+                </div>
+                <div class="capabilities-grid">
+                    <div class="capability-card">
+                        <div class="capability-icon">🛡️</div>
+                        <h3 class="capability-title">24/7 Monitoring</h3>
+                        <p class="capability-desc">Daily automated scans detect changes before they become problems.</p>
+                    </div>
+                    <div class="capability-card">
+                        <div class="capability-icon">📁</div>
+                        <h3 class="capability-title">File Tracking</h3>
+                        <p class="capability-desc">Every theme file is tracked with checksums to detect unauthorized
+                            modifications.</p>
+                    </div>
+                    <div class="capability-card">
+                        <div class="capability-icon">⚡</div>
+                        <h3 class="capability-title">Conflict Detection</h3>
+                        <p class="capability-desc">Identifies apps that conflict with each other based on community
+                            reports.</p>
+                    </div>
+                    <div class="capability-card">
+                        <div class="capability-icon">🧹</div>
+                        <h3 class="capability-title">Orphan Code Finder</h3>
+                        <p class="capability-desc">Finds code left behind by uninstalled apps that slows down your
+                            store.</p>
+                    </div>
+                    <div class="capability-card">
+                        <div class="capability-icon">📊</div>
+                        <h3 class="capability-title">Performance Impact</h3>
+                        <p class="capability-desc">Tracks how each app affects your store's loading speed over time.</p>
+                    </div>
+                    <div class="capability-card">
+                        <div class="capability-icon">🔄</div>
+                        <h3 class="capability-title">Rollback Protection</h3>
+                        <p class="capability-desc">Restore theme files to previous versions if an app causes problems.
+                        </p>
+                    </div>
+                </div>
+            </section>
 
             <!-- Stats Cards -->
             <div id="stats-container">
@@ -101,10 +260,9 @@
                 <!-- Recent Scans -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Recent Scans</h3>
+                        <h3 class="card-title">📋 Recent Investigations</h3>
                         <div>
-                            <button class="btn btn-secondary btn-sm" onclick="startScan('quick')"
-                                title="Quick scan - recently installed apps only">
+                            <button class="btn btn-secondary btn-sm" onclick="startScan('quick')">
                                 ⚡ Quick
                             </button>
                             <button class="btn btn-primary btn-sm" onclick="startScan('full')">
@@ -112,10 +270,10 @@
                             </button>
                         </div>
                     </div>
-                    <div id="recent-scans">
+                    <div class="card-body" id="recent-scans">
                         <div class="loading">
                             <div class="spinner"></div>
-                            <p>Loading scans...</p>
+                            <p>Loading scan history...</p>
                         </div>
                     </div>
                 </div>
@@ -123,15 +281,15 @@
                 <!-- Suspect Apps -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Suspect Apps</h3>
+                        <h3 class="card-title">🚨 Suspect Apps</h3>
                         <button class="btn btn-secondary btn-sm" onclick="viewAllApps()">
                             View All Apps
                         </button>
                     </div>
-                    <div id="suspect-apps">
+                    <div class="card-body" id="suspect-apps">
                         <div class="loading">
                             <div class="spinner"></div>
-                            <p>Loading apps...</p>
+                            <p>Analyzing installed apps...</p>
                         </div>
                     </div>
                 </div>
@@ -147,7 +305,7 @@
                         Check Conflicts
                     </button>
                 </div>
-                <div id="conflicts-content">
+                <div class="card-body" id="conflicts-content">
                     <div class="empty-state">
                         <div class="empty-state-icon">⚡</div>
                         <h3>Check for Conflicts</h3>
@@ -167,12 +325,12 @@
                         Scan for Orphan Code
                     </button>
                 </div>
-                <div id="orphan-content">
+                <div class="card-body" id="orphan-content">
                     <div class="empty-state">
                         <div class="empty-state-icon">🧹</div>
                         <h3>Find Leftover Code</h3>
                         <p>Scan your theme for code left behind by uninstalled apps. This orphan code can slow down your
-                            store.</p>
+                            store and cause conflicts.</p>
                     </div>
                 </div>
             </div>
@@ -187,11 +345,11 @@
                         Load Timeline
                     </button>
                 </div>
-                <div id="timeline-content">
+                <div class="card-body" id="timeline-content">
                     <div class="empty-state">
                         <div class="empty-state-icon">📈</div>
                         <h3>Track Performance Changes</h3>
-                        <p>See how your store's performance changed after each app installation.</p>
+                        <p>See how your store's performance changed after each app installation or update.</p>
                     </div>
                 </div>
             </div>
@@ -211,7 +369,7 @@
                         </button>
                     </div>
                 </div>
-                <div id="community-content">
+                <div class="card-body" id="community-content">
                     <div class="empty-state">
                         <div class="empty-state-icon">👥</div>
                         <h3>Community-Reported Issues</h3>
@@ -222,14 +380,14 @@
             </div>
 
             <!-- Most Reported Apps -->
-            <div class="card" style="margin-top: 20px;">
+            <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">🔥 Most Reported Apps</h3>
                     <button class="btn btn-secondary btn-sm" onclick="loadMostReportedApps()">
                         Refresh
                     </button>
                 </div>
-                <div id="most-reported-apps">
+                <div class="card-body" id="most-reported-apps">
                     <div class="empty-state">
                         <div class="empty-state-icon">📊</div>
                         <h3>Loading...</h3>
@@ -326,7 +484,7 @@ Judge.me"></textarea>
 
     <!-- Footer -->
     <footer class="footer">
-        <p>Sherlock v2.0 · Enhanced Shopify App Diagnostics · <a href="/docs" target="_blank">API Docs</a></p>
+        <p>🔍 Sherlock v2.0 · Your Store's Detective · <a href="/docs" target="_blank">API Docs</a></p>
     </footer>
 
     <!-- JavaScript -->
