@@ -323,3 +323,77 @@ async def get_latest_scan(
             "css_issues_found": scan.css_issues_found
         }
     }
+@router.post("/scan-all")
+async def scan_all_stores(
+    api_key: str = Query(default=None, description="Secret API key for cron jobs"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Scan all active stores - designed for cron job use
+    
+    This endpoint scans every store that has:
+    - A valid access token
+    - Is not currently being scanned
+    
+    Returns a summary of all scan results.
+    """
+    import os
+    
+    # Verify API key for security
+    expected_key = os.getenv("CRON_API_KEY")
+    if expected_key and api_key != expected_key:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    
+    # Get all stores with access tokens
+    result = await db.execute(
+        select(Store).where(Store.access_token.isnot(None))
+    )
+    stores = result.scalars().all()
+    
+    if not stores:
+        return {
+            "success": True,
+            "message": "No stores to scan",
+            "stores_scanned": 0,
+            "results": []
+        }
+    
+    scan_service = DailyScanService(db)
+    results = []
+    errors = []
+    
+    for store in stores:
+        try:
+            print(f"🔍 [Cron] Scanning {store.shopify_domain}...")
+            scan = await scan_service.run_daily_scan(store)
+            
+            results.append({
+                "shop": store.shopify_domain,
+                "success": True,
+                "scan_id": scan.id,
+                "risk_level": scan.risk_level,
+                "files_new": scan.files_new,
+                "files_changed": scan.files_changed,
+                "css_issues_found": scan.css_issues_found
+            })
+            
+            print(f"✅ [Cron] Completed {store.shopify_domain} - {scan.risk_level} risk")
+            
+        except Exception as e:
+            print(f"❌ [Cron] Failed {store.shopify_domain}: {str(e)}")
+            errors.append({
+                "shop": store.shopify_domain,
+                "success": False,
+                "error": str(e)
+            })
+    
+    await db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Scanned {len(results)} stores",
+        "stores_scanned": len(results),
+        "stores_failed": len(errors),
+        "results": results,
+        "errors": errors
+    }
