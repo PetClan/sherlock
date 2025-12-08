@@ -93,7 +93,7 @@ async def dashboard(request: Request, shop: Optional[str] = None):
     templates_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
     
     if os.path.exists(templates_path):
-        with open(templates_path, "r") as f:
+        with open(templates_path, "r", encoding="utf-8") as f:
             html_content = f.read()
         return HTMLResponse(content=html_content)
     
@@ -117,7 +117,7 @@ async def install_page(request: Request):
     templates_path = os.path.join(os.path.dirname(__file__), "templates", "install.html")
     
     if os.path.exists(templates_path):
-        with open(templates_path, "r") as f:
+        with open(templates_path, "r", encoding="utf-8") as f:
             html_content = f.read()
         return HTMLResponse(content=html_content)
     
