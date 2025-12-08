@@ -1272,7 +1272,21 @@ async function loadLatestMonitoringScan() {
         const data = await response.json();
 
         if (data.has_scan && data.scan) {
-            renderMonitoringResults(data.scan);
+            // Map the API response to match renderMonitoringResults expectations
+            const result = {
+                scan_id: data.scan.id,
+                risk_level: data.scan.risk_level,
+                risk_reasons: data.scan.risk_reasons,
+                summary: data.scan.summary,
+                completed_at: data.scan.scan_date,
+                files_total: data.scan.files_total,
+                files_new: data.scan.files_new,
+                files_changed: data.scan.files_changed,
+                css_issues_found: data.scan.css_issues_found,
+                scripts_total: data.scan.scripts_total,
+                scripts_new: data.scan.scripts_new
+            };
+            renderMonitoringResults(result);
         }
     } catch (error) {
         console.error('Error loading latest scan:', error);
