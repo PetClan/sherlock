@@ -323,7 +323,7 @@ async def get_latest_scan(
             "css_issues_found": scan.css_issues_found
         }
     }
-@router.post("/scan-all")
+@router.get("/scan-all")
 async def scan_all_stores(
     api_key: str = Query(default=None, description="Secret API key for cron jobs"),
     db: AsyncSession = Depends(get_db)
