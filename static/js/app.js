@@ -583,6 +583,12 @@ function switchTab(tabName) {
     if (tabName === 'community') {
         loadMostReportedApps();
     }
+
+    // Load monitoring data when tab opens
+    if (tabName === 'monitoring') {
+        loadLatestMonitoringScan();
+        loadMonitoringHistory();
+    }
 }
 
 // Conflicts Tab
@@ -1024,9 +1030,11 @@ async function runMonitoringScan() {
 
     const latestContainer = document.getElementById('monitoring-latest');
     latestContainer.innerHTML =
-        '<div class="loading">' +
-        '<div class="spinner"></div>' +
-        '<p>Running monitoring scan... This may take a minute.</p>' +
+        '<div class="scan-progress-indicator">' +
+        '<div class="scan-progress-spinner"></div>' +
+        '<h3>🔍 Scanning Your Theme...</h3>' +
+        '<p>Analyzing theme files, script tags, and CSS for potential conflicts.</p>' +
+        '<p class="scan-progress-note">This typically takes 30-60 seconds depending on theme size.</p>' +
         '</div>';
 
     try {

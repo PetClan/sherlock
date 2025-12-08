@@ -1589,3 +1589,42 @@ code {
 .notification-close:hover {
     opacity: 1;
 }
+/* ==================== SCAN PROGRESS INDICATOR ==================== */
+
+.scan-progress-indicator {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.scan-progress-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.scan-progress-indicator h3 {
+    margin: 0 0 10px;
+    color: #374151;
+    font-size: 1.25rem;
+}
+
+.scan-progress-indicator p {
+    margin: 0 0 8px;
+    color: #6b7280;
+}
+
+.scan-progress-indicator .scan-progress-note {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    font-style: italic;
+}
