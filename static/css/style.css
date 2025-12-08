@@ -14,11 +14,11 @@
     --navy-600: #334155;
     --navy-500: #475569;
 
-    /* Accent Colors - Muted Orange */
-    --gold-500: #c2724e;
-    --gold-400: #d4846a;
-    --gold-300: #e6a589;
-    --gold-glow: rgba(194, 114, 78, 0.3);
+    /* Accent Colors - Warm Copper */
+    --gold-500: #c97b4a;
+    --gold-400: #db9266;
+    --gold-300: #e8ab85;
+    --gold-glow: rgba(201, 123, 74, 0.3);
 
     /* Status Colors */
     --emerald-500: #10b981;
