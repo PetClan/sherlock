@@ -37,7 +37,6 @@
     <div class="container">
         <div class="tabs">
             <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-            <button class="tab" onclick="switchTab('monitoring')">🔍 Monitoring</button>
             <button class="tab" onclick="switchTab('conflicts')">⚡ Conflicts</button>
             <button class="tab" onclick="switchTab('orphan')">🧹 Orphan Code</button>
             <button class="tab" onclick="switchTab('timeline')">📈 Timeline</button>
@@ -51,7 +50,26 @@
         <div id="tab-dashboard" class="tab-content">
             <!-- Scan Progress (hidden by default) -->
             <div id="scan-progress" style="display:none;"></div>
-
+            
+            <!-- Site Health Status -->
+            <div id="site-health-container" class="card site-health-card">
+                <div class="site-health-header">
+                    <div class="site-health-title">
+                        <span class="shield-icon">🛡️</span>
+                        <h3>Site Health Status</h3>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="runMonitoringScan()" id="monitoring-scan-btn">
+                        🔍 Run Health Scan
+                    </button>
+                </div>
+                <div id="site-health-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading site health...</p>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Stats Cards -->
             <div id="stats-container">
                 <div class="grid grid-4">
@@ -119,74 +137,7 @@
                 </div>
             </div>
         </div>
-        <!-- Monitoring Tab -->
-        <div id="tab-monitoring" class="tab-content hidden">
-            <!-- Latest Scan Summary -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">🔍 Daily Monitoring</h3>
-                    <button class="btn btn-primary btn-sm" onclick="runMonitoringScan()" id="monitoring-scan-btn">
-                        📸 Run Monitoring Scan
-                    </button>
-                </div>
-                <div id="monitoring-latest">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔍</div>
-                        <h3>No Monitoring Scans Yet</h3>
-                        <p>Run a monitoring scan to track theme changes, script injections, and CSS risks.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Scan Results Grid -->
-            <div class="grid grid-2" id="monitoring-details" style="display: none;">
-                <!-- Changed Files -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">📁 File Changes</h3>
-                    </div>
-                    <div id="monitoring-files">
-                        <p class="text-muted">No file changes detected.</p>
-                    </div>
-                </div>
-
-                <!-- CSS Issues -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">🎨 CSS Risk Detection</h3>
-                    </div>
-                    <div id="monitoring-css">
-                        <p class="text-muted">No CSS issues detected.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Scripts Section -->
-            <div class="card" id="monitoring-scripts-card" style="display: none; margin-top: 20px;">
-                <div class="card-header">
-                    <h3 class="card-title">📜 Script Tags</h3>
-                </div>
-                <div id="monitoring-scripts">
-                    <p class="text-muted">No script tag changes detected.</p>
-                </div>
-            </div>
-
-            <!-- Scan History -->
-            <div class="card" style="margin-top: 20px;">
-                <div class="card-header">
-                    <h3 class="card-title">📅 Scan History</h3>
-                    <button class="btn btn-secondary btn-sm" onclick="loadMonitoringHistory()">
-                        Refresh
-                    </button>
-                </div>
-                <div id="monitoring-history">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Loading scan history...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
         <!-- Conflicts Tab -->
         <div id="tab-conflicts" class="tab-content hidden">
             <div class="card">
