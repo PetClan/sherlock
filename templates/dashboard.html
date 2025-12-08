@@ -36,11 +36,11 @@
     <!-- Tabs -->
     <div class="container">
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-            <button class="tab" onclick="switchTab('conflicts')">⚡ Conflicts</button>
-            <button class="tab" onclick="switchTab('orphan')">🧹 Orphan Code</button>
-            <button class="tab" onclick="switchTab('timeline')">📈 Timeline</button>
-            <button class="tab" onclick="switchTab('community')">👥 Community</button>
+            <button class="tab active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+            <button class="tab" onclick="switchTab('conflicts', this)">⚡ Conflicts</button>
+            <button class="tab" onclick="switchTab('orphan', this)">🧹 Orphan Code</button>
+            <button class="tab" onclick="switchTab('timeline', this)">📈 Timeline</button>
+            <button class="tab" onclick="switchTab('community', this)">👥 Community</button>
         </div>
     </div>
 
@@ -50,7 +50,7 @@
         <div id="tab-dashboard" class="tab-content">
             <!-- Scan Progress (hidden by default) -->
             <div id="scan-progress" style="display:none;"></div>
-            
+
             <!-- Site Health Status -->
             <div id="site-health-container" class="card site-health-card">
                 <div class="site-health-header">
@@ -69,7 +69,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Stats Cards -->
             <div id="stats-container">
                 <div class="grid grid-4">
@@ -137,7 +137,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Conflicts Tab -->
         <div id="tab-conflicts" class="tab-content hidden">
             <div class="card">
