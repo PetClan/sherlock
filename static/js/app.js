@@ -1000,52 +1000,54 @@ async function loadDashboard() {
                 '</div>';
         }
     }
-    // ==================== Monitoring Functions ====================
+}
 
-    async function runMonitoringScan() {
-        const btn = document.getElementById('monitoring-scan-btn');
-        btn.classList.add('loading');
-        btn.textContent = 'Scanning...';
-        btn.disabled = true;
+// ==================== Monitoring Functions ====================
 
-        const healthContainer = document.getElementById('site-health-content');
-        healthContainer.innerHTML =
-            '<div class="scan-progress-indicator">' +
-            '<div class="scan-progress-spinner"></div>' +
-            '<h3>🔍 Scanning Your Theme...</h3>' +
-            '<p>Analyzing theme files, script tags, and CSS for potential conflicts.</p>' +
-            '<p class="scan-progress-note">This typically takes 30-60 seconds depending on theme size.</p>' +
-            '</div>';
+async function runMonitoringScan() {
+    const btn = document.getElementById('monitoring-scan-btn');
+    btn.classList.add('loading');
+    btn.textContent = 'Scanning...';
+    btn.disabled = true;
 
-        try {
-            const response = await fetch('/api/v1/monitoring/scan/' + state.shop, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
+    const healthContainer = document.getElementById('site-health-content');
+    healthContainer.innerHTML =
+        '<div class="scan-progress-indicator">' +
+        '<div class="scan-progress-spinner"></div>' +
+        '<h3>🔍 Scanning Your Theme...</h3>' +
+        '<p>Analyzing theme files, script tags, and CSS for potential conflicts.</p>' +
+        '<p class="scan-progress-note">This typically takes 30-60 seconds depending on theme size.</p>' +
+        '</div>';
 
-            const result = await response.json();
+    try {
+        const response = await fetch('/api/v1/monitoring/scan/' + state.shop, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
 
-            if (response.ok && result.success) {
-                renderSiteHealth(result);
-                showNotification('Health scan completed!', 'success');
-            } else {
-                throw new Error(result.detail || 'Scan failed');
-            }
-        } catch (error) {
-            console.error('Health scan error:', error);
-            healthContainer.innerHTML =
-                '<div class="site-health-empty">' +
-                '<div class="site-health-empty-icon">❌</div>' +
-                '<h4>Scan Failed</h4>' +
-                '<p>' + error.message + '</p>' +
-                '</div>';
-            showNotification('Health scan failed: ' + error.message, 'error');
-        } finally {
-            btn.classList.remove('loading');
-            btn.textContent = '🔍 Run Health Scan';
-            btn.disabled = false;
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            renderSiteHealth(result);
+            showNotification('Health scan completed!', 'success');
+        } else {
+            throw new Error(result.detail || 'Scan failed');
         }
+    } catch (error) {
+        console.error('Health scan error:', error);
+        healthContainer.innerHTML =
+            '<div class="site-health-empty">' +
+            '<div class="site-health-empty-icon">❌</div>' +
+            '<h4>Scan Failed</h4>' +
+            '<p>' + error.message + '</p>' +
+            '</div>';
+        showNotification('Health scan failed: ' + error.message, 'error');
+    } finally {
+        btn.classList.remove('loading');
+        btn.textContent = '🔍 Run Health Scan';
+        btn.disabled = false;
     }
+}
 
     function renderMonitoringResults(result) {
         const latestContainer = document.getElementById('monitoring-latest');
