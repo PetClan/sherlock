@@ -101,8 +101,8 @@
         .login-btn {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, var(--gold-500) 0%, var(--white) 100%);
-            color: var(--navy-900);
+            background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-300) 100%);
+            color: var(--white);
             border: none;
             border-radius: var(--radius-md);
             font-size: 16px;
@@ -202,7 +202,46 @@
 
         .admin-subtitle {
             color: var(--slate-400);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--navy-600);
+            padding-bottom: 12px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--slate-400);
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: var(--navy-700);
+            color: var(--slate-100);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-300) 100%);
+            color: var(--white);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         /* Stats Grid */
@@ -261,6 +300,40 @@
             margin-top: 4px;
         }
 
+        /* Revenue Card Special */
+        .revenue-card {
+            background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-800) 100%);
+            border: 2px solid var(--emerald-500);
+        }
+
+        .price-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .price-input {
+            width: 80px;
+            padding: 8px 12px;
+            background: var(--navy-800);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-md);
+            color: var(--white);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .price-input:focus {
+            outline: none;
+            border-color: var(--emerald-500);
+        }
+
+        .price-label {
+            color: var(--slate-400);
+            font-size: 13px;
+        }
+
         /* Sections */
         .admin-section {
             background: var(--navy-700);
@@ -285,6 +358,17 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .section-link {
+            color: var(--gold-400);
+            font-size: 13px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .section-link:hover {
+            text-decoration: underline;
         }
 
         .section-body {
@@ -387,6 +471,91 @@
             gap: 24px;
         }
 
+        /* Conflict Card */
+        .conflict-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--navy-600);
+        }
+
+        .conflict-item:last-child {
+            border-bottom: none;
+        }
+
+        .conflict-apps {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .conflict-vs {
+            color: var(--crimson-400);
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .conflict-count {
+            font-size: 12px;
+            color: var(--slate-400);
+        }
+
+        /* Weekly Report */
+        .report-card {
+            background: var(--navy-700);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .report-date {
+            color: var(--slate-400);
+            font-size: 13px;
+        }
+
+        .report-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--navy-600);
+        }
+
+        .report-stat:last-child {
+            border-bottom: none;
+        }
+
+        .report-stat-label {
+            color: var(--slate-400);
+        }
+
+        .report-stat-value {
+            font-weight: 600;
+        }
+
+        .satisfaction-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .satisfaction-stars {
+            color: var(--amber-400);
+        }
+
         /* Loading */
         .loading-spinner {
             display: flex;
@@ -417,6 +586,10 @@
 
             .two-columns {
                 grid-template-columns: 1fr;
+            }
+
+            .tab-nav {
+                flex-wrap: wrap;
             }
         }
 
@@ -466,121 +639,216 @@
         </header>
 
         <main class="admin-main">
-            <h1 class="admin-title">Admin Overview</h1>
-            <p class="admin-subtitle">Monitor stores, reports, and system activity</p>
+            <h1 class="admin-title">Admin Portal</h1>
+            <p class="admin-subtitle">Monitor your Sherlock business</p>
 
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-label">Total Stores</span>
-                        <span class="stat-card-icon">🏪</span>
+            <!-- Tab Navigation -->
+            <nav class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="tab-btn" onclick="switchTab('stores')">🏪 Stores</button>
+                <button class="tab-btn" onclick="switchTab('activity')">📋 Activity</button>
+                <button class="tab-btn" onclick="switchTab('reports')">🚨 App Reports</button>
+                <button class="tab-btn" onclick="switchTab('weekly')">📈 Weekly Report</button>
+            </nav>
+
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-content active">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Total Stores</span>
+                            <span class="stat-card-icon">🏪</span>
+                        </div>
+                        <div class="stat-card-value" id="stat-total-stores">-</div>
+                        <div class="stat-card-sub"><span id="stat-active-stores">-</span> active this week</div>
                     </div>
-                    <div class="stat-card-value" id="stat-total-stores">-</div>
-                    <div class="stat-card-sub"><span id="stat-active-stores">-</span> active this week</div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Apps Reported</span>
+                            <span class="stat-card-icon">🚨</span>
+                        </div>
+                        <div class="stat-card-value warning" id="stat-total-reports">-</div>
+                        <div class="stat-card-sub"><span id="stat-reports-week">-</span> this week</div>
+                    </div>
+
+                    <div class="stat-card revenue-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Monthly Revenue</span>
+                            <span class="stat-card-icon">💰</span>
+                        </div>
+                        <div class="stat-card-value success" id="stat-revenue">$0</div>
+                        <div class="price-input-group">
+                            <span class="price-label">Price per store: $</span>
+                            <input type="number" id="price-per-store" class="price-input" value="9" min="0" step="0.01"
+                                onchange="updateRevenue()">
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Satisfaction</span>
+                            <span class="stat-card-icon">⭐</span>
+                        </div>
+                        <div class="stat-card-value" id="stat-satisfaction">-</div>
+                        <div class="stat-card-sub"><span id="stat-ratings-count">-</span> ratings</div>
+                    </div>
                 </div>
 
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-label">App Reports</span>
-                        <span class="stat-card-icon">🚨</span>
+                <div class="two-columns">
+                    <div>
+                        <!-- Top Conflicting Apps -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <h2 class="section-title">⚡ Top Conflicting Apps</h2>
+                            </div>
+                            <div class="section-body">
+                                <div id="conflicts-loading" class="loading-spinner">
+                                    <div class="spinner"></div>
+                                </div>
+                                <div id="conflicts-list" style="display: none;"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-card-value warning" id="stat-total-reports">-</div>
-                    <div class="stat-card-sub"><span id="stat-reports-week">-</span> this week</div>
-                </div>
 
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-label">Total Scans</span>
-                        <span class="stat-card-icon">🔍</span>
+                    <div>
+                        <!-- Recent Activity (5 items) -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <h2 class="section-title">📋 Recent Activity</h2>
+                                <a class="section-link" onclick="switchTab('activity')">View All →</a>
+                            </div>
+                            <div class="section-body">
+                                <div id="activity-loading" class="loading-spinner">
+                                    <div class="spinner"></div>
+                                </div>
+                                <ul class="activity-list" id="activity-list" style="display: none;"></ul>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-card-value success" id="stat-total-scans">-</div>
-                    <div class="stat-card-sub"><span id="stat-scans-today">-</span> today</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-card-header">
-                        <span class="stat-card-label">Daily Monitoring</span>
-                        <span class="stat-card-icon">📊</span>
-                    </div>
-                    <div class="stat-card-value" id="stat-daily-scans">-</div>
-                    <div class="stat-card-sub">stores configured</div>
                 </div>
             </div>
 
-            <div class="two-columns">
-                <div>
-                    <!-- Stores Section -->
-                    <div class="admin-section">
-                        <div class="section-header">
-                            <h2 class="section-title">🏪 Registered Stores</h2>
-                        </div>
-                        <div class="section-body">
-                            <div id="stores-loading" class="loading-spinner">
-                                <div class="spinner"></div>
-                            </div>
-                            <table class="admin-table" id="stores-table" style="display: none;">
-                                <thead>
-                                    <tr>
-                                        <th>Store</th>
-                                        <th>Status</th>
-                                        <th>Risk</th>
-                                        <th>Last Scan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="stores-body"></tbody>
-                            </table>
-                        </div>
+            <!-- Stores Tab -->
+            <div id="tab-stores" class="tab-content">
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">🏪 All Registered Stores</h2>
                     </div>
-
-                    <!-- Reports Section -->
-                    <div class="admin-section">
-                        <div class="section-header">
-                            <h2 class="section-title">🚨 App Reports</h2>
+                    <div class="section-body">
+                        <div id="stores-loading" class="loading-spinner">
+                            <div class="spinner"></div>
                         </div>
-                        <div class="section-body">
-                            <div id="reports-loading" class="loading-spinner">
-                                <div class="spinner"></div>
-                            </div>
-                            <table class="admin-table" id="reports-table" style="display: none;">
-                                <thead>
-                                    <tr>
-                                        <th>App Name</th>
-                                        <th>Reports</th>
-                                        <th>Risk Score</th>
-                                        <th>Issues</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="reports-body"></tbody>
-                            </table>
-                        </div>
+                        <table class="admin-table" id="stores-table" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Store</th>
+                                    <th>Status</th>
+                                    <th>Risk</th>
+                                    <th>Last Scan</th>
+                                    <th>Installed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stores-body"></tbody>
+                        </table>
                     </div>
                 </div>
+            </div>
 
-                <div>
-                    <!-- Activity Feed -->
-                    <div class="admin-section">
-                        <div class="section-header">
-                            <h2 class="section-title">📋 Recent Activity</h2>
+            <!-- Activity Tab -->
+            <div id="tab-activity" class="tab-content">
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">📋 This Week's Activity</h2>
+                    </div>
+                    <div class="section-body">
+                        <div id="full-activity-loading" class="loading-spinner">
+                            <div class="spinner"></div>
                         </div>
-                        <div class="section-body">
-                            <div id="activity-loading" class="loading-spinner">
-                                <div class="spinner"></div>
-                            </div>
-                            <ul class="activity-list" id="activity-list" style="display: none;"></ul>
+                        <ul class="activity-list" id="full-activity-list" style="display: none;"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Reports Tab -->
+            <div id="tab-reports" class="tab-content">
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">🚨 All App Reports</h2>
+                    </div>
+                    <div class="section-body">
+                        <div id="reports-loading" class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                        <table class="admin-table" id="reports-table" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>App Name</th>
+                                    <th>Reports</th>
+                                    <th>Risk Score</th>
+                                    <th>Issues</th>
+                                    <th>Last Reported</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Report Tab -->
+            <div id="tab-weekly" class="tab-content">
+                <div id="weekly-report-loading" class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+                <div id="weekly-report-content" style="display: none;">
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3 class="report-title">📈 Weekly Report</h3>
+                            <span class="report-date" id="report-week-range">-</span>
+                        </div>
+                        <div class="report-stat">
+                            <span class="report-stat-label">Total Stores</span>
+                            <span class="report-stat-value" id="report-total-stores">-</span>
+                        </div>
+                        <div class="report-stat">
+                            <span class="report-stat-label">New Installs This Week</span>
+                            <span class="report-stat-value" id="report-new-installs">-</span>
+                        </div>
+                        <div class="report-stat">
+                            <span class="report-stat-label">Stores Running Daily Scans</span>
+                            <span class="report-stat-value" id="report-daily-scans">-</span>
+                        </div>
+                        <div class="report-stat">
+                            <span class="report-stat-label">Apps Reported This Week</span>
+                            <span class="report-stat-value" id="report-apps-reported">-</span>
+                        </div>
+                        <div class="report-stat">
+                            <span class="report-stat-label">Top Reported App</span>
+                            <span class="report-stat-value" id="report-top-app">-</span>
+                        </div>
+                        <div class="report-stat">
+                            <span class="report-stat-label">Customer Satisfaction</span>
+                            <span class="report-stat-value satisfaction-score">
+                                <span class="satisfaction-stars" id="report-satisfaction-stars">-</span>
+                                <span id="report-satisfaction-score">-</span>
+                            </span>
+                        </div>
+                        <div class="report-stat">
+                            <span class="report-stat-label">Estimated Monthly Revenue</span>
+                            <span class="report-stat-value" id="report-revenue"
+                                style="color: var(--emerald-400);">-</span>
                         </div>
                     </div>
 
-                    <!-- Top Reported -->
+                    <!-- Recent Feedback -->
                     <div class="admin-section">
                         <div class="section-header">
-                            <h2 class="section-title">⚠️ Top Reported Apps</h2>
+                            <h2 class="section-title">💬 Recent Customer Feedback</h2>
                         </div>
                         <div class="section-body">
-                            <div id="top-loading" class="loading-spinner">
-                                <div class="spinner"></div>
-                            </div>
-                            <ul class="activity-list" id="top-reported-list" style="display: none;"></ul>
+                            <ul class="activity-list" id="feedback-list"></ul>
                         </div>
                     </div>
                 </div>
@@ -594,6 +862,7 @@
         const secretKey = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
 
         let adminPassword = '';
+        let totalStores = 0;
 
         // Handle Enter key on password input
         document.getElementById('password-input').addEventListener('keypress', function (e) {
@@ -637,6 +906,22 @@
             document.getElementById('password-input').value = '';
         }
 
+        function switchTab(tabName) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Load tab-specific data
+            if (tabName === 'stores') loadStores();
+            if (tabName === 'activity') loadFullActivity();
+            if (tabName === 'reports') loadReports();
+            if (tabName === 'weekly') loadWeeklyReport();
+        }
+
         async function apiCall(endpoint) {
             const response = await fetch(`/api/v1/admin/${secretKey}${endpoint}?password=${encodeURIComponent(adminPassword)}`);
             if (!response.ok) throw new Error('API Error');
@@ -645,86 +930,77 @@
 
         async function loadDashboard() {
             loadOverviewStats();
-            loadStores();
-            loadReports();
+            loadConflicts();
             loadActivity();
-            loadTopReported();
         }
 
         async function loadOverviewStats() {
             try {
                 const data = await apiCall('/stats/overview');
+                totalStores = data.total_stores || 0;
                 document.getElementById('stat-total-stores').textContent = data.total_stores;
                 document.getElementById('stat-active-stores').textContent = data.active_stores;
                 document.getElementById('stat-total-reports').textContent = data.total_reports;
                 document.getElementById('stat-reports-week').textContent = data.reports_this_week;
-                document.getElementById('stat-total-scans').textContent = data.total_scans;
-                document.getElementById('stat-scans-today').textContent = data.scans_today;
-                document.getElementById('stat-daily-scans').textContent = data.daily_scans_configured;
+
+                // Satisfaction
+                if (data.avg_satisfaction) {
+                    document.getElementById('stat-satisfaction').textContent = data.avg_satisfaction.toFixed(1) + '/5';
+                    document.getElementById('stat-ratings-count').textContent = data.total_ratings;
+                } else {
+                    document.getElementById('stat-satisfaction').textContent = '-';
+                    document.getElementById('stat-ratings-count').textContent = '0';
+                }
+
+                updateRevenue();
             } catch (error) {
                 console.error('Failed to load stats:', error);
             }
         }
 
-        async function loadStores() {
-            try {
-                const data = await apiCall('/stores');
-                const tbody = document.getElementById('stores-body');
-                tbody.innerHTML = '';
-
-                if (data.stores.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--slate-400);">No stores registered yet</td></tr>';
-                } else {
-                    data.stores.forEach(store => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td><strong>${store.shopify_domain}</strong></td>
-                            <td><span class="badge ${store.is_active ? 'badge-success' : 'badge-warning'}">${store.is_active ? 'Active' : 'Inactive'}</span></td>
-                            <td><span class="badge ${getRiskBadgeClass(store.current_risk_level)}">${store.current_risk_level || 'Unknown'}</span></td>
-                            <td>${store.last_scanned ? formatDate(store.last_scanned) : 'Never'}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                }
-
-                document.getElementById('stores-loading').style.display = 'none';
-                document.getElementById('stores-table').style.display = 'table';
-            } catch (error) {
-                console.error('Failed to load stores:', error);
-            }
+        function updateRevenue() {
+            const price = parseFloat(document.getElementById('price-per-store').value) || 0;
+            const revenue = totalStores * price;
+            document.getElementById('stat-revenue').textContent = '$' + revenue.toFixed(2);
         }
 
-        async function loadReports() {
+        async function loadConflicts() {
             try {
-                const data = await apiCall('/reports');
-                const tbody = document.getElementById('reports-body');
-                tbody.innerHTML = '';
+                const data = await apiCall('/top-conflicts');
+                const container = document.getElementById('conflicts-list');
+                container.innerHTML = '';
 
-                if (data.reports.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--slate-400);">No reports yet</td></tr>';
+                if (!data.conflicts || data.conflicts.length === 0) {
+                    container.innerHTML = '<p style="color: var(--slate-400); text-align: center;">No conflict data yet</p>';
                 } else {
-                    data.reports.forEach(report => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td><strong>${report.app_name}</strong></td>
-                            <td>${report.report_count}</td>
-                            <td><span class="badge ${getRiskScoreBadgeClass(report.risk_score)}">${report.risk_score?.toFixed(1) || 'N/A'}</span></td>
-                            <td>${formatIssueTypes(report.issue_types)}</td>
+                    data.conflicts.forEach(conflict => {
+                        const div = document.createElement('div');
+                        div.className = 'conflict-item';
+                        div.innerHTML = `
+                            <div class="conflict-apps">
+                                <span><strong>${conflict.app1}</strong></span>
+                                <span class="conflict-vs">⚡</span>
+                                <span><strong>${conflict.app2 || 'Theme'}</strong></span>
+                            </div>
+                            <span class="conflict-count">${conflict.report_count} reports</span>
                         `;
-                        tbody.appendChild(row);
+                        container.appendChild(div);
                     });
                 }
 
-                document.getElementById('reports-loading').style.display = 'none';
-                document.getElementById('reports-table').style.display = 'table';
+                document.getElementById('conflicts-loading').style.display = 'none';
+                container.style.display = 'block';
             } catch (error) {
-                console.error('Failed to load reports:', error);
+                console.error('Failed to load conflicts:', error);
+                document.getElementById('conflicts-loading').style.display = 'none';
+                document.getElementById('conflicts-list').innerHTML = '<p style="color: var(--slate-400);">Failed to load</p>';
+                document.getElementById('conflicts-list').style.display = 'block';
             }
         }
 
         async function loadActivity() {
             try {
-                const data = await apiCall('/activity');
+                const data = await apiCall('/activity?limit=5');
                 const list = document.getElementById('activity-list');
                 list.innerHTML = '';
 
@@ -744,37 +1020,143 @@
                 }
 
                 document.getElementById('activity-loading').style.display = 'none';
-                document.getElementById('activity-list').style.display = 'block';
+                list.style.display = 'block';
             } catch (error) {
                 console.error('Failed to load activity:', error);
             }
         }
 
-        async function loadTopReported() {
+        async function loadFullActivity() {
             try {
-                const data = await apiCall('/top-reported');
-                const list = document.getElementById('top-reported-list');
+                const data = await apiCall('/activity?limit=50');
+                const list = document.getElementById('full-activity-list');
                 list.innerHTML = '';
 
-                if (data.apps.length === 0) {
-                    list.innerHTML = '<li class="activity-item" style="color: var(--slate-400);">No reported apps yet</li>';
+                if (data.activities.length === 0) {
+                    list.innerHTML = '<li class="activity-item" style="color: var(--slate-400);">No activity this week</li>';
                 } else {
-                    data.apps.forEach((app, index) => {
+                    data.activities.forEach(activity => {
                         const item = document.createElement('li');
                         item.className = 'activity-item';
                         item.innerHTML = `
-                            <span class="activity-icon">${index + 1}.</span>
-                            <span class="activity-message"><strong>${app.app_name}</strong></span>
-                            <span class="badge ${getRiskScoreBadgeClass(app.risk_score)}">${app.report_count} reports</span>
+                            <span class="activity-icon">${activity.icon}</span>
+                            <span class="activity-message">${activity.message}</span>
+                            <span class="activity-time">${formatTimeAgo(activity.timestamp)}</span>
                         `;
                         list.appendChild(item);
                     });
                 }
 
-                document.getElementById('top-loading').style.display = 'none';
-                document.getElementById('top-reported-list').style.display = 'block';
+                document.getElementById('full-activity-loading').style.display = 'none';
+                list.style.display = 'block';
             } catch (error) {
-                console.error('Failed to load top reported:', error);
+                console.error('Failed to load full activity:', error);
+            }
+        }
+
+        async function loadStores() {
+            try {
+                const data = await apiCall('/stores');
+                const tbody = document.getElementById('stores-body');
+                tbody.innerHTML = '';
+
+                if (data.stores.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--slate-400);">No stores registered yet</td></tr>';
+                } else {
+                    data.stores.forEach(store => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${store.shopify_domain}</strong></td>
+                            <td><span class="badge ${store.is_active ? 'badge-success' : 'badge-warning'}">${store.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td><span class="badge ${getRiskBadgeClass(store.current_risk_level)}">${store.current_risk_level || 'Unknown'}</span></td>
+                            <td>${store.last_scanned ? formatDate(store.last_scanned) : 'Never'}</td>
+                            <td>${store.created_at ? formatDate(store.created_at) : '-'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                document.getElementById('stores-loading').style.display = 'none';
+                document.getElementById('stores-table').style.display = 'table';
+            } catch (error) {
+                console.error('Failed to load stores:', error);
+            }
+        }
+
+        async function loadReports() {
+            try {
+                const data = await apiCall('/reports');
+                const tbody = document.getElementById('reports-body');
+                tbody.innerHTML = '';
+
+                if (data.reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--slate-400);">No reports yet</td></tr>';
+                } else {
+                    data.reports.forEach(report => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${report.app_name}</strong></td>
+                            <td>${report.report_count}</td>
+                            <td><span class="badge ${getRiskScoreBadgeClass(report.risk_score)}">${report.risk_score?.toFixed(1) || 'N/A'}</span></td>
+                            <td>${formatIssueTypes(report.issue_types)}</td>
+                            <td>${report.last_reported ? formatDate(report.last_reported) : '-'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                document.getElementById('reports-loading').style.display = 'none';
+                document.getElementById('reports-table').style.display = 'table';
+            } catch (error) {
+                console.error('Failed to load reports:', error);
+            }
+        }
+
+        async function loadWeeklyReport() {
+            try {
+                const data = await apiCall('/weekly-report');
+
+                document.getElementById('report-week-range').textContent = data.week_range || 'This Week';
+                document.getElementById('report-total-stores').textContent = data.total_stores;
+                document.getElementById('report-new-installs').textContent = data.new_installs;
+                document.getElementById('report-daily-scans').textContent = `${data.daily_scan_stores} (${data.daily_scan_percentage}%)`;
+                document.getElementById('report-apps-reported').textContent = data.apps_reported;
+                document.getElementById('report-top-app').textContent = data.top_reported_app || 'None';
+
+                // Satisfaction
+                if (data.avg_satisfaction) {
+                    document.getElementById('report-satisfaction-stars').textContent = '★'.repeat(Math.round(data.avg_satisfaction));
+                    document.getElementById('report-satisfaction-score').textContent = `${data.avg_satisfaction.toFixed(1)}/5`;
+                } else {
+                    document.getElementById('report-satisfaction-stars').textContent = '';
+                    document.getElementById('report-satisfaction-score').textContent = 'No ratings yet';
+                }
+
+                const price = parseFloat(document.getElementById('price-per-store').value) || 9;
+                document.getElementById('report-revenue').textContent = '$' + (data.total_stores * price).toFixed(2);
+
+                // Feedback
+                const feedbackList = document.getElementById('feedback-list');
+                feedbackList.innerHTML = '';
+                if (data.recent_feedback && data.recent_feedback.length > 0) {
+                    data.recent_feedback.forEach(fb => {
+                        const item = document.createElement('li');
+                        item.className = 'activity-item';
+                        item.innerHTML = `
+                            <span class="activity-icon">${'⭐'.repeat(fb.rating)}</span>
+                            <span class="activity-message">${fb.comment || 'No comment'}</span>
+                            <span class="activity-time">${formatTimeAgo(fb.created_at)}</span>
+                        `;
+                        feedbackList.appendChild(item);
+                    });
+                } else {
+                    feedbackList.innerHTML = '<li class="activity-item" style="color: var(--slate-400);">No feedback yet</li>';
+                }
+
+                document.getElementById('weekly-report-loading').style.display = 'none';
+                document.getElementById('weekly-report-content').style.display = 'block';
+            } catch (error) {
+                console.error('Failed to load weekly report:', error);
             }
         }
 
@@ -814,18 +1196,18 @@
         }
 
         function formatIssueTypes(types) {
-                if (!types || types.length === 0) return '-';
-                if (typeof types === 'string') return types;
-                if (Array.isArray(types)) {
-                    return types.slice(0, 2).map(t => {
-                        if (typeof t === 'object' && t !== null) {
-                            return t.type || t.name || t.issue || JSON.stringify(t);
-                        }
-                        return t;
-                    }).join(', ');
-                }
-                return '-';
+            if (!types || types.length === 0) return '-';
+            if (typeof types === 'string') return types;
+            if (Array.isArray(types)) {
+                return types.slice(0, 2).map(t => {
+                    if (typeof t === 'object' && t !== null) {
+                        return t.type || t.name || t.issue || JSON.stringify(t);
+                    }
+                    return t;
+                }).join(', ');
             }
+            return '-';
+        }
     </script>
 </body>
 

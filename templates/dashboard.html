@@ -484,10 +484,38 @@ Judge.me"></textarea>
             </div>
         </div>
     </div>
+    <!-- Rating Widget -->
+    <div id="rating-widget" class="rating-widget hidden">
+        <div class="rating-widget-inner">
+            <button class="rating-close" onclick="dismissRating()">&times;</button>
+            <div class="rating-content">
+                <span class="rating-icon">🔍</span>
+                <h3>How's Sherlock doing?</h3>
+                <p>Your feedback helps us improve</p>
+                <div class="rating-stars" id="rating-stars">
+                    <span class="star" data-rating="1">★</span>
+                    <span class="star" data-rating="2">★</span>
+                    <span class="star" data-rating="3">★</span>
+                    <span class="star" data-rating="4">★</span>
+                    <span class="star" data-rating="5">★</span>
+                </div>
+                <textarea id="rating-comment" class="rating-comment"
+                    placeholder="Any suggestions? (optional)"></textarea>
+                <button class="btn btn-primary" onclick="submitRating()" id="rating-submit-btn">Submit Feedback</button>
+            </div>
+            <div class="rating-success hidden" id="rating-success">
+                <span class="rating-icon">🎉</span>
+                <h3>Thank you!</h3>
+                <p>Your feedback helps make Sherlock better for everyone.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
 
     <!-- Footer -->
     <footer class="footer">
-        <p>🔍 Sherlock v2.0 · Your Store's Detective · <a href="/docs" target="_blank">API Docs</a></p>
+        <p>🔍 Sherlock for Shopify v2.0 · Your Store's Detective · <a href="/docs" target="_blank">API Docs</a></p>
     </footer>
 
     <!-- JavaScript -->

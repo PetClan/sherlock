@@ -40,6 +40,7 @@ class Store(Base):
     script_tag_snapshots = relationship("ScriptTagSnapshot", back_populates="store", cascade="all, delete-orphan")
     daily_scans = relationship("DailyScan", back_populates="store", cascade="all, delete-orphan")
     rollback_actions = relationship("RollbackAction", back_populates="store", cascade="all, delete-orphan")
+    customer_ratings = relationship("CustomerRating", back_populates="store", cascade="all, delete-orphan")
 
 
 class InstalledApp(Base):
@@ -412,4 +413,27 @@ class RollbackAction(Base):
     __table_args__ = (
         Index("idx_rollback_store", "store_id"),
         Index("idx_rollback_file", "store_id", "file_path"),
+    )
+
+
+class CustomerRating(Base):
+    """Customer satisfaction ratings"""
+    __tablename__ = "customer_ratings"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    store_id = Column(String(36), ForeignKey("stores.id", ondelete="CASCADE"), nullable=False)
+    
+    # Rating data
+    rating = Column(Integer, nullable=False)  # 1-5 stars
+    comment = Column(Text, nullable=True)  # Optional feedback
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    store = relationship("Store", back_populates="customer_ratings")
+    
+    __table_args__ = (
+        Index("idx_ratings_store", "store_id"),
+        Index("idx_ratings_created", "created_at"),
     )

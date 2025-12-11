@@ -6,7 +6,7 @@ Protected admin endpoint for monitoring and oversight
 from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, and_
 from datetime import datetime, timedelta
 from typing import Optional
 import os
@@ -72,7 +72,7 @@ async def get_overview_stats(
         # Total stores
         total_stores = await db.scalar(select(func.count(Store.id)))
         
-        # Active stores (scanned in last 7 days)
+        # Active stores (updated in last 7 days)
         week_ago = datetime.utcnow() - timedelta(days=7)
         active_stores = await db.scalar(
             select(func.count(Store.id)).where(Store.updated_at >= week_ago)
@@ -86,17 +86,15 @@ async def get_overview_stats(
             select(func.count(ReportedApp.id)).where(ReportedApp.first_reported >= week_ago)
         )
         
-        # Total scans
-        total_scans = await db.scalar(select(func.count(Diagnosis.id)))
-        
-        # Scans today
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        scans_today = await db.scalar(
-            select(func.count(Diagnosis.id)).where(Diagnosis.started_at >= today)
-        )
-        
-        # Daily scans count
-        daily_scans = await db.scalar(select(func.count(DailyScan.id)))
+        # Try to get satisfaction stats if table exists
+        avg_satisfaction = None
+        total_ratings = 0
+        try:
+            from app.db.models import CustomerRating
+            avg_satisfaction = await db.scalar(select(func.avg(CustomerRating.rating)))
+            total_ratings = await db.scalar(select(func.count(CustomerRating.id))) or 0
+        except:
+            pass
         
         return {
             "total_stores": total_stores or 0,
@@ -104,9 +102,8 @@ async def get_overview_stats(
             "inactive_stores": (total_stores or 0) - (active_stores or 0),
             "total_reports": total_reports or 0,
             "reports_this_week": reports_this_week or 0,
-            "total_scans": total_scans or 0,
-            "scans_today": scans_today or 0,
-            "daily_scans_configured": daily_scans or 0
+            "avg_satisfaction": avg_satisfaction,
+            "total_ratings": total_ratings
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -202,45 +199,6 @@ async def get_all_reports(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{secret_key}/scans")
-async def get_recent_scans(
-    secret_key: str,
-    password: str = Query(...),
-    limit: int = Query(default=50, ge=1, le=200),
-    db: AsyncSession = Depends(get_db)
-):
-    """Get recent scans"""
-    verify_secret_key(secret_key)
-    if password != ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Invalid password")
-    
-    try:
-        result = await db.execute(
-            select(Diagnosis, Store)
-            .join(Store, Diagnosis.store_id == Store.id)
-            .order_by(desc(Diagnosis.started_at))
-            .limit(limit)
-        )
-        scans = result.all()
-        
-        return {
-            "scans": [
-                {
-                    "id": str(d.id),
-                    "shop": s.shopify_domain,
-                    "scan_type": d.scan_type,
-                    "status": d.status,
-                    "issues_found": d.issues_found,
-                    "started_at": d.started_at.isoformat() if d.started_at else None,
-                    "completed_at": d.completed_at.isoformat() if d.completed_at else None
-                }
-                for d, s in scans
-            ]
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get("/{secret_key}/activity")
 async def get_recent_activity(
     secret_key: str,
@@ -260,7 +218,7 @@ async def get_recent_activity(
         stores_result = await db.execute(
             select(Store)
             .order_by(desc(Store.installed_at))
-            .limit(5)
+            .limit(10)
         )
         for store in stores_result.scalars().all():
             if store.installed_at:
@@ -276,7 +234,7 @@ async def get_recent_activity(
             select(Diagnosis, Store)
             .join(Store, Diagnosis.store_id == Store.id)
             .order_by(desc(Diagnosis.started_at))
-            .limit(5)
+            .limit(10)
         )
         for diag, store in scans_result.all():
             if diag.started_at:
@@ -291,7 +249,7 @@ async def get_recent_activity(
         reports_result = await db.execute(
             select(ReportedApp)
             .order_by(desc(ReportedApp.last_reported))
-            .limit(5)
+            .limit(10)
         )
         for report in reports_result.scalars().all():
             if report.last_reported:
@@ -310,36 +268,144 @@ async def get_recent_activity(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{secret_key}/top-reported")
-async def get_top_reported_apps(
+@router.get("/{secret_key}/top-conflicts")
+async def get_top_conflicts(
     secret_key: str,
     password: str = Query(...),
     limit: int = Query(default=10),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get most reported apps"""
+    """Get top conflicting apps (reported + known conflicts combined)"""
     verify_secret_key(secret_key)
     if password != ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid password")
     
     try:
+        conflicts = []
+        
+        # Get reported apps with conflict-related issues
         result = await db.execute(
             select(ReportedApp)
+            .where(ReportedApp.causes_conflicts == True)
             .order_by(desc(ReportedApp.total_reports))
             .limit(limit)
         )
-        apps = result.scalars().all()
+        reported = result.scalars().all()
+        
+        for app in reported:
+            conflicts.append({
+                "app1": app.app_name,
+                "app2": "Theme/Other Apps",
+                "report_count": app.total_reports,
+                "source": "reported"
+            })
+        
+        # Also get apps with theme issues
+        result2 = await db.execute(
+            select(ReportedApp)
+            .where(ReportedApp.causes_theme_issues == True)
+            .order_by(desc(ReportedApp.total_reports))
+            .limit(limit)
+        )
+        theme_issues = result2.scalars().all()
+        
+        for app in theme_issues:
+            # Avoid duplicates
+            if not any(c["app1"] == app.app_name for c in conflicts):
+                conflicts.append({
+                    "app1": app.app_name,
+                    "app2": "Theme",
+                    "report_count": app.total_reports,
+                    "source": "theme_conflict"
+                })
+        
+        # Sort by report count
+        conflicts.sort(key=lambda x: x["report_count"], reverse=True)
+        
+        return {"conflicts": conflicts[:limit]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{secret_key}/weekly-report")
+async def get_weekly_report(
+    secret_key: str,
+    password: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get weekly report data"""
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        now = datetime.utcnow()
+        week_ago = now - timedelta(days=7)
+        
+        # Calculate week range for display
+        week_start = (now - timedelta(days=now.weekday())).strftime("%b %d")
+        week_end = now.strftime("%b %d, %Y")
+        
+        # Total stores
+        total_stores = await db.scalar(select(func.count(Store.id))) or 0
+        
+        # New installs this week
+        new_installs = await db.scalar(
+            select(func.count(Store.id)).where(Store.installed_at >= week_ago)
+        ) or 0
+        
+        # Stores with daily scans configured
+        daily_scan_stores = await db.scalar(
+            select(func.count(func.distinct(DailyScan.store_id)))
+        ) or 0
+        
+        daily_scan_percentage = round((daily_scan_stores / total_stores * 100) if total_stores > 0 else 0, 1)
+        
+        # Apps reported this week
+        apps_reported = await db.scalar(
+            select(func.count(ReportedApp.id)).where(ReportedApp.first_reported >= week_ago)
+        ) or 0
+        
+        # Top reported app
+        top_app_result = await db.execute(
+            select(ReportedApp)
+            .order_by(desc(ReportedApp.total_reports))
+            .limit(1)
+        )
+        top_app = top_app_result.scalar()
+        top_reported_app = top_app.app_name if top_app else None
+        
+        # Satisfaction stats
+        avg_satisfaction = None
+        recent_feedback = []
+        try:
+            from app.db.models import CustomerRating
+            avg_satisfaction = await db.scalar(select(func.avg(CustomerRating.rating)))
+            
+            feedback_result = await db.execute(
+                select(CustomerRating)
+                .order_by(desc(CustomerRating.created_at))
+                .limit(5)
+            )
+            for fb in feedback_result.scalars().all():
+                recent_feedback.append({
+                    "rating": fb.rating,
+                    "comment": fb.comment,
+                    "created_at": fb.created_at.isoformat() if fb.created_at else None
+                })
+        except:
+            pass
         
         return {
-            "apps": [
-                {
-                    "app_name": a.app_name,
-                    "report_count": a.total_reports,
-                    "risk_score": a.reddit_risk_score,
-                    "issue_types": a.report_reasons
-                }
-                for a in apps
-            ]
+            "week_range": f"{week_start} - {week_end}",
+            "total_stores": total_stores,
+            "new_installs": new_installs,
+            "daily_scan_stores": daily_scan_stores,
+            "daily_scan_percentage": daily_scan_percentage,
+            "apps_reported": apps_reported,
+            "top_reported_app": top_reported_app,
+            "avg_satisfaction": avg_satisfaction,
+            "recent_feedback": recent_feedback
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

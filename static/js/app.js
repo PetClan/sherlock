@@ -490,6 +490,7 @@ async function startScan(scanType) {
     }
 
     state.isScanning = true;
+    incrementScanCount();
     showScanProgress({ status: 'starting', scan_type: scanType });
 
     try {
@@ -1019,6 +1020,146 @@ function truncateUrl(url) {
     }
     return url;
 }
+// ==================== RATING WIDGET ====================
+
+var selectedRating = 0;
+
+function initRatingWidget() {
+    const stars = document.querySelectorAll('#rating-stars .star');
+
+    stars.forEach(function (star) {
+        star.addEventListener('mouseenter', function () {
+            const rating = parseInt(this.dataset.rating);
+            highlightStars(rating);
+        });
+
+        star.addEventListener('mouseleave', function () {
+            highlightStars(selectedRating);
+        });
+
+        star.addEventListener('click', function () {
+            selectedRating = parseInt(this.dataset.rating);
+            highlightStars(selectedRating);
+        });
+    });
+
+    // Check if we should show the rating widget
+    checkShowRatingWidget();
+}
+
+function highlightStars(rating) {
+    const stars = document.querySelectorAll('#rating-stars .star');
+    stars.forEach(function (star) {
+        const starRating = parseInt(star.dataset.rating);
+        if (starRating <= rating) {
+            star.classList.add('active');
+        } else {
+            star.classList.remove('active');
+        }
+    });
+}
+
+function checkShowRatingWidget() {
+    // Check if user has already rated recently (stored in localStorage)
+    const lastRated = localStorage.getItem('sherlock_last_rated');
+    const dismissed = localStorage.getItem('sherlock_rating_dismissed');
+
+    if (lastRated) {
+        const daysSinceRated = (Date.now() - parseInt(lastRated)) / (1000 * 60 * 60 * 24);
+        if (daysSinceRated < 30) return; // Don't show again for 30 days
+    }
+
+    if (dismissed) {
+        const daysSinceDismissed = (Date.now() - parseInt(dismissed)) / (1000 * 60 * 60 * 24);
+        if (daysSinceDismissed < 7) return; // Don't show again for 7 days after dismiss
+    }
+
+    // Show widget after 3 scans or after 5 seconds on dashboard
+    const scanCount = parseInt(localStorage.getItem('sherlock_scan_count') || '0');
+
+    if (scanCount >= 3) {
+        setTimeout(showRatingWidget, 2000);
+    } else {
+        setTimeout(function () {
+            if (scanCount >= 1) {
+                showRatingWidget();
+            }
+        }, 30000); // Show after 30 seconds if at least 1 scan
+    }
+}
+
+function showRatingWidget() {
+    const widget = document.getElementById('rating-widget');
+    if (widget) {
+        widget.classList.remove('hidden');
+    }
+}
+
+function dismissRating() {
+    const widget = document.getElementById('rating-widget');
+    if (widget) {
+        widget.classList.add('hidden');
+    }
+    localStorage.setItem('sherlock_rating_dismissed', Date.now().toString());
+}
+
+async function submitRating() {
+    if (selectedRating === 0) {
+        showNotification('Please select a rating', 'warning');
+        return;
+    }
+
+    const comment = document.getElementById('rating-comment').value.trim();
+    const btn = document.getElementById('rating-submit-btn');
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+        const response = await fetch('/api/v1/ratings/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                shop: state.shop,
+                rating: selectedRating,
+                comment: comment
+            })
+        });
+
+        if (response.ok) {
+            // Show success state
+            document.querySelector('.rating-content').classList.add('hidden');
+            document.getElementById('rating-success').classList.remove('hidden');
+
+            // Store that user has rated
+            localStorage.setItem('sherlock_last_rated', Date.now().toString());
+
+            // Hide widget after 3 seconds
+            setTimeout(function () {
+                const widget = document.getElementById('rating-widget');
+                if (widget) {
+                    widget.classList.add('hidden');
+                }
+            }, 3000);
+        } else {
+            throw new Error('Failed to submit rating');
+        }
+    } catch (error) {
+        console.error('Rating submit error:', error);
+        showNotification('Failed to submit rating. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Submit Feedback';
+    }
+}
+
+// Track scan count for rating widget trigger
+function incrementScanCount() {
+    const count = parseInt(localStorage.getItem('sherlock_scan_count') || '0');
+    localStorage.setItem('sherlock_scan_count', (count + 1).toString());
+}
 
 // Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function () {
+    init();
+    initRatingWidget();
+});
