@@ -75,7 +75,7 @@ async def get_overview_stats(
         # Active stores (scanned in last 7 days)
         week_ago = datetime.utcnow() - timedelta(days=7)
         active_stores = await db.scalar(
-            select(func.count(Store.id)).where(Store.last_scanned >= week_ago)
+            select(func.count(Store.id)).where(Store.updated_at >= week_ago)
         )
         
         # Total reports
@@ -128,7 +128,7 @@ async def get_all_stores(
     try:
         result = await db.execute(
             select(Store)
-            .order_by(desc(Store.created_at))
+            .order_by(desc(Store.installed_at))
             .limit(limit)
             .offset(offset)
         )
@@ -145,9 +145,9 @@ async def get_all_stores(
                     "shop_name": s.shop_name,
                     "email": s.email,
                     "is_active": s.is_active,
-                    "created_at": s.created_at.isoformat() if s.created_at else None,
-                    "last_scanned": s.last_scanned.isoformat() if s.last_scanned else None,
-                    "current_risk_level": s.current_risk_level
+                    "created_at": s.installed_at.isoformat() if s.installed_at else None,
+                    "last_scanned": s.updated_at.isoformat() if s.updated_at else None,
+                    "current_risk_level": "unknown"
                 }
                 for s in stores
             ]
@@ -186,12 +186,12 @@ async def get_all_reports(
                 {
                     "id": str(r.id),
                     "app_name": r.app_name,
-                    "report_count": r.report_count,
-                    "issue_types": r.issue_types,
-                    "risk_score": r.risk_score,
-                    "reddit_mentions": r.reddit_mentions,
+                    "report_count": r.total_reports,
+                    "issue_types": r.report_reasons,
+                    "risk_score": r.reddit_risk_score,
+                    "reddit_mentions": r.reddit_posts_found,
                     "reddit_sentiment": r.reddit_sentiment,
-                    "common_issues": r.common_issues,
+                    "common_issues": r.reddit_common_issues,
                     "first_reported": r.first_reported.isoformat() if r.first_reported else None,
                     "last_reported": r.last_reported.isoformat() if r.last_reported else None
                 }
@@ -259,16 +259,16 @@ async def get_recent_activity(
         # Recent store registrations
         stores_result = await db.execute(
             select(Store)
-            .order_by(desc(Store.created_at))
+            .order_by(desc(Store.installed_at))
             .limit(5)
         )
         for store in stores_result.scalars().all():
-            if store.created_at:
+            if store.installed_at:
                 activities.append({
                     "type": "store_registered",
                     "icon": "🏪",
                     "message": f"New store: {store.shopify_domain}",
-                    "timestamp": store.created_at.isoformat()
+                    "timestamp": store.installed_at.isoformat()
                 })
         
         # Recent scans
@@ -325,7 +325,7 @@ async def get_top_reported_apps(
     try:
         result = await db.execute(
             select(ReportedApp)
-            .order_by(desc(ReportedApp.report_count))
+            .order_by(desc(ReportedApp.total_reports))
             .limit(limit)
         )
         apps = result.scalars().all()
@@ -334,9 +334,9 @@ async def get_top_reported_apps(
             "apps": [
                 {
                     "app_name": a.app_name,
-                    "report_count": a.report_count,
-                    "risk_score": a.risk_score,
-                    "issue_types": a.issue_types
+                    "report_count": a.total_reports,
+                    "risk_score": a.reddit_risk_score,
+                    "issue_types": a.report_reasons
                 }
                 for a in apps
             ]
