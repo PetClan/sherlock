@@ -977,6 +977,7 @@ function showReportResults(result) {
 
     let html = '<div style="padding: 16px; background: var(--emerald-bg); border: 1px solid var(--emerald-500); border-radius: var(--radius-md);">';
     html += '<h4 style="color: var(--emerald-400); margin-bottom: 12px;">✅ Report Submitted</h4>';
+    html += '<button class="btn btn-secondary" onclick="closeReportModal()" style="margin-top: 12px;">Close</button>';
 
     if (result.reddit_results && result.reddit_results.length > 0) {
         html += '<p style="margin-bottom: 8px; font-weight: 600;">Related Reddit Discussions:</p>';
