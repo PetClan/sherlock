@@ -14,11 +14,11 @@
     --navy-600: #334155;
     --navy-500: #475569;
 
-    /* Accent Colors - Blue */
-        --gold-500: #3b82f6;
-        --gold-400: #60a5fa;
-        --gold-300: #93c5fd;
-        --gold-glow: rgba(59, 130, 246, 0.3);
+    /* Accent Colors - Police Blue */
+        --gold-500: #0d4f8b;
+        --gold-400: #1a6fc2;
+        --gold-300: #4a9ae6;
+        --gold-glow: rgba(13, 79, 139, 0.3);
 
     /* Status Colors */
     --emerald-500: #10b981;
@@ -113,8 +113,12 @@ body {
 }
 
 .logo-icon {
-    font-size: 32px;
-    filter: drop-shadow(0 0 8px var(--gold-glow));
+    width: 44px;
+    height: 44px;
+    background: repeating-conic-gradient(var(--gold-500) 0deg 90deg,
+            var(--white) 90deg 180deg) 50% / 22px 22px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px var(--gold-glow);
 }
 
 .logo-text {
