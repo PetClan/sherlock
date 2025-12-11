@@ -1,6 +1,6 @@
 """
 Sherlock - Admin Portal Router
-Protected admin endpoints for monitoring and oversight
+Protected admin endpoint for monitoring and oversight
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query
