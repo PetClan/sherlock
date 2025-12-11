@@ -951,17 +951,14 @@ async function submitAppReport() {
     btn.textContent = '🔍 Searching...';
 
     try {
-        const result = await api('/reports/submit', {
-            method: 'POST',
-            body: JSON.stringify({
-                shop: state.shop,
-                app_name: appName,
-                issue_type: issueType,
-                when_started: when,
-                what_doing: doing,
-                other_apps: otherApps,
-                description: description
-            })
+        const params = new URLSearchParams({
+            app_name: appName,
+            shop: state.shop,
+            issue_type: issueType,
+            description: description
+        });
+        const result = await api('/reports/app?' + params.toString(), {
+            method: 'POST'
         });
 
         showReportResults(result);
