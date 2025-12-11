@@ -814,10 +814,18 @@
         }
 
         function formatIssueTypes(types) {
-            if (!types || types.length === 0) return '-';
-            if (typeof types === 'string') return types;
-            return types.slice(0, 2).join(', ');
-        }
+                if (!types || types.length === 0) return '-';
+                if (typeof types === 'string') return types;
+                if (Array.isArray(types)) {
+                    return types.slice(0, 2).map(t => {
+                        if (typeof t === 'object' && t !== null) {
+                            return t.type || t.name || t.issue || JSON.stringify(t);
+                        }
+                        return t;
+                    }).join(', ');
+                }
+                return '-';
+            }
     </script>
 </body>
 
