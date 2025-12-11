@@ -86,7 +86,7 @@ body {
     min-height: 100vh;
 }
 
-/* ==================== HEADER ==================== */
+/* ==================== HEADERs ==================== */
 .header {
     background: var(--navy-900);
     border-bottom: 1px solid rgba(251, 191, 36, 0.2);
