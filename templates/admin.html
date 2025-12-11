@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sherlock Admin Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy-900: #0c1222;
+            --navy-800: #0f172a;
+            --navy-700: #1e293b;
+            --navy-600: #334155;
+            --gold-500: #0d4f8b;
+            --gold-400: #1a6fc2;
+            --gold-300: #4a9ae6;
+            --emerald-500: #10b981;
+            --emerald-400: #34d399;
+            --emerald-bg: rgba(16, 185, 129, 0.15);
+            --amber-500: #f59e0b;
+            --amber-400: #fbbf24;
+            --amber-bg: rgba(245, 158, 11, 0.15);
+            --crimson-500: #ef4444;
+            --crimson-400: #f87171;
+            --crimson-bg: rgba(239, 68, 68, 0.15);
+            --slate-100: #f1f5f9;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --white: #ffffff;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(180deg, var(--navy-800) 0%, var(--navy-900) 100%);
+            color: var(--slate-100);
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--navy-700);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: var(--slate-400);
+            margin-bottom: 30px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: var(--navy-800);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-md);
+            color: var(--white);
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: var(--gold-500);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--gold-500) 0%, var(--white) 100%);
+            color: var(--navy-900);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-error {
+            background: var(--crimson-bg);
+            color: var(--crimson-400);
+            padding: 12px;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        /* Admin Dashboard */
+        .admin-dashboard {
+            display: none;
+        }
+
+        .admin-header {
+            background: var(--navy-900);
+            border-bottom: 1px solid var(--navy-600);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .admin-header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .admin-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: repeating-conic-gradient(var(--gold-500) 0deg 90deg, var(--white) 90deg 180deg) 50% / 20px 20px;
+            border-radius: 6px;
+        }
+
+        .admin-logo-text {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .admin-badge {
+            background: var(--crimson-500);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .admin-logout {
+            background: var(--navy-700);
+            color: var(--slate-300);
+            border: 1px solid var(--navy-600);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .admin-logout:hover {
+            background: var(--navy-600);
+        }
+
+        .admin-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .admin-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .admin-subtitle {
+            color: var(--slate-400);
+            margin-bottom: 30px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--navy-700);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-card-icon {
+            font-size: 24px;
+        }
+
+        .stat-card-label {
+            font-size: 13px;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .stat-card-value.success {
+            color: var(--emerald-400);
+        }
+
+        .stat-card-value.warning {
+            color: var(--amber-400);
+        }
+
+        .stat-card-value.danger {
+            color: var(--crimson-400);
+        }
+
+        .stat-card-sub {
+            font-size: 13px;
+            color: var(--slate-400);
+            margin-top: 4px;
+        }
+
+        /* Sections */
+        .admin-section {
+            background: var(--navy-700);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--navy-800);
+            border-bottom: 1px solid var(--navy-600);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-body {
+            padding: 20px;
+        }
+
+        /* Tables */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--navy-600);
+        }
+
+        .admin-table th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            background: var(--navy-800);
+        }
+
+        .admin-table td {
+            font-size: 14px;
+        }
+
+        .admin-table tr:hover td {
+            background: var(--navy-800);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: var(--emerald-bg);
+            color: var(--emerald-400);
+        }
+
+        .badge-warning {
+            background: var(--amber-bg);
+            color: var(--amber-400);
+        }
+
+        .badge-danger {
+            background: var(--crimson-bg);
+            color: var(--crimson-400);
+        }
+
+        .badge-info {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        /* Activity Feed */
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--navy-600);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            font-size: 20px;
+        }
+
+        .activity-message {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--slate-500);
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--navy-600);
+            border-top-color: var(--gold-500);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-table {
+                font-size: 12px;
+            }
+
+            .admin-table th,
+            .admin-table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-box">
+            <div class="login-logo">🔐</div>
+            <h1 class="login-title">Sherlock Admin</h1>
+            <p class="login-subtitle">Enter password to access the admin portal</p>
+
+            <div id="login-error" class="login-error"></div>
+
+            <input type="password" id="password-input" class="login-input" placeholder="Enter admin password" autofocus>
+            <button onclick="attemptLogin()" class="login-btn">Access Portal</button>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="admin-dashboard">
+        <header class="admin-header">
+            <div class="admin-header-inner">
+                <div class="admin-logo">
+                    <div class="admin-logo-icon"></div>
+                    <span class="admin-logo-text">SHERLOCK</span>
+                    <span class="admin-badge">Admin</span>
+                </div>
+                <button onclick="logout()" class="admin-logout">Logout</button>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <h1 class="admin-title">Admin Overview</h1>
+            <p class="admin-subtitle">Monitor stores, reports, and system activity</p>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">Total Stores</span>
+                        <span class="stat-card-icon">🏪</span>
+                    </div>
+                    <div class="stat-card-value" id="stat-total-stores">-</div>
+                    <div class="stat-card-sub"><span id="stat-active-stores">-</span> active this week</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">App Reports</span>
+                        <span class="stat-card-icon">🚨</span>
+                    </div>
+                    <div class="stat-card-value warning" id="stat-total-reports">-</div>
+                    <div class="stat-card-sub"><span id="stat-reports-week">-</span> this week</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">Total Scans</span>
+                        <span class="stat-card-icon">🔍</span>
+                    </div>
+                    <div class="stat-card-value success" id="stat-total-scans">-</div>
+                    <div class="stat-card-sub"><span id="stat-scans-today">-</span> today</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">Daily Monitoring</span>
+                        <span class="stat-card-icon">📊</span>
+                    </div>
+                    <div class="stat-card-value" id="stat-daily-scans">-</div>
+                    <div class="stat-card-sub">stores configured</div>
+                </div>
+            </div>
+
+            <div class="two-columns">
+                <div>
+                    <!-- Stores Section -->
+                    <div class="admin-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🏪 Registered Stores</h2>
+                        </div>
+                        <div class="section-body">
+                            <div id="stores-loading" class="loading-spinner">
+                                <div class="spinner"></div>
+                            </div>
+                            <table class="admin-table" id="stores-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Store</th>
+                                        <th>Status</th>
+                                        <th>Risk</th>
+                                        <th>Last Scan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stores-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Reports Section -->
+                    <div class="admin-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🚨 App Reports</h2>
+                        </div>
+                        <div class="section-body">
+                            <div id="reports-loading" class="loading-spinner">
+                                <div class="spinner"></div>
+                            </div>
+                            <table class="admin-table" id="reports-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>App Name</th>
+                                        <th>Reports</th>
+                                        <th>Risk Score</th>
+                                        <th>Issues</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reports-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Activity Feed -->
+                    <div class="admin-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📋 Recent Activity</h2>
+                        </div>
+                        <div class="section-body">
+                            <div id="activity-loading" class="loading-spinner">
+                                <div class="spinner"></div>
+                            </div>
+                            <ul class="activity-list" id="activity-list" style="display: none;"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Top Reported -->
+                    <div class="admin-section">
+                        <div class="section-header">
+                            <h2 class="section-title">⚠️ Top Reported Apps</h2>
+                        </div>
+                        <div class="section-body">
+                            <div id="top-loading" class="loading-spinner">
+                                <div class="spinner"></div>
+                            </div>
+                            <ul class="activity-list" id="top-reported-list" style="display: none;"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Get secret key from URL
+        const pathParts = window.location.pathname.split('/');
+        const secretKey = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+
+        let adminPassword = '';
+
+        // Handle Enter key on password input
+        document.getElementById('password-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') attemptLogin();
+        });
+
+        async function attemptLogin() {
+            const password = document.getElementById('password-input').value;
+            const errorDiv = document.getElementById('login-error');
+
+            if (!password) {
+                errorDiv.textContent = 'Please enter a password';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/admin/${secretKey}/login?password=${encodeURIComponent(password)}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    adminPassword = password;
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('admin-dashboard').style.display = 'block';
+                    loadDashboard();
+                } else {
+                    errorDiv.textContent = 'Invalid password';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            adminPassword = '';
+            document.getElementById('admin-dashboard').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('password-input').value = '';
+        }
+
+        async function apiCall(endpoint) {
+            const response = await fetch(`/api/v1/admin/${secretKey}${endpoint}?password=${encodeURIComponent(adminPassword)}`);
+            if (!response.ok) throw new Error('API Error');
+            return response.json();
+        }
+
+        async function loadDashboard() {
+            loadOverviewStats();
+            loadStores();
+            loadReports();
+            loadActivity();
+            loadTopReported();
+        }
+
+        async function loadOverviewStats() {
+            try {
+                const data = await apiCall('/stats/overview');
+                document.getElementById('stat-total-stores').textContent = data.total_stores;
+                document.getElementById('stat-active-stores').textContent = data.active_stores;
+                document.getElementById('stat-total-reports').textContent = data.total_reports;
+                document.getElementById('stat-reports-week').textContent = data.reports_this_week;
+                document.getElementById('stat-total-scans').textContent = data.total_scans;
+                document.getElementById('stat-scans-today').textContent = data.scans_today;
+                document.getElementById('stat-daily-scans').textContent = data.daily_scans_configured;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        async function loadStores() {
+            try {
+                const data = await apiCall('/stores');
+                const tbody = document.getElementById('stores-body');
+                tbody.innerHTML = '';
+
+                if (data.stores.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--slate-400);">No stores registered yet</td></tr>';
+                } else {
+                    data.stores.forEach(store => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${store.shopify_domain}</strong></td>
+                            <td><span class="badge ${store.is_active ? 'badge-success' : 'badge-warning'}">${store.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td><span class="badge ${getRiskBadgeClass(store.current_risk_level)}">${store.current_risk_level || 'Unknown'}</span></td>
+                            <td>${store.last_scanned ? formatDate(store.last_scanned) : 'Never'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                document.getElementById('stores-loading').style.display = 'none';
+                document.getElementById('stores-table').style.display = 'table';
+            } catch (error) {
+                console.error('Failed to load stores:', error);
+            }
+        }
+
+        async function loadReports() {
+            try {
+                const data = await apiCall('/reports');
+                const tbody = document.getElementById('reports-body');
+                tbody.innerHTML = '';
+
+                if (data.reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--slate-400);">No reports yet</td></tr>';
+                } else {
+                    data.reports.forEach(report => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${report.app_name}</strong></td>
+                            <td>${report.report_count}</td>
+                            <td><span class="badge ${getRiskScoreBadgeClass(report.risk_score)}">${report.risk_score?.toFixed(1) || 'N/A'}</span></td>
+                            <td>${formatIssueTypes(report.issue_types)}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                document.getElementById('reports-loading').style.display = 'none';
+                document.getElementById('reports-table').style.display = 'table';
+            } catch (error) {
+                console.error('Failed to load reports:', error);
+            }
+        }
+
+        async function loadActivity() {
+            try {
+                const data = await apiCall('/activity');
+                const list = document.getElementById('activity-list');
+                list.innerHTML = '';
+
+                if (data.activities.length === 0) {
+                    list.innerHTML = '<li class="activity-item" style="color: var(--slate-400);">No recent activity</li>';
+                } else {
+                    data.activities.forEach(activity => {
+                        const item = document.createElement('li');
+                        item.className = 'activity-item';
+                        item.innerHTML = `
+                            <span class="activity-icon">${activity.icon}</span>
+                            <span class="activity-message">${activity.message}</span>
+                            <span class="activity-time">${formatTimeAgo(activity.timestamp)}</span>
+                        `;
+                        list.appendChild(item);
+                    });
+                }
+
+                document.getElementById('activity-loading').style.display = 'none';
+                document.getElementById('activity-list').style.display = 'block';
+            } catch (error) {
+                console.error('Failed to load activity:', error);
+            }
+        }
+
+        async function loadTopReported() {
+            try {
+                const data = await apiCall('/top-reported');
+                const list = document.getElementById('top-reported-list');
+                list.innerHTML = '';
+
+                if (data.apps.length === 0) {
+                    list.innerHTML = '<li class="activity-item" style="color: var(--slate-400);">No reported apps yet</li>';
+                } else {
+                    data.apps.forEach((app, index) => {
+                        const item = document.createElement('li');
+                        item.className = 'activity-item';
+                        item.innerHTML = `
+                            <span class="activity-icon">${index + 1}.</span>
+                            <span class="activity-message"><strong>${app.app_name}</strong></span>
+                            <span class="badge ${getRiskScoreBadgeClass(app.risk_score)}">${app.report_count} reports</span>
+                        `;
+                        list.appendChild(item);
+                    });
+                }
+
+                document.getElementById('top-loading').style.display = 'none';
+                document.getElementById('top-reported-list').style.display = 'block';
+            } catch (error) {
+                console.error('Failed to load top reported:', error);
+            }
+        }
+
+        // Helper functions
+        function getRiskBadgeClass(level) {
+            if (!level) return 'badge-info';
+            switch (level.toLowerCase()) {
+                case 'low': return 'badge-success';
+                case 'medium': return 'badge-warning';
+                case 'high': return 'badge-danger';
+                default: return 'badge-info';
+            }
+        }
+
+        function getRiskScoreBadgeClass(score) {
+            if (score === null || score === undefined) return 'badge-info';
+            if (score < 3) return 'badge-success';
+            if (score < 6) return 'badge-warning';
+            return 'badge-danger';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatTimeAgo(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+
+        function formatIssueTypes(types) {
+            if (!types || types.length === 0) return '-';
+            if (typeof types === 'string') return types;
+            return types.slice(0, 2).join(', ');
+        }
+    </script>
+</body>
+
+</html>

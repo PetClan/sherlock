@@ -10,6 +10,7 @@ from app.api.routers.reports import router as reports_router
 from app.api.routers.google_router import router as google_router
 from app.api.routers.monitoring import router as monitoring_router
 from app.api.routers.rollback import router as rollback_router
+from app.api.routers.admin import router as admin_router
 
 
 # Main API router
@@ -22,3 +23,4 @@ api_router.include_router(reports_router)
 api_router.include_router(google_router)
 api_router.include_router(monitoring_router)
 api_router.include_router(rollback_router)
+api_router.include_router(admin_router)
