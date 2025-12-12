@@ -558,7 +558,7 @@ function showScanProgress(scan) {
 
 async function viewScan(diagnosisId) {
     try {
-        const report = await api('/scan/report/' + diagnosisId);
+        const report = await api('/scan/' + diagnosisId + '/report');
         renderScanReport(report);
     } catch (error) {
         console.error('View scan error:', error);
