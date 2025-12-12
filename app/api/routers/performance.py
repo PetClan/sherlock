@@ -9,7 +9,7 @@ from sqlalchemy import select, desc
 from datetime import datetime, timedelta
 
 from app.db.database import get_db
-from app.db.models import Store, ScanResult
+from app.db.models import Store, DailyScan
 
 router = APIRouter(prefix="/performance", tags=["Performance"])
 
@@ -36,36 +36,45 @@ async def get_performance_history(
     since = datetime.utcnow() - timedelta(days=days)
     
     scans_result = await db.execute(
-        select(ScanResult)
-        .where(ScanResult.store_id == store.id)
-        .where(ScanResult.scanned_at >= since)
-        .order_by(desc(ScanResult.scanned_at))
+        select(DailyScan)
+        .where(DailyScan.store_id == store.id)
+        .where(DailyScan.scan_date >= since)
+        .order_by(desc(DailyScan.scan_date))
         .limit(50)
     )
     scans = scans_result.scalars().all()
     
     history = []
     for scan in scans:
-        # Calculate a performance score from scan data
-        # Lower risk = higher performance score
-        risk_score = scan.risk_score or 0
-        performance_score = max(0, 100 - (risk_score * 10))
+        # Calculate a performance score from risk level
+        risk_level = scan.risk_level or "low"
+        if risk_level == "high":
+            performance_score = 30
+        elif risk_level == "medium":
+            performance_score = 60
+        else:
+            performance_score = 90
         
-        # Build event description
-        event = None
-        if scan.apps_changed:
-            event = f"Apps changed: {scan.apps_changed}"
-        elif scan.files_changed:
-            event = f"Theme files changed: {scan.files_changed}"
-        elif scan.new_issues:
-            event = f"New issues detected: {scan.new_issues}"
+        # Build event description from actual changes
+        events = []
+        if scan.files_changed and scan.files_changed > 0:
+            events.append(f"{scan.files_changed} files changed")
+        if scan.files_new and scan.files_new > 0:
+            events.append(f"{scan.files_new} new files")
+        if scan.files_deleted and scan.files_deleted > 0:
+            events.append(f"{scan.files_deleted} files deleted")
+        if scan.scripts_new and scan.scripts_new > 0:
+            events.append(f"{scan.scripts_new} new scripts")
+        if scan.css_issues_found and scan.css_issues_found > 0:
+            events.append(f"{scan.css_issues_found} CSS issues")
+        
+        event = ", ".join(events) if events else scan.summary
         
         history.append({
-            "recorded_at": scan.scanned_at.isoformat() if scan.scanned_at else None,
+            "recorded_at": scan.scan_date.isoformat() if scan.scan_date else None,
             "performance_score": performance_score,
-            "risk_score": risk_score,
-            "event": event,
-            "scan_type": scan.scan_type
+            "risk_level": risk_level,
+            "event": event
         })
     
     return {
@@ -92,9 +101,9 @@ async def get_latest_performance(
     
     # Get latest scan
     scan_result = await db.execute(
-        select(ScanResult)
-        .where(ScanResult.store_id == store.id)
-        .order_by(desc(ScanResult.scanned_at))
+        select(DailyScan)
+        .where(DailyScan.store_id == store.id)
+        .order_by(desc(DailyScan.scan_date))
         .limit(1)
     )
     scan = scan_result.scalar_one_or_none()
@@ -102,12 +111,17 @@ async def get_latest_performance(
     if not scan:
         return {"shop": shop, "performance_score": None, "message": "No scans yet"}
     
-    risk_score = scan.risk_score or 0
-    performance_score = max(0, 100 - (risk_score * 10))
+    risk_level = scan.risk_level or "low"
+    if risk_level == "high":
+        performance_score = 30
+    elif risk_level == "medium":
+        performance_score = 60
+    else:
+        performance_score = 90
     
     return {
         "shop": shop,
         "performance_score": performance_score,
-        "risk_score": risk_score,
-        "last_scan": scan.scanned_at.isoformat() if scan.scanned_at else None
+        "risk_level": risk_level,
+        "last_scan": scan.scan_date.isoformat() if scan.scan_date else None
     }
