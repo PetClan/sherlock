@@ -481,6 +481,17 @@ async function runMonitoringScan() {
     }
 }
 
+async function runMonitoringScanSilent() {
+    try {
+        await fetch('/api/v1/monitoring/scan/' + state.shop, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error('Silent monitoring scan error:', error);
+    }
+}
+
 // ==================== SCAN FUNCTIONS ====================
 
 async function startScan(scanType) {
@@ -523,12 +534,14 @@ function pollScanStatus(diagnosisId) {
             if (status.status === 'completed' || status.status === 'failed') {
                 stopPolling();
                 if (status.status === 'completed') {
+                    // Also run monitoring scan to update Store Protection Status
+                    await runMonitoringScanSilent();
                     showNotification('Investigation completed!', 'success');
                     loadDashboard();
                 } else {
                     showError('Investigation failed: ' + (status.error || 'Unknown error'));
                 }
-            }
+            }    
         } catch (error) {
             console.error('Poll error:', error);
             stopPolling();
