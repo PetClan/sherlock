@@ -159,19 +159,19 @@ async def investigate_app(
         
         risk_factors = 0
         
-        # 1. Search Reddit
+        # 1. Search Reddit (via Google site:reddit.com)
         try:
-            from app.services.reddit_service import reddit_service
-            reddit_data = await reddit_service.check_app_reputation(app_name)
+            from app.services.google_search_service import google_search_service
+            reddit_data = await google_search_service.search_reddit_discussions(app_name)
             
             if reddit_data and reddit_data.get("posts"):
                 for post in reddit_data["posts"][:5]:
                     results["reddit_results"].append({
                         "title": post.get("title", ""),
                         "url": post.get("url", ""),
-                        "snippet": post.get("snippet", post.get("selftext", ""))[:200] if post.get("snippet") or post.get("selftext") else "",
+                        "snippet": post.get("snippet", "")[:200] if post.get("snippet") else "",
                         "subreddit": post.get("subreddit", "shopify"),
-                        "score": post.get("score", 0)
+                        "source": "reddit"
                     })
                 
                 # Add to risk score based on negative sentiment

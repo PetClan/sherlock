@@ -37,7 +37,53 @@ class GoogleSearchService:
         query = f'"{app_name}" shopify app review OR issue OR problem OR slow OR conflict'
         
         return await self._perform_search(query, app_name, limit)
+    async def search_reddit_discussions(self, app_name: str, limit: int = 10) -> Dict[str, Any]:
+        """
+        Search Reddit discussions about a Shopify app via Google
+        Uses site:reddit.com to find Reddit posts
+        """
+        if not self._is_configured():
+            return {
+                "success": False,
+                "error": "Google Search API not configured",
+                "app_name": app_name,
+                "posts": []
+            }
+        
+        # Search Reddit specifically for app issues
+        query = f'site:reddit.com "{app_name}" shopify (issue OR problem OR slow OR broken OR conflict OR review)'
+        
+        result = await self._perform_search(query, app_name, limit, search_type="reddit")
+        
+        # Transform results to match Reddit format expected by investigate endpoint
+        if result.get("success"):
+            posts = []
+            for item in result.get("results", []):
+                posts.append({
+                    "title": item.get("title", ""),
+                    "url": item.get("link", ""),
+                    "snippet": item.get("snippet", ""),
+                    "subreddit": self._extract_subreddit(item.get("link", "")),
+                    "source": "google_reddit_search"
+                })
+            
+            result["posts"] = posts
+            result["risk_score"] = result.get("google_risk_score", 0) // 10  # Scale to 0-10
+            result["negative_posts"] = result.get("sentiment", {}).get("negative", 0)
+        
+        return result
     
+    def _extract_subreddit(self, url: str) -> str:
+        """Extract subreddit name from Reddit URL"""
+        try:
+            # URL format: https://www.reddit.com/r/shopify/...
+            if "/r/" in url:
+                parts = url.split("/r/")[1].split("/")
+                return parts[0] if parts else "unknown"
+            return "unknown"
+        except:
+            return "unknown"
+        
     async def search_app_conflicts(self, app_name: str, limit: int = 10) -> Dict[str, Any]:
         """
         Search specifically for app conflicts
