@@ -850,6 +850,182 @@ async function loadMostReportedApps() {
     }
 }
 
+// ==================== INVESTIGATE APP MODAL ====================
+
+function openInvestigateModal() {
+    document.getElementById('investigate-modal').classList.remove('hidden');
+    document.getElementById('investigate-app-name').value = '';
+    document.getElementById('investigate-results').classList.add('hidden');
+    document.getElementById('investigate-results').innerHTML = '';
+}
+
+function closeInvestigateModal() {
+    document.getElementById('investigate-modal').classList.add('hidden');
+}
+
+async function investigateApp() {
+    const appName = document.getElementById('investigate-app-name').value.trim();
+
+    if (!appName) {
+        showError('Please enter an app name');
+        return;
+    }
+
+    const btn = document.getElementById('investigate-btn');
+    const resultsContainer = document.getElementById('investigate-results');
+
+    btn.disabled = true;
+    btn.innerHTML = '🔍 Investigating...';
+
+    resultsContainer.classList.remove('hidden');
+    resultsContainer.innerHTML =
+        '<div class="loading">' +
+        '<div class="spinner"></div>' +
+        '<p>Sherlock is investigating ' + escapeHtml(appName) + '...</p>' +
+        '<p style="font-size: 13px; color: var(--slate-400);">Searching Reddit, reviews, and community reports...</p>' +
+        '</div>';
+
+    try {
+        const response = await fetch('/api/v1/reports/investigate?app_name=' + encodeURIComponent(appName));
+        const data = await response.json();
+
+        renderInvestigationReport(appName, data);
+    } catch (error) {
+        console.error('Investigation error:', error);
+        resultsContainer.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">❌</div>' +
+            '<h3>Investigation Failed</h3>' +
+            '<p>Could not complete investigation. Please try again.</p>' +
+            '</div>';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🔎 Investigate';
+    }
+}
+
+function renderInvestigationReport(appName, data) {
+    const container = document.getElementById('investigate-results');
+
+    // Determine risk level and styling
+    const riskScore = data.risk_score || 0;
+    let riskLevel, riskClass, riskIcon, recommendation;
+
+    if (riskScore >= 7) {
+        riskLevel = 'HIGH RISK';
+        riskClass = 'danger';
+        riskIcon = '🚨';
+        recommendation = 'Proceed with caution. Significant issues reported by the community.';
+    } else if (riskScore >= 4) {
+        riskLevel = 'MEDIUM RISK';
+        riskClass = 'warning';
+        riskIcon = '⚠️';
+        recommendation = 'Some concerns found. Review the evidence below before installing.';
+    } else {
+        riskLevel = 'LOW RISK';
+        riskClass = 'success';
+        riskIcon = '✅';
+        recommendation = 'No significant issues found. This app appears safe to install.';
+    }
+
+    // Build evidence sections
+    let evidenceHtml = '';
+
+    // Reddit evidence
+    if (data.reddit_results && data.reddit_results.length > 0) {
+        evidenceHtml += '<div class="evidence-section">' +
+            '<h4>📱 Reddit Discussions (' + data.reddit_results.length + ' found)</h4>' +
+            '<div class="evidence-list">';
+
+        data.reddit_results.forEach(function (post) {
+            evidenceHtml +=
+                '<div class="evidence-item">' +
+                '<a href="' + escapeHtml(post.url) + '" target="_blank" class="evidence-title">' + escapeHtml(post.title) + '</a>' +
+                (post.snippet ? '<p class="evidence-snippet">"' + escapeHtml(post.snippet) + '"</p>' : '') +
+                '<span class="evidence-source">r/' + escapeHtml(post.subreddit || 'shopify') + '</span>' +
+                '</div>';
+        });
+
+        evidenceHtml += '</div></div>';
+    }
+
+    // Google evidence
+    if (data.google_results && data.google_results.length > 0) {
+        evidenceHtml += '<div class="evidence-section">' +
+            '<h4>🔍 Web Results (' + data.google_results.length + ' found)</h4>' +
+            '<div class="evidence-list">';
+
+        data.google_results.forEach(function (result) {
+            evidenceHtml +=
+                '<div class="evidence-item">' +
+                '<a href="' + escapeHtml(result.url) + '" target="_blank" class="evidence-title">' + escapeHtml(result.title) + '</a>' +
+                (result.snippet ? '<p class="evidence-snippet">"' + escapeHtml(result.snippet) + '"</p>' : '') +
+                '<span class="evidence-source">' + escapeHtml(result.source || 'Web') + '</span>' +
+                '</div>';
+        });
+
+        evidenceHtml += '</div></div>';
+    }
+
+    // Database reports
+    if (data.database_reports && data.database_reports.total > 0) {
+        evidenceHtml += '<div class="evidence-section">' +
+            '<h4>📊 Community Reports (' + data.database_reports.total + ' reports)</h4>' +
+            '<div class="evidence-list">';
+
+        if (data.database_reports.issues && data.database_reports.issues.length > 0) {
+            data.database_reports.issues.forEach(function (issue) {
+                evidenceHtml +=
+                    '<div class="evidence-item">' +
+                    '<span class="evidence-issue-type">' + escapeHtml(issue.type) + '</span>' +
+                    '<span class="evidence-count">' + issue.count + ' reports</span>' +
+                    '</div>';
+            });
+        }
+
+        evidenceHtml += '</div></div>';
+    }
+
+    // Known conflicts
+    if (data.known_conflicts && data.known_conflicts.length > 0) {
+        evidenceHtml += '<div class="evidence-section">' +
+            '<h4>⚡ Known Conflicts</h4>' +
+            '<div class="evidence-list">';
+
+        data.known_conflicts.forEach(function (conflict) {
+            evidenceHtml +=
+                '<div class="evidence-item">' +
+                '<span class="evidence-conflict">Conflicts with: <strong>' + escapeHtml(conflict.app) + '</strong></span>' +
+                (conflict.description ? '<p class="evidence-snippet">' + escapeHtml(conflict.description) + '</p>' : '') +
+                '</div>';
+        });
+
+        evidenceHtml += '</div></div>';
+    }
+
+    // No evidence found
+    if (!evidenceHtml) {
+        evidenceHtml = '<div class="evidence-section">' +
+            '<p style="color: var(--slate-400);">No community reports or discussions found for this app. This could mean it\'s new, rarely used, or simply has no reported issues.</p>' +
+            '</div>';
+    }
+
+    // Build final report
+    container.innerHTML =
+        '<div class="investigation-report">' +
+        '<div class="report-header">' +
+        '<h3>' + escapeHtml(appName) + '</h3>' +
+        '<div class="risk-badge ' + riskClass + '">' + riskIcon + ' ' + riskLevel + '</div>' +
+        '</div>' +
+        '<div class="report-recommendation">' +
+        '<p><strong>Sherlock\'s Assessment:</strong> ' + recommendation + '</p>' +
+        '</div>' +
+        '<div class="report-evidence">' +
+        '<h4 style="margin-bottom: 16px;">📋 Evidence</h4>' +
+        evidenceHtml +
+        '</div>' +
+        '</div>';
+}
 // ==================== REPORT MODAL ====================
 
 function openReportModal() {

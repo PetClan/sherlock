@@ -23,6 +23,9 @@
             </div>
             <span class="shop-badge" id="shop-name"></span>
             <div class="header-actions">
+                <button class="btn btn-secondary" onclick="openInvestigateModal()">
+                    🔎 Investigate App
+                </button>
                 <button class="btn btn-secondary" onclick="openReportModal()">
                     🚨 Report an App
                 </button>
@@ -89,7 +92,8 @@
                 <div class="section-header">
                     <span class="section-icon">🔍</span>
                     <h2>Sherlock's Capabilities</h2>
-                    <p class="section-subtitle">"The tools of my trade, dear merchant. Click any card to examine the evidence."</p>
+                    <p class="section-subtitle">"The tools of my trade, dear merchant. Click any card to examine the
+                        evidence."</p>
                 </div>
                 <div class="capabilities-grid">
                     <div class="capability-card" onclick="showCapability('monitoring')" style="cursor: pointer;">
@@ -287,7 +291,32 @@
             </div>
         </div>
     </main>
+    <!-- Investigate App Modal -->
+    <div id="investigate-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>🔎 Investigate an App</h2>
+                <button class="modal-close" onclick="closeInvestigateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px;">Research an app before installing it. Sherlock will search community
+                    reports, Reddit discussions, and reviews to assess potential risks.</p>
 
+                <div class="form-group">
+                    <label for="investigate-app-name">App Name</label>
+                    <input type="text" id="investigate-app-name" placeholder="e.g., Klaviyo, PageFly, Loox">
+                </div>
+
+                <button class="btn btn-primary" onclick="investigateApp()" id="investigate-btn" style="width: 100%;">
+                    🔎 Investigate
+                </button>
+
+                <div id="investigate-results" class="hidden" style="margin-top: 24px;">
+                    <!-- Results will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Capability Modal -->
     <div id="capability-modal" class="modal hidden">
         <div class="modal-content">

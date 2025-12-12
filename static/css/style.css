@@ -2090,3 +2090,125 @@ code {
         width: 100%;
     }
 }
+/* Investigation Report Styles */
+.investigation-report {
+    background: var(--navy-800);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--navy-600);
+}
+
+.report-header h3 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.risk-badge {
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.risk-badge.success {
+    background: var(--emerald-bg);
+    color: var(--emerald-400);
+    border: 1px solid var(--emerald-500);
+}
+
+.risk-badge.warning {
+    background: var(--amber-bg);
+    color: var(--amber-400);
+    border: 1px solid var(--amber-500);
+}
+
+.risk-badge.danger {
+    background: var(--crimson-bg);
+    color: var(--crimson-400);
+    border: 1px solid var(--crimson-500);
+}
+
+.report-recommendation {
+    background: var(--navy-700);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.report-recommendation p {
+    margin: 0;
+}
+
+.report-evidence h4 {
+    color: var(--slate-200);
+}
+
+.evidence-section {
+    margin-bottom: 20px;
+}
+
+.evidence-section h4 {
+    font-size: 14px;
+    color: var(--slate-300);
+    margin-bottom: 12px;
+}
+
+.evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.evidence-item {
+    background: var(--navy-700);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--gold-500);
+}
+
+.evidence-title {
+    color: var(--gold-400);
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.evidence-title:hover {
+    text-decoration: underline;
+}
+
+.evidence-snippet {
+    font-size: 13px;
+    color: var(--slate-400);
+    margin: 8px 0;
+    font-style: italic;
+}
+
+.evidence-source {
+    font-size: 12px;
+    color: var(--slate-500);
+}
+
+.evidence-issue-type {
+    font-weight: 500;
+    color: var(--slate-200);
+}
+
+.evidence-count {
+    color: var(--slate-400);
+    font-size: 13px;
+    margin-left: 8px;
+}
+
+.evidence-conflict {
+    color: var(--amber-400);
+}
