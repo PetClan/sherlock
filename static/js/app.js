@@ -1077,7 +1077,7 @@ function renderInvestigationReport(appName, data) {
         evidenceHtml +
         '</div>' +
         '</div>';
-
+}
 // ==================== REPORT MODAL ====================
 
 function openReportModal() {
