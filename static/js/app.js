@@ -1320,7 +1320,7 @@ var capabilityData = {
             <ul>
                 <li>Merchant reports from our community</li>
                 <li>Reddit discussions and forums</li>
-                <li>Shopify community posts</li>
+                <li>Web reviews and articles</li>
                 <li>Our own testing and research</li>
             </ul>
             
