@@ -714,7 +714,7 @@ async function loadTimeline() {
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading timeline...</p></div>';
 
     try {
-        const result = await api('/performance/' + state.shop + '/history');
+        const result = await api('/performance/' + state.shop);
         renderTimeline(result);
     } catch (error) {
         console.error('Timeline error:', error);
