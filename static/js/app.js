@@ -931,8 +931,135 @@ function renderInvestigationReport(appName, data) {
     // Build evidence sections
     let evidenceHtml = '';
 
-    // Reddit evidence
+    // Track Reddit URLs to avoid duplicates from Google
+    var redditUrls = [];
+
+    // Reddit evidence (show first - most relevant customer discussions)
     if (data.reddit_results && data.reddit_results.length > 0) {
+        data.reddit_results.forEach(function (post) {
+            if (post.url) redditUrls.push(post.url.toLowerCase());
+        });
+
+        evidenceHtml += '<div class="evidence-section">' +
+            '<h4>💬 Reddit Discussions (' + data.reddit_results.length + ' found)</h4>' +
+            '<p class="evidence-section-desc">Real merchant experiences and discussions</p>' +
+            '<div class="evidence-list">';
+
+        data.reddit_results.forEach(function (post) {
+            evidenceHtml +=
+                '<div class="evidence-item">' +
+                '<a href="' + escapeHtml(post.url) + '" target="_blank" class="evidence-title">' + escapeHtml(post.title) + '</a>' +
+                (post.snippet ? '<p class="evidence-snippet">"' + escapeHtml(post.snippet) + '"</p>' : '') +
+                '<span class="evidence-source">r/' + escapeHtml(post.subreddit || 'shopify') + '</span>' +
+                '</div>';
+        });
+
+        evidenceHtml += '</div></div>';
+    }
+
+    // Google evidence (filter out Reddit duplicates)
+    if (data.google_results && data.google_results.length > 0) {
+        // Filter out Reddit results already shown
+        var filteredGoogle = data.google_results.filter(function (result) {
+            var url = (result.url || result.link || '').toLowerCase();
+            var isReddit = url.indexOf('reddit.com') !== -1;
+            var isDuplicate = redditUrls.some(function (redditUrl) {
+                return url.indexOf(redditUrl) !== -1 || redditUrl.indexOf(url) !== -1;
+            });
+            return !isReddit || !isDuplicate;
+        });
+
+        // Separate Reddit results found via Google (if Reddit API failed)
+        var googleRedditResults = filteredGoogle.filter(function (r) {
+            return (r.url || r.link || '').toLowerCase().indexOf('reddit.com') !== -1;
+        });
+        var otherWebResults = filteredGoogle.filter(function (r) {
+            return (r.url || r.link || '').toLowerCase().indexOf('reddit.com') === -1;
+        });
+
+        // Show Reddit from Google if we didn't get direct Reddit results
+        if (googleRedditResults.length > 0 && data.reddit_results.length === 0) {
+            evidenceHtml += '<div class="evidence-section">' +
+                '<h4>💬 Reddit Discussions (' + googleRedditResults.length + ' found)</h4>' +
+                '<p class="evidence-section-desc">Real merchant experiences and discussions</p>' +
+                '<div class="evidence-list">';
+
+            googleRedditResults.forEach(function (result) {
+                evidenceHtml +=
+                    '<div class="evidence-item">' +
+                    '<a href="' + escapeHtml(result.url || result.link) + '" target="_blank" class="evidence-title">' + escapeHtml(result.title) + '</a>' +
+                    (result.snippet ? '<p class="evidence-snippet">"' + escapeHtml(result.snippet) + '"</p>' : '') +
+                    '<span class="evidence-source">r/shopify</span>' +
+                    '</div>';
+            });
+
+            evidenceHtml += '</div></div>';
+        }
+
+        // Show other web results
+        if (otherWebResults.length > 0) {
+            evidenceHtml += '<div class="evidence-section">' +
+                '<h4>🔍 Web Results (' + otherWebResults.length + ' found)</h4>' +
+                '<p class="evidence-section-desc">Reviews, articles, and documentation</p>' +
+                '<div class="evidence-list">';
+
+            otherWebResults.forEach(function (result) {
+                evidenceHtml +=
+                    '<div class="evidence-item">' +
+                    '<a href="' + escapeHtml(result.url || result.link) + '" target="_blank" class="evidence-title">' + escapeHtml(result.title) + '</a>' +
+                    (result.snippet ? '<p class="evidence-snippet">"' + escapeHtml(result.snippet) + '"</p>' : '') +
+                    '<span class="evidence-source">' + escapeHtml(result.source || result.displayLink || 'Web') + '</span>' +
+                    '</div>';
+            });
+
+            evidenceHtml += '</div></div>';
+        }
+    }
+
+    // Database reports
+    if (data.database_reports && data.database_reports.total > 0) {
+        evidenceHtml += '<div class="evidence-section">' +
+            '<h4>📊 Community Reports (' + data.database_reports.total + ' reports)</h4>' +
+            '<p class="evidence-section-desc">Issues reported by Sherlock users</p>' +
+            '<div class="evidence-list">';
+
+        if (data.database_reports.issues && data.database_reports.issues.length > 0) {
+            data.database_reports.issues.forEach(function (issue) {
+                evidenceHtml +=
+                    '<div class="evidence-item">' +
+                    '<span class="evidence-issue-type">' + escapeHtml(issue.type) + '</span>' +
+                    '<span class="evidence-count">' + issue.count + ' reports</span>' +
+                    '</div>';
+            });
+        }
+
+        evidenceHtml += '</div></div>';
+    }
+
+    // Known conflicts
+    if (data.known_conflicts && data.known_conflicts.length > 0) {
+        evidenceHtml += '<div class="evidence-section">' +
+            '<h4>⚡ Known Conflicts</h4>' +
+            '<p class="evidence-section-desc">Apps with reported compatibility issues</p>' +
+            '<div class="evidence-list">';
+
+        data.known_conflicts.forEach(function (conflict) {
+            evidenceHtml +=
+                '<div class="evidence-item">' +
+                '<span class="evidence-conflict">Conflicts with: <strong>' + escapeHtml(conflict.app) + '</strong></span>' +
+                (conflict.description ? '<p class="evidence-snippet">' + escapeHtml(conflict.description) + '</p>' : '') +
+                '</div>';
+        });
+
+        evidenceHtml += '</div></div>';
+    }
+
+    // No evidence found
+    if (!evidenceHtml) {
+        evidenceHtml = '<div class="evidence-section">' +
+            '<p style="color: var(--slate-400);">No community reports or discussions found for this app. This could mean it\'s new, rarely used, or simply has no reported issues.</p>' +
+            '</div>';
+    }
         evidenceHtml += '<div class="evidence-section">' +
             '<h4>📱 Reddit Discussions (' + data.reddit_results.length + ' found)</h4>' +
             '<div class="evidence-list">';
@@ -1025,7 +1152,7 @@ function renderInvestigationReport(appName, data) {
         evidenceHtml +
         '</div>' +
         '</div>';
-}
+
 // ==================== REPORT MODAL ====================
 
 function openReportModal() {

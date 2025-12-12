@@ -83,6 +83,7 @@ class GoogleSearchService:
             "cx": self.search_engine_id,
             "q": query,
             "num": min(limit, 10),  # Google allows max 10 per request
+            "dateRestrict": "y2",  # Only results from last 2 years
         }
         
         try:

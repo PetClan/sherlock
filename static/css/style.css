@@ -2158,6 +2158,12 @@ code {
 .evidence-section h4 {
     font-size: 14px;
     color: var(--slate-300);
+    margin-bottom: 4px;
+}
+
+.evidence-section-desc {
+    font-size: 12px;
+    color: var(--slate-500);
     margin-bottom: 12px;
 }
 
