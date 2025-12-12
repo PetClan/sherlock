@@ -150,6 +150,8 @@ async def get_scan_report(
         "recommendations": diagnosis.recommendations or [],
         "issues": diagnosis.suspect_apps or []
     }
+
+
 @router.get("/diagnosis/{shop}")
 async def get_store_diagnosis(
     shop: str,

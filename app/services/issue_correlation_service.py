@@ -29,7 +29,7 @@ class IssueCorrelationService:
         """
         # Get store
         result = await self.db.execute(
-            select(Store).where(Store.shop_domain == shop_domain)
+            select(Store).where(Store.shopify_domain == shop_domain)
         )
         store = result.scalar_one_or_none()
         
