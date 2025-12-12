@@ -118,10 +118,8 @@ async function loadDashboard() {
 
 // Render stats cards
 function renderStats(apps, scanHistory, performance) {
-    const totalScans = scanHistory.total_scans || scanHistory.scans?.length || 0;
-
     const statsHtml =
-        '<div class="grid grid-4">' +
+        '<div class="grid grid-3">' +
         '<div class="stat-card">' +
         '<div class="stat-value">' + (apps.total || 0) + '</div>' +
         '<div class="stat-label">Installed Apps</div>' +
@@ -137,10 +135,6 @@ function renderStats(apps, scanHistory, performance) {
         (performance?.performance_score ? Math.round(performance.performance_score) : '—') +
         '</div>' +
         '<div class="stat-label">Performance Score</div>' +
-        '</div>' +
-        '<div class="stat-card">' +
-        '<div class="stat-value">' + totalScans + '</div>' +
-        '<div class="stat-label">Investigations Run</div>' +
         '</div>' +
         '</div>';
 
@@ -262,7 +256,6 @@ async function loadSiteHealth() {
 
         if (data.has_scan && data.scan) {
             renderProtectionStatus(data.scan);
-            updateCaseFiles(data.scan);
         } else {
             container.innerHTML =
                 '<div class="empty-state">' +
@@ -271,8 +264,7 @@ async function loadSiteHealth() {
                 '<p>Run your first investigation to see your store\'s protection status.</p>' +
                 '</div>';
 
-            // Reset case files to default
-            resetCaseFiles();
+            
         }
     } catch (error) {
         console.error('Error loading site health:', error);
@@ -367,73 +359,7 @@ function renderProtectionStatus(scan) {
         '</div>';
 }
 
-function updateCaseFiles(scan) {
-    // Update Theme Files case
-    var themeCard = document.getElementById('case-theme');
-    var themeValue = document.getElementById('case-theme-value');
-    var themeStatus = document.getElementById('case-theme-status');
 
-    if (themeValue) themeValue.textContent = scan.files_total || 0;
-
-    if (scan.files_new > 0 || scan.files_changed > 0) {
-        themeCard.className = 'case-file status-warning';
-        themeStatus.className = 'case-file-status warning';
-        themeStatus.textContent = '⚠️ ' + (scan.files_new + scan.files_changed) + ' changes';
-    } else {
-        themeCard.className = 'case-file status-clean';
-        themeStatus.className = 'case-file-status clean';
-        themeStatus.textContent = '✓ Clean';
-    }
-
-    // Update Scripts case
-    var scriptsCard = document.getElementById('case-scripts');
-    var scriptsValue = document.getElementById('case-scripts-value');
-    var scriptsStatus = document.getElementById('case-scripts-status');
-
-    if (scriptsValue) scriptsValue.textContent = scan.scripts_total || 0;
-
-    if (scan.scripts_new > 0) {
-        scriptsCard.className = 'case-file status-warning';
-        scriptsStatus.className = 'case-file-status warning';
-        scriptsStatus.textContent = '⚠️ ' + scan.scripts_new + ' new';
-    } else {
-        scriptsCard.className = 'case-file status-clean';
-        scriptsStatus.className = 'case-file-status clean';
-        scriptsStatus.textContent = '✓ Clean';
-    }
-
-    // Update CSS case
-    var cssCard = document.getElementById('case-css');
-    var cssValue = document.getElementById('case-css-value');
-    var cssStatus = document.getElementById('case-css-status');
-
-    if (cssValue) {
-        cssValue.textContent = scan.css_issues_found || 0;
-        if (scan.css_issues_found > 0) {
-            cssValue.className = 'metric-value ' + (scan.css_issues_found > 20 ? 'danger' : 'warning');
-        }
-    }
-
-    if (scan.css_issues_found > 20) {
-        cssCard.className = 'case-file status-danger';
-        cssStatus.className = 'case-file-status danger';
-        cssStatus.textContent = '🚨 ' + scan.css_issues_found + ' issues';
-    } else if (scan.css_issues_found > 0) {
-        cssCard.className = 'case-file status-warning';
-        cssStatus.className = 'case-file-status warning';
-        cssStatus.textContent = '⚠️ ' + scan.css_issues_found + ' issues';
-    } else {
-        cssCard.className = 'case-file status-clean';
-        cssStatus.className = 'case-file-status clean';
-        cssStatus.textContent = '✓ Clean';
-    }
-}
-
-function resetCaseFiles() {
-    document.getElementById('case-theme-value').textContent = '—';
-    document.getElementById('case-scripts-value').textContent = '—';
-    document.getElementById('case-css-value').textContent = '—';
-}
 
 async function runMonitoringScan() {
     const btn = document.getElementById('monitoring-scan-btn');
