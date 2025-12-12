@@ -91,39 +91,36 @@
                     <h2>Sherlock's Capabilities</h2>
                 </div>
                 <div class="capabilities-grid">
-                    <div class="capability-card">
+                    <div class="capability-card" onclick="showCapability('monitoring')" style="cursor: pointer;">
                         <div class="capability-icon">🛡️</div>
                         <h3 class="capability-title">24/7 Monitoring</h3>
                         <p class="capability-desc">Daily automated scans detect changes before they become problems.</p>
                     </div>
-                    <div class="capability-card">
+                    <div class="capability-card" onclick="showCapability('filetracking')" style="cursor: pointer;">
                         <div class="capability-icon">📁</div>
                         <h3 class="capability-title">File Tracking</h3>
-                        <p class="capability-desc">Every theme file is tracked with checksums to detect unauthorized
-                            modifications.</p>
+                        <p class="capability-desc">Every theme file is tracked with checksums to detect unauthorized modifications.
+                        </p>
                     </div>
-                    <div class="capability-card">
+                    <div class="capability-card" onclick="showCapability('conflicts')" style="cursor: pointer;">
                         <div class="capability-icon">⚡</div>
                         <h3 class="capability-title">Conflict Detection</h3>
-                        <p class="capability-desc">Identifies apps that conflict with each other based on community
-                            reports.</p>
+                        <p class="capability-desc">Identifies apps that conflict with each other based on community reports.</p>
                     </div>
-                    <div class="capability-card">
+                    <div class="capability-card" onclick="showCapability('orphan')" style="cursor: pointer;">
                         <div class="capability-icon">🧹</div>
                         <h3 class="capability-title">Orphan Code Finder</h3>
-                        <p class="capability-desc">Finds code left behind by uninstalled apps that slows down your
-                            store.</p>
+                        <p class="capability-desc">Finds code left behind by uninstalled apps that slows down your store.</p>
                     </div>
-                    <div class="capability-card">
+                    <div class="capability-card" onclick="showCapability('performance')" style="cursor: pointer;">
                         <div class="capability-icon">📊</div>
                         <h3 class="capability-title">Performance Impact</h3>
                         <p class="capability-desc">Tracks how each app affects your store's loading speed over time.</p>
                     </div>
-                    <div class="capability-card">
+                    <div class="capability-card" onclick="showCapability('rollback')" style="cursor: pointer;">
                         <div class="capability-icon">🔄</div>
                         <h3 class="capability-title">Rollback Protection</h3>
-                        <p class="capability-desc">Restore theme files to previous versions if an app causes problems.
-                        </p>
+                        <p class="capability-desc">Restore theme files to previous versions if an app causes problems.</p>
                     </div>
                 </div>
             </section>
@@ -367,6 +364,22 @@ Judge.me"></textarea>
                 </button>
             </div>
         </div>
+        <!-- Capability Modal -->
+        <div id="capability-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="capability-modal-title">Capability</h2>
+                    <button class="modal-close" onclick="closeCapabilityModal()">&times;</button>
+                </div>
+                <div class="modal-body" id="capability-modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="closeCapabilityModal()">Got it!</button>
+                </div>
+            </div>
+        </div>
+        
+        
     </div>
     <!-- Rating Widget -->
     <div id="rating-widget" class="rating-widget hidden">
@@ -394,8 +407,6 @@ Judge.me"></textarea>
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
 
     <!-- Footer -->
     <footer class="footer">

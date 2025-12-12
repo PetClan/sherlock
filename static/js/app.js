@@ -360,7 +360,6 @@ function renderProtectionStatus(scan) {
 }
 
 
-
 async function runMonitoringScan() {
     const btn = document.getElementById('monitoring-scan-btn');
     btn.classList.add('loading');
@@ -1095,6 +1094,151 @@ async function submitRating() {
 function incrementScanCount() {
     const count = parseInt(localStorage.getItem('sherlock_scan_count') || '0');
     localStorage.setItem('sherlock_scan_count', (count + 1).toString());
+}
+
+// ==================== CAPABILITY MODAL ====================
+
+var capabilityData = {
+    monitoring: {
+        title: '🛡️ 24/7 Monitoring',
+        content: `
+            <h4>What it does</h4>
+            <p>Sherlock automatically scans your store every day, looking for changes that could cause problems — even while you sleep.</p>
+            
+            <h4>Why it matters for your store</h4>
+            <p>Apps can update themselves, inject new code, or modify your theme without warning. A change that happens on Tuesday might not cause visible problems until the weekend when you're running a sale. Daily monitoring catches issues early, before they cost you sales.</p>
+            
+            <h4>What we check</h4>
+            <ul>
+                <li>Theme file changes (new, modified, or deleted files)</li>
+                <li>New script injections from apps</li>
+                <li>CSS that could conflict with your theme</li>
+                <li>Performance impact changes</li>
+            </ul>
+            
+            <h4>What you'll see</h4>
+            <p>Your Store Protection Status card updates automatically. If something changes, you'll see warnings with specific details about what changed and which app likely caused it.</p>
+        `
+    },
+    filetracking: {
+        title: '📁 File Tracking',
+        content: `
+            <h4>What it does</h4>
+            <p>Sherlock creates a "fingerprint" (checksum) of every file in your theme. When a file changes, we know exactly what changed and when.</p>
+            
+            <h4>Why it matters for your store</h4>
+            <p>Many apps modify your theme files directly — adding code to your theme.liquid, cart.liquid, or other templates. Sometimes these changes break things. Without tracking, you'd never know which app made the change or when it happened.</p>
+            
+            <h4>Real example</h4>
+            <p>A review app adds code to your product template. Later, you install a currency converter that conflicts with that code. Your product pages break, but you don't know why. With file tracking, Sherlock shows you exactly which files changed and when, so you can identify the culprit.</p>
+            
+            <h4>What we track</h4>
+            <ul>
+                <li>All .liquid template files</li>
+                <li>CSS and JavaScript files</li>
+                <li>Config and settings files</li>
+                <li>Asset files</li>
+            </ul>
+        `
+    },
+    conflicts: {
+        title: '⚡ Conflict Detection',
+        content: `
+            <h4>What it does</h4>
+            <p>Sherlock maintains a database of known app conflicts based on community reports and our own research. We check your installed apps against this database.</p>
+            
+            <h4>Why it matters for your store</h4>
+            <p>Some apps simply don't play nice together. They might both try to modify the same part of your theme, or their JavaScript conflicts. These issues are often not documented anywhere — you only find out when something breaks.</p>
+            
+            <h4>How we know about conflicts</h4>
+            <ul>
+                <li>Merchant reports from our community</li>
+                <li>Reddit discussions and forums</li>
+                <li>Shopify community posts</li>
+                <li>Our own testing and research</li>
+            </ul>
+            
+            <h4>What you can do</h4>
+            <p>Check the Conflicts tab to see if any of your installed apps have known issues with each other. If conflicts are found, we'll explain the issue and suggest solutions.</p>
+        `
+    },
+    orphan: {
+        title: '🧹 Orphan Code Finder',
+        content: `
+            <h4>What it does</h4>
+            <p>When you uninstall an app, it should remove all the code it added to your theme. But many apps don't clean up after themselves. Sherlock finds this leftover "orphan" code.</p>
+            
+            <h4>Why it matters for your store</h4>
+            <p>Orphan code slows down your store. Every extra line of code takes time to load and process. If you've installed and uninstalled several apps over the years, you might have hundreds of lines of useless code dragging down your performance.</p>
+            
+            <h4>Common culprits</h4>
+            <ul>
+                <li>Review apps that leave star rating code</li>
+                <li>Chat widgets that leave loading scripts</li>
+                <li>Pop-up apps that leave modal code</li>
+                <li>Analytics apps that leave tracking snippets</li>
+            </ul>
+            
+            <h4>What you can do</h4>
+            <p>Check the Orphan Code tab. Sherlock identifies suspicious code and tells you which app likely left it behind. You can then safely remove it or ask a developer to help.</p>
+        `
+    },
+    performance: {
+        title: '📊 Performance Impact',
+        content: `
+            <h4>What it does</h4>
+            <p>Sherlock measures your store's loading speed and tracks how it changes over time, especially after you install or update apps.</p>
+            
+            <h4>Why it matters for your store</h4>
+            <p>Every second of load time costs you sales. Studies show that a 1-second delay can reduce conversions by 7%. When you install a new app, you need to know if it's slowing down your store.</p>
+            
+            <h4>What we measure</h4>
+            <ul>
+                <li>Homepage load time</li>
+                <li>Product page load time</li>
+                <li>Collection page load time</li>
+                <li>Cart page load time</li>
+                <li>Overall performance score (0-100)</li>
+            </ul>
+            
+            <h4>What you'll see</h4>
+            <p>Check the Timeline tab to see how your performance has changed over time. If you notice a drop after installing an app, that app might be the problem.</p>
+        `
+    },
+    rollback: {
+        title: '🔄 Rollback Protection',
+        content: `
+            <h4>What it does</h4>
+            <p>Sherlock saves snapshots of your theme files. If an app breaks something, you can restore individual files to their previous working state.</p>
+            
+            <h4>Why it matters for your store</h4>
+            <p>When something breaks at 2am before a big sale, you don't want to be scrambling to figure out what changed. With rollback protection, you can quickly restore the affected files and deal with the root cause later.</p>
+            
+            <h4>How it works</h4>
+            <ul>
+                <li>We save file versions with each daily scan</li>
+                <li>You can view the history of any file</li>
+                <li>One-click restore to any previous version</li>
+                <li>See exactly what changed between versions</li>
+            </ul>
+            
+            <h4>Peace of mind</h4>
+            <p>This is your safety net. Install new apps with confidence knowing you can always roll back if something goes wrong.</p>
+        `
+    }
+};
+
+function showCapability(key) {
+    var data = capabilityData[key];
+    if (!data) return;
+
+    document.getElementById('capability-modal-title').innerHTML = data.title;
+    document.getElementById('capability-modal-body').innerHTML = data.content;
+    document.getElementById('capability-modal').classList.remove('hidden');
+}
+
+function closeCapabilityModal() {
+    document.getElementById('capability-modal').classList.add('hidden');
 }
 
 // Initialize on DOM ready
