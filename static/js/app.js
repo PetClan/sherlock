@@ -517,7 +517,7 @@ async function startScan(scanType) {
 function pollScanStatus(diagnosisId) {
     state.pollInterval = setInterval(async function () {
         try {
-            const status = await api('/scan/status/' + diagnosisId);
+            const status = await api('/scan/' + diagnosisId);
             showScanProgress(status);
 
             if (status.status === 'completed' || status.status === 'failed') {
