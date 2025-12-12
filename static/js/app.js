@@ -326,33 +326,23 @@ function renderProtectionStatus(scan) {
         '</div>' +
         warningsHtml +
         '<div class="protection-stats">' +
-        '<div class="protection-stat tooltip">' +
-        '<span class="stat-info">ℹ️</span>' +
-        '<span class="tooltip-text">Total number of files in your theme that Sherlock is monitoring for changes.</span>' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'totalfiles\')" style="cursor: pointer;">' +
         '<div class="protection-stat-value">' + (scan.files_total || 0) + '</div>' +
         '<div class="protection-stat-label">Total Files</div>' +
         '</div>' +
-        '<div class="protection-stat tooltip">' +
-        '<span class="stat-info">ℹ️</span>' +
-        '<span class="tooltip-text">New files added since the last scan. Could be from theme updates or app installations.</span>' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'newfiles\')" style="cursor: pointer;">' +
         '<div class="protection-stat-value ' + (scan.files_new > 0 ? 'warning' : '') + '">' + (scan.files_new || 0) + '</div>' +
         '<div class="protection-stat-label">New Files</div>' +
         '</div>' +
-        '<div class="protection-stat tooltip">' +
-        '<span class="stat-info">ℹ️</span>' +
-        '<span class="tooltip-text">Files that have been modified since the last scan. Review to ensure changes are expected.</span>' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'changed\')" style="cursor: pointer;">' +
         '<div class="protection-stat-value ' + (scan.files_changed > 0 ? 'warning' : '') + '">' + (scan.files_changed || 0) + '</div>' +
         '<div class="protection-stat-label">Changed</div>' +
         '</div>' +
-        '<div class="protection-stat tooltip">' +
-        '<span class="stat-info">ℹ️</span>' +
-        '<span class="tooltip-text">CSS rules that don\'t use proper namespacing. These can conflict with your theme or other apps.</span>' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'cssissues\')" style="cursor: pointer;">' +
         '<div class="protection-stat-value ' + (scan.css_issues_found > 0 ? 'danger' : '') + '">' + (scan.css_issues_found || 0) + '</div>' +
         '<div class="protection-stat-label">CSS Issues</div>' +
         '</div>' +
-        '<div class="protection-stat tooltip">' +
-        '<span class="stat-info">ℹ️</span>' +
-        '<span class="tooltip-text">JavaScript files injected by apps via Shopify\'s Script Tags API.</span>' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'scripts\')" style="cursor: pointer;">' +
         '<div class="protection-stat-value">' + (scan.scripts_total || 0) + '</div>' +
         '<div class="protection-stat-label">Scripts</div>' +
         '</div>' +
@@ -1227,6 +1217,113 @@ var capabilityData = {
         `
     }
 };
+var protectionStatData = {
+    totalfiles: {
+        title: '📄 Total Files',
+        content: `
+            <h4>What it means</h4>
+            <p>This is the total number of files in your Shopify theme that Sherlock is monitoring.</p>
+            
+            <h4>What's included</h4>
+            <ul>
+                <li>Liquid templates (.liquid files)</li>
+                <li>Stylesheets (CSS files)</li>
+                <li>JavaScript files</li>
+                <li>Configuration files (settings, locales)</li>
+                <li>Assets (images, fonts)</li>
+            </ul>
+            
+            <h4>Why it matters</h4>
+            <p>More files means more places where apps can inject code or make changes. Sherlock tracks every file so nothing slips through unnoticed.</p>
+        `
+    },
+    newfiles: {
+        title: '🆕 New Files',
+        content: `
+            <h4>What it means</h4>
+            <p>Files that have been added to your theme since the last scan.</p>
+            
+            <h4>Common causes</h4>
+            <ul>
+                <li>Installing a new app that adds theme files</li>
+                <li>Theme updates from your theme developer</li>
+                <li>Manual additions by you or a developer</li>
+            </ul>
+            
+            <h4>What to do</h4>
+            <p>If you see unexpected new files, check what apps you recently installed. New files aren't necessarily bad, but you should know where they came from.</p>
+        `
+    },
+    changed: {
+        title: '✏️ Changed Files',
+        content: `
+            <h4>What it means</h4>
+            <p>Files that existed before but have been modified since the last scan.</p>
+            
+            <h4>Common causes</h4>
+            <ul>
+                <li>Apps injecting code into your theme</li>
+                <li>Theme updates</li>
+                <li>Manual edits in the theme editor</li>
+                <li>App updates modifying existing code</li>
+            </ul>
+            
+            <h4>What to do</h4>
+            <p>If you didn't make changes yourself, investigate which app modified your files. Unexpected changes can cause display issues or conflicts.</p>
+        `
+    },
+    cssissues: {
+        title: '🎨 CSS Issues',
+        content: `
+            <h4>What it means</h4>
+            <p>CSS rules that don't use proper namespacing and could conflict with your theme or other apps.</p>
+            
+            <h4>The problem</h4>
+            <p>When an app uses generic CSS selectors like <code>.button</code> or <code>.container</code> instead of namespaced ones like <code>.app-name-button</code>, their styles can accidentally override your theme's styles.</p>
+            
+            <h4>Symptoms of CSS conflicts</h4>
+            <ul>
+                <li>Buttons looking different than expected</li>
+                <li>Text colors or sizes changing</li>
+                <li>Layout breaking on certain pages</li>
+                <li>Elements appearing in wrong positions</li>
+            </ul>
+            
+            <h4>What to do</h4>
+            <p>If you have CSS issues and notice visual problems, the apps with non-namespaced CSS are likely culprits. Contact the app developer or consider alternatives.</p>
+        `
+    },
+    scripts: {
+        title: '⚡ Scripts',
+        content: `
+            <h4>What it means</h4>
+            <p>JavaScript files injected into your store by apps via Shopify's Script Tags API.</p>
+            
+            <h4>How it works</h4>
+            <p>Apps can add JavaScript to your storefront without modifying your theme files. These scripts load on every page of your store.</p>
+            
+            <h4>Why it matters</h4>
+            <ul>
+                <li>Each script adds to page load time</li>
+                <li>Scripts can conflict with each other</li>
+                <li>Some scripts continue running after you uninstall the app</li>
+                <li>Too many scripts significantly slow down your store</li>
+            </ul>
+            
+            <h4>What to do</h4>
+            <p>If you have many scripts and slow page loads, consider which apps are essential. Some apps offer "lazy loading" options to reduce performance impact.</p>
+        `
+    }
+};
+
+function showProtectionStat(key) {
+    var data = protectionStatData[key];
+    if (!data) return;
+
+    document.getElementById('capability-modal-title').innerHTML = data.title;
+    document.getElementById('capability-modal-body').innerHTML = data.content;
+    document.getElementById('capability-modal').classList.remove('hidden');
+}
 
 function showCapability(key) {
     var data = capabilityData[key];
