@@ -1,15 +1,16 @@
 """
 Sherlock - API Routers
 """
-
 from fastapi import APIRouter
-
 from app.api.routers.auth import router as auth_router
 from app.api.routers.reddit import router as reddit_router
 from app.api.routers.reports import router as reports_router
 from app.api.routers.google_router import router as google_router
 from app.api.routers.monitoring import router as monitoring_router
-
+from app.api.routers.rollback import router as rollback_router
+from app.api.routers.admin import router as admin_router
+from app.api.routers.ratings import router as ratings_router
+from app.api.routers.scan import router as scan_router
 
 # Main API router
 api_router = APIRouter()
@@ -20,3 +21,7 @@ api_router.include_router(reddit_router)
 api_router.include_router(reports_router)
 api_router.include_router(google_router)
 api_router.include_router(monitoring_router)
+api_router.include_router(rollback_router)
+api_router.include_router(admin_router)
+api_router.include_router(ratings_router)
+api_router.include_router(scan_router)
