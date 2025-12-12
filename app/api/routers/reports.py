@@ -184,11 +184,11 @@ async def investigate_app(
         except Exception as e:
             print(f"Reddit search error: {e}")
         
+        
         # 2. Search Google
         try:
-            from app.services.google_search_service import GoogleSearchService
-            google_service = GoogleSearchService()
-            google_data = await google_service.search_app_issues(app_name)
+            from app.services.google_search_service import google_search_service
+            google_data = await google_search_service.search_app_reviews(app_name)
             
             if google_data and google_data.get("results"):
                 for item in google_data["results"][:5]:
@@ -239,7 +239,8 @@ async def investigate_app(
         
         # 4. Check known conflicts
         try:
-            from app.services.conflict_database import conflict_db
+            from app.services.conflict_database import ConflictDatabase
+            conflict_db = ConflictDatabase()
             conflicts = conflict_db.get_conflicts_for_app(app_name)
             
             if conflicts:
