@@ -150,3 +150,18 @@ async def get_scan_report(
         "recommendations": diagnosis.recommendations or [],
         "issues": diagnosis.suspect_apps or []
     }
+@router.get("/diagnosis/{shop}")
+async def get_store_diagnosis(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get full diagnosis for a store
+    Identifies issues, correlates with recent apps, and provides actions
+    """
+    from app.services.issue_correlation_service import IssueCorrelationService
+    
+    service = IssueCorrelationService(db)
+    diagnosis = await service.get_store_diagnosis(shop)
+    
+    return diagnosis
