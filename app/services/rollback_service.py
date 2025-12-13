@@ -88,7 +88,8 @@ class RollbackService:
         mode: str = "direct_live",
         user_confirmed: bool = False,
         performed_by: str = "user",
-        notes: str = None
+        notes: str = None,
+        target_theme_id: str = None
     ) -> Dict[str, Any]:
         """
         Rollback a file to a previous version
@@ -155,10 +156,12 @@ class RollbackService:
         await self.db.flush()
         
         # Perform the rollback via Shopify API
+        # Use target_theme_id if provided, otherwise fall back to version's theme_id
+        actual_theme_id = target_theme_id or version.theme_id
         try:
             success = await self._update_theme_file(
                 store=store,
-                theme_id=version.theme_id,
+                theme_id=actual_theme_id,
                 file_path=version.file_path,
                 content=version.content
             )

@@ -368,7 +368,8 @@ async def restore_full_theme(
                 mode=request.mode,
                 user_confirmed=True,  # Auto-confirm for full restore
                 performed_by="user_full_restore",
-                notes=f"Full restore to {request.date}"
+                notes=f"Full restore to {request.date}",
+                target_theme_id=theme_id
             )
             
             if result.get("success"):
