@@ -58,6 +58,7 @@ class InstalledApp(Base):
     # Install info
     installed_on = Column(DateTime(timezone=True), nullable=True)
     last_updated = Column(String(50), nullable=True)  # From app store listing
+    update_detected_at = Column(DateTime(timezone=True), nullable=True)  # When Sherlock detected an update
     
     # Risk indicators
     is_suspect = Column(Boolean, default=False)  # Flagged as potential issue

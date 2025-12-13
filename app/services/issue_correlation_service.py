@@ -61,7 +61,7 @@ class IssueCorrelationService:
                 "last_clean_scan": last_clean_scan.isoformat() if last_clean_scan else None
             }
         
-            # Get all installed apps for conflict checking
+        # Get all installed apps for conflict checking
         all_apps = await self._get_all_installed_apps(store.id)
         all_app_names = [app.app_name for app in all_apps]
         
@@ -106,15 +106,37 @@ class IssueCorrelationService:
         return result.scalars().all()
 
     async def _get_recent_apps(self, store_id: str, days: int = 14) -> List[InstalledApp]:
-        """Get apps installed in the last N days"""
+        """Get apps installed OR updated in the last N days"""
         since = datetime.utcnow() - timedelta(days=days)
-        result = await self.db.execute(
+        
+        # Get apps installed recently
+        installed_result = await self.db.execute(
             select(InstalledApp)
             .where(InstalledApp.store_id == store_id)
             .where(InstalledApp.installed_on >= since)
-            .order_by(desc(InstalledApp.installed_on))
         )
-        return result.scalars().all()
+        installed_apps = installed_result.scalars().all()
+        
+        # Get apps updated recently
+        updated_result = await self.db.execute(
+            select(InstalledApp)
+            .where(InstalledApp.store_id == store_id)
+            .where(InstalledApp.update_detected_at >= since)
+        )
+        updated_apps = updated_result.scalars().all()
+        
+        # Combine and deduplicate
+        all_apps = {app.id: app for app in installed_apps}
+        for app in updated_apps:
+            if app.id not in all_apps:
+                all_apps[app.id] = app
+        
+        # Sort by most recent activity (install or update)
+        def get_latest_date(app):
+            dates = [d for d in [app.installed_on, app.update_detected_at] if d]
+            return max(dates) if dates else datetime.min
+        
+        return sorted(all_apps.values(), key=get_latest_date, reverse=True)
     
     async def _get_last_clean_scan(self, store_id: str) -> Optional[datetime]:
         """Get the date of the last scan with no issues"""
@@ -152,7 +174,9 @@ class IssueCorrelationService:
                         "confidence": issue.confidence or 50,
                         "issues_caused": [],
                         "reasoning": "Previously identified as likely source",
-                        "installed_on": None
+                        "installed_on": None,
+                        "updated_on": None,
+                        "was_updated": False
                     }
                 correlations[app_name]["issues_caused"].append({
                     "type": issue.issue_type,
@@ -161,54 +185,86 @@ class IssueCorrelationService:
                 })
                 continue
             
-            # Otherwise, look for apps installed before issue was detected
+            # Otherwise, look for apps installed or updated before issue was detected
             for app in apps:
-                if not app.installed_on:
+                # Determine if this was an install or update
+                was_updated = False
+                relevant_date = None
+                
+                # Check if app was updated recently
+                if app.update_detected_at and app.update_detected_at <= issue_date:
+                    # If update is more recent than install, it's likely the cause
+                    if not app.installed_on or app.update_detected_at > app.installed_on:
+                        was_updated = True
+                        relevant_date = app.update_detected_at
+                
+                # If not an update, check install date
+                if not relevant_date and app.installed_on and app.installed_on <= issue_date:
+                    relevant_date = app.installed_on
+                
+                if not relevant_date:
                     continue
                 
-                # App was installed before issue appeared
-                if app.installed_on <= issue_date:
-                    # Calculate time gap
-                    gap = (issue_date - app.installed_on).days
-                    
-                    # Closer in time = higher confidence
-                    if gap <= 1:
-                        confidence = 85
-                        reasoning = f"Installed 1 day before issue appeared"
-                    elif gap <= 3:
-                        confidence = 70
-                        reasoning = f"Installed {gap} days before issue appeared"
-                    elif gap <= 7:
-                        confidence = 50
-                        reasoning = f"Installed {gap} days before issue appeared"
+                # Calculate time gap
+                gap = (issue_date - relevant_date).days
+                
+                # Closer in time = higher confidence
+                if gap <= 1:
+                    confidence = 85
+                    if was_updated:
+                        reasoning = "Updated 1 day before issue appeared"
                     else:
-                        confidence = 30
+                        reasoning = "Installed 1 day before issue appeared"
+                elif gap <= 3:
+                    confidence = 70
+                    if was_updated:
+                        reasoning = f"Updated {gap} days before issue appeared"
+                    else:
+                        reasoning = f"Installed {gap} days before issue appeared"
+                elif gap <= 7:
+                    confidence = 50
+                    if was_updated:
+                        reasoning = f"Updated {gap} days before issue appeared"
+                    else:
+                        reasoning = f"Installed {gap} days before issue appeared"
+                else:
+                    confidence = 30
+                    if was_updated:
+                        reasoning = f"Updated {gap} days ago"
+                    else:
                         reasoning = f"Installed {gap} days ago"
-                    
-                    # Boost confidence if app is flagged as suspect
-                    if app.is_suspect:
-                        confidence = min(95, confidence + 15)
-                        reasoning += " (flagged as potentially problematic)"
-                    
-                    app_name = app.app_name
-                    if app_name not in correlations:
-                        correlations[app_name] = {
-                            "confidence": confidence,
-                            "issues_caused": [],
-                            "reasoning": reasoning,
-                            "installed_on": app.installed_on.isoformat() if app.installed_on else None
-                        }
-                    else:
-                        # Update confidence if this correlation is stronger
-                        if confidence > correlations[app_name]["confidence"]:
-                            correlations[app_name]["confidence"] = confidence
-                            correlations[app_name]["reasoning"] = reasoning
-                    
-                    correlations[app_name]["issues_caused"].append({
-                        "type": issue.issue_type,
-                        "file": issue.file_path,
-                        "severity": issue.severity
-                    })
+                
+                # Boost confidence if app is flagged as suspect
+                if app.is_suspect:
+                    confidence = min(95, confidence + 15)
+                    reasoning += " (flagged as potentially problematic)"
+                
+                # Add note about update being potential cause
+                if was_updated:
+                    reasoning += " - app updates can introduce new issues"
+                
+                app_name = app.app_name
+                if app_name not in correlations:
+                    correlations[app_name] = {
+                        "confidence": confidence,
+                        "issues_caused": [],
+                        "reasoning": reasoning,
+                        "installed_on": app.installed_on.isoformat() if app.installed_on else None,
+                        "updated_on": app.update_detected_at.isoformat() if app.update_detected_at else None,
+                        "was_updated": was_updated
+                    }
+                else:
+                    # Update confidence if this correlation is stronger
+                    if confidence > correlations[app_name]["confidence"]:
+                        correlations[app_name]["confidence"] = confidence
+                        correlations[app_name]["reasoning"] = reasoning
+                        correlations[app_name]["was_updated"] = was_updated
+                
+                correlations[app_name]["issues_caused"].append({
+                    "type": issue.issue_type,
+                    "file": issue.file_path,
+                    "severity": issue.severity
+                })
         
         return correlations
     
@@ -249,6 +305,7 @@ class IssueCorrelationService:
                 "reasoning": data["reasoning"],
                 "issues_caused": len(data["issues_caused"]),
                 "installed_on": data["installed_on"],
+                "was_updated": data.get("was_updated", False),
                 "conflicts_with": app_conflicts
             })
         
@@ -263,6 +320,7 @@ class IssueCorrelationService:
                 "confidence": top["confidence"],
                 "confidence_label": top["confidence_label"],
                 "message": self._get_suspect_message(top),
+                "was_updated": top["was_updated"],
                 "conflicts_with": top["conflicts_with"]
             }
         
@@ -297,53 +355,6 @@ class IssueCorrelationService:
                     })
         
         return app_conflicts
-        """Build merchant-friendly diagnosis with clear actions"""
-        
-        # Format issues for display
-        formatted_issues = []
-        for issue in issues:
-            formatted_issues.append({
-                "type": issue.issue_type,
-                "severity": issue.severity,
-                "file": issue.file_path,
-                "description": self._get_issue_description(issue),
-                "detected_at": issue.detected_at.isoformat() if issue.detected_at else None
-            })
-        
-        # Sort suspects by confidence
-        suspects = []
-        for app_name, data in correlations.items():
-            suspects.append({
-                "app_name": app_name,
-                "confidence": data["confidence"],
-                "confidence_label": self._get_confidence_label(data["confidence"]),
-                "reasoning": data["reasoning"],
-                "issues_caused": len(data["issues_caused"]),
-                "installed_on": data["installed_on"]
-            })
-        
-        suspects.sort(key=lambda x: x["confidence"], reverse=True)
-        
-        # Determine primary suspect
-        primary_suspect = None
-        if suspects:
-            top = suspects[0]
-            primary_suspect = {
-                "app_name": top["app_name"],
-                "confidence": top["confidence"],
-                "confidence_label": top["confidence_label"],
-                "message": self._get_suspect_message(top)
-            }
-        
-        # Build recommended actions
-        actions = self._build_actions(primary_suspect, suspects, issues)
-        
-        return {
-            "issues": formatted_issues,
-            "primary_suspect": primary_suspect,
-            "all_suspects": suspects,
-            "actions": actions
-        }
     
     def _get_issue_description(self, issue: ThemeIssue) -> str:
         """Get plain English description of an issue"""
@@ -404,7 +415,7 @@ class IssueCorrelationService:
                     "step": 1,
                     "title": f"'{primary['app_name']}' may be conflicting with '{other_app}'",
                     "description": f"{conflict['description']}",
-                    "why": f"These two apps are known to cause issues when used together."
+                    "why": "These two apps are known to cause issues when used together."
                 })
                 actions.append({
                     "step": 2,
@@ -422,10 +433,36 @@ class IssueCorrelationService:
                     "step": 4,
                     "title": "Consider replacing one of them",
                     "description": f"{conflict.get('solution', 'You may need to choose one app over the other.')}",
-                    "why": "Some apps simply can't work together. Choosing one will permanently fix the issue."
+                    "why": "Some apps simply can't work together. Choosing one should permanently fix the issue."
+                })
+            elif primary.get("was_updated", False):
+                # Update-specific guidance
+                actions.append({
+                    "step": 1,
+                    "title": f"'{primary['app_name']}' was recently updated",
+                    "description": "This app received an update around the time your issue started. Updates can sometimes introduce new bugs or conflicts.",
+                    "why": "The timing of the update matches when the problem appeared."
+                })
+                actions.append({
+                    "step": 2,
+                    "title": "Check if you can roll back the app",
+                    "description": f"Some apps let you use a previous version. Check '{primary['app_name']}' settings or contact their support.",
+                    "why": "Rolling back to the previous version may fix the issue immediately."
+                })
+                actions.append({
+                    "step": 3,
+                    "title": "If no rollback, disable temporarily",
+                    "description": f"Go to your Shopify admin → Apps, find '{primary['app_name']}', and disable it. Check if your store works normally.",
+                    "why": "This confirms whether the updated app is causing the problem."
+                })
+                actions.append({
+                    "step": 4,
+                    "title": "Contact the app developer",
+                    "description": f"Let the '{primary['app_name']}' team know about the issue. They may already be working on a fix or can help you troubleshoot.",
+                    "why": "App developers want to know about bugs - your report helps everyone!"
                 })
             else:
-                # Single app guidance (no known conflict)
+                # Single app guidance (no known conflict, new install)
                 actions.append({
                     "step": 1,
                     "title": f"Disable '{primary['app_name']}' temporarily",
@@ -498,69 +535,6 @@ class IssueCorrelationService:
             "title": "Still stuck? We're here to help",
             "description": "Run another scan to get fresh data, or contact the app developer directly. You can also reach out to a Shopify Expert if the issue persists.",
             "why": "Sometimes issues need expert eyes. Don't struggle alone!"
-        })
-        
-        return actions
-    
-        """Build step-by-step actions for the merchant"""
-        actions = []
-        
-        if primary and primary["confidence"] >= 60:
-            # High confidence - give direct action
-            actions.append({
-                "step": 1,
-                "title": f"Disable '{primary['app_name']}' temporarily",
-                "description": f"Go to your Shopify admin → Apps, find '{primary['app_name']}', and disable it. This won't delete anything, just turns it off.",
-                "why": f"This app is {primary['confidence_label'].lower()} causing the issue based on when it was installed."
-            })
-            actions.append({
-                "step": 2,
-                "title": "Check if the problem is fixed",
-                "description": "Open your store in a new browser window (or incognito mode) and check if things are back to normal.",
-                "why": "This confirms whether that app was the cause."
-            })
-            actions.append({
-                "step": 3,
-                "title": "Decide what to do next",
-                "description": f"If disabling '{primary['app_name']}' fixed the issue, you can either keep it disabled, contact the app developer for help, or look for an alternative app.",
-                "why": "You have options - don't feel stuck!"
-            })
-        elif suspects:
-            # Lower confidence - suggest testing multiple
-            actions.append({
-                "step": 1,
-                "title": "Test your recently installed apps one by one",
-                "description": "Disable each recent app one at a time, checking your store after each to find the culprit.",
-                "why": "We found a few possible causes, so testing each one will pinpoint the exact issue."
-            })
-            suspect_names = [s["app_name"] for s in suspects[:3]]
-            actions.append({
-                "step": 2,
-                "title": f"Start with: {', '.join(suspect_names)}",
-                "description": "These apps were installed around the time issues started appearing.",
-                "why": "Testing in order of likelihood saves you time."
-            })
-        else:
-            # No suspects - general guidance
-            actions.append({
-                "step": 1,
-                "title": "Review your recently installed apps",
-                "description": "Check which apps you've added in the last 2 weeks. Try disabling them one at a time.",
-                "why": "Most theme issues are caused by app conflicts."
-            })
-            actions.append({
-                "step": 2,
-                "title": "Check your theme customizations",
-                "description": "If you recently edited your theme code directly, those changes might be causing issues.",
-                "why": "Manual code changes can sometimes conflict with apps."
-            })
-        
-        # Always add this final action
-        actions.append({
-            "step": len(actions) + 1,
-            "title": "Still stuck? Run another scan",
-            "description": "Click 'Run Full Scan' to get fresh data. If issues persist, consider reaching out to a Shopify expert.",
-            "why": "Sometimes issues resolve themselves after app updates."
         })
         
         return actions
