@@ -252,31 +252,11 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Rollback Tab -->
         <div id="tab-rollback" class="tab-content hidden">
-            <div class="card" style="margin-bottom: 24px;">
-                <div class="card-header">
-                    <h3 class="card-title">🔄 Theme File Versions</h3>
-                    <button class="btn btn-primary btn-sm" onclick="loadRollbackFiles()">
-                        Load File History
-                    </button>
-                </div>
-                <div class="card-body" id="rollback-files-content">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔄</div>
-                        <h3>Rollback Protection</h3>
-                        <p>Sherlock tracks changes to your theme files. If an app breaks something, you can restore files to a
-                            previous working version.</p>
-                        <button class="btn btn-primary" onclick="loadRollbackFiles()" style="margin-top: 16px;">
-                            View File History
-                        </button>
-                    </div>
-                </div>
-            </div>
-        
-            <!-- File Version History (shown when a file is selected) -->
-            <div class="card hidden" id="version-history-card">
+            <!-- File Version History (shown when a file is selected) - AT TOP -->
+            <div class="card hidden" id="version-history-card" style="margin-bottom: 24px;">
                 <div class="card-header">
                     <h3 class="card-title" id="version-history-title">📁 File History</h3>
                     <button class="btn btn-secondary btn-sm" onclick="closeVersionHistory()">
@@ -286,7 +266,29 @@
                 <div class="card-body" id="version-history-content">
                 </div>
             </div>
-        
+
+            <!-- Theme File Versions -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <h3 class="card-title">📄 Theme File Versions</h3>
+                    <button class="btn btn-primary btn-sm" onclick="loadRollbackFiles()">
+                        Load File History
+                    </button>
+                </div>
+                <div class="card-body" id="rollback-files-content">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <h3>Rollback Protection</h3>
+                        <p>Sherlock tracks changes to your theme files. If an app breaks something, you can restore
+                            files to a
+                            previous working version.</p>
+                        <button class="btn btn-primary" onclick="loadRollbackFiles()" style="margin-top: 16px;">
+                            View File History
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Rollback History -->
             <div class="card">
                 <div class="card-header">
@@ -304,7 +306,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Community Tab -->
         <div id="tab-community" class="tab-content hidden">
             <div class="card">
