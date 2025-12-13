@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, and_
 
 from app.db.models import Store, InstalledApp, ThemeIssue, DailyScan
+from app.services.conflict_database import ConflictDatabase
 
 
 class IssueCorrelationService:
@@ -60,11 +61,19 @@ class IssueCorrelationService:
                 "last_clean_scan": last_clean_scan.isoformat() if last_clean_scan else None
             }
         
+            # Get all installed apps for conflict checking
+        all_apps = await self._get_all_installed_apps(store.id)
+        all_app_names = [app.app_name for app in all_apps]
+        
+        # Check for conflicts between installed apps
+        conflict_db = ConflictDatabase()
+        conflicts = conflict_db.check_conflicts(all_app_names)
+        
         # Correlate issues with apps
         correlations = self._correlate_issues_to_apps(issues, recent_apps, last_clean_scan)
         
         # Build merchant-friendly diagnosis
-        diagnosis = self._build_diagnosis(issues, correlations, recent_apps)
+        diagnosis = self._build_diagnosis(issues, correlations, recent_apps, conflicts, all_app_names)
         
         return {
             "shop": shop_domain,
@@ -88,6 +97,14 @@ class IssueCorrelationService:
         )
         return result.scalars().all()
     
+    async def _get_all_installed_apps(self, store_id: str) -> List[InstalledApp]:
+        """Get all installed apps for a store"""
+        result = await self.db.execute(
+            select(InstalledApp)
+            .where(InstalledApp.store_id == store_id)
+        )
+        return result.scalars().all()
+
     async def _get_recent_apps(self, store_id: str, days: int = 14) -> List[InstalledApp]:
         """Get apps installed in the last N days"""
         since = datetime.utcnow() - timedelta(days=days)
@@ -199,8 +216,87 @@ class IssueCorrelationService:
         self, 
         issues: List[ThemeIssue], 
         correlations: Dict[str, Dict],
-        recent_apps: List[InstalledApp]
+        recent_apps: List[InstalledApp],
+        conflicts: List[Dict] = None,
+        all_app_names: List[str] = None
     ) -> Dict[str, Any]:
+        """Build merchant-friendly diagnosis with clear actions"""
+        
+        conflicts = conflicts or []
+        all_app_names = all_app_names or []
+        
+        # Format issues for display
+        formatted_issues = []
+        for issue in issues:
+            formatted_issues.append({
+                "type": issue.issue_type,
+                "severity": issue.severity,
+                "file": issue.file_path,
+                "description": self._get_issue_description(issue),
+                "detected_at": issue.detected_at.isoformat() if issue.detected_at else None
+            })
+        
+        # Sort suspects by confidence
+        suspects = []
+        for app_name, data in correlations.items():
+            # Check if this app has conflicts with other installed apps
+            app_conflicts = self._get_app_conflicts(app_name, conflicts)
+            
+            suspects.append({
+                "app_name": app_name,
+                "confidence": data["confidence"],
+                "confidence_label": self._get_confidence_label(data["confidence"]),
+                "reasoning": data["reasoning"],
+                "issues_caused": len(data["issues_caused"]),
+                "installed_on": data["installed_on"],
+                "conflicts_with": app_conflicts
+            })
+        
+        suspects.sort(key=lambda x: x["confidence"], reverse=True)
+        
+        # Determine primary suspect
+        primary_suspect = None
+        if suspects:
+            top = suspects[0]
+            primary_suspect = {
+                "app_name": top["app_name"],
+                "confidence": top["confidence"],
+                "confidence_label": top["confidence_label"],
+                "message": self._get_suspect_message(top),
+                "conflicts_with": top["conflicts_with"]
+            }
+        
+        # Build recommended actions
+        actions = self._build_actions(primary_suspect, suspects, issues, conflicts)
+        
+        return {
+            "issues": formatted_issues,
+            "primary_suspect": primary_suspect,
+            "all_suspects": suspects,
+            "actions": actions,
+            "conflicts": conflicts
+        }
+    
+    def _get_app_conflicts(self, app_name: str, conflicts: List[Dict]) -> List[Dict]:
+        """Get conflicts involving this specific app"""
+        app_conflicts = []
+        app_lower = app_name.lower()
+        
+        for conflict in conflicts:
+            matched = [a.lower() for a in conflict.get("matched_apps", [])]
+            if app_lower in matched or any(app_lower in m for m in matched):
+                # Find the OTHER app in the conflict
+                other_apps = [a for a in conflict.get("conflicting_apps", []) 
+                             if a.lower() != app_lower and app_lower not in a.lower()]
+                if other_apps:
+                    app_conflicts.append({
+                        "other_app": other_apps[0],
+                        "severity": conflict.get("severity"),
+                        "description": conflict.get("description"),
+                        "solution": conflict.get("solution")
+                    })
+        
+        return app_conflicts
         """Build merchant-friendly diagnosis with clear actions"""
         
         # Format issues for display
@@ -290,8 +386,122 @@ class IssueCorrelationService:
         self, 
         primary: Optional[Dict], 
         suspects: List[Dict], 
-        issues: List[ThemeIssue]
+        issues: List[ThemeIssue],
+        conflicts: List[Dict] = None
     ) -> List[Dict]:
+        """Build step-by-step actions for the merchant"""
+        actions = []
+        conflicts = conflicts or []
+        
+        if primary and primary["confidence"] >= 60:
+            # Check if there's a conflict with another app
+            if primary.get("conflicts_with"):
+                conflict = primary["conflicts_with"][0]
+                other_app = conflict["other_app"]
+                
+                # Conflict-based guidance
+                actions.append({
+                    "step": 1,
+                    "title": f"'{primary['app_name']}' may be conflicting with '{other_app}'",
+                    "description": f"{conflict['description']}",
+                    "why": f"These two apps are known to cause issues when used together."
+                })
+                actions.append({
+                    "step": 2,
+                    "title": f"Try disabling '{primary['app_name']}' first",
+                    "description": f"Go to your Shopify admin → Apps, find '{primary['app_name']}', and disable it. Check if your store works normally.",
+                    "why": f"Since '{primary['app_name']}' was installed more recently, it's the more likely culprit."
+                })
+                actions.append({
+                    "step": 3,
+                    "title": "If that doesn't fix it, try the other app",
+                    "description": f"Re-enable '{primary['app_name']}', then disable '{other_app}' instead. Check your store again.",
+                    "why": "Sometimes the older app is actually the problem, especially after updates."
+                })
+                actions.append({
+                    "step": 4,
+                    "title": "Consider replacing one of them",
+                    "description": f"{conflict.get('solution', 'You may need to choose one app over the other.')}",
+                    "why": "Some apps simply can't work together. Choosing one will permanently fix the issue."
+                })
+            else:
+                # Single app guidance (no known conflict)
+                actions.append({
+                    "step": 1,
+                    "title": f"Disable '{primary['app_name']}' temporarily",
+                    "description": f"Go to your Shopify admin → Apps, find '{primary['app_name']}', and disable it. This won't delete anything, just turns it off.",
+                    "why": f"This app is {primary['confidence_label'].lower()} causing the issue based on when it was installed."
+                })
+                actions.append({
+                    "step": 2,
+                    "title": "Check if the problem is fixed",
+                    "description": "Open your store in a new browser window (or incognito mode) and check if things are back to normal.",
+                    "why": "This confirms whether that app was the cause."
+                })
+                actions.append({
+                    "step": 3,
+                    "title": "If it's NOT fixed, re-enable and try the next suspect",
+                    "description": "Turn the app back on, then disable the next most likely app. Repeat until you find the culprit.",
+                    "why": "Sometimes our best guess isn't right - systematic testing will find the real cause."
+                })
+                actions.append({
+                    "step": 4,
+                    "title": "Decide what to do next",
+                    "description": f"If disabling '{primary['app_name']}' fixed the issue, you can: keep it disabled, contact the app developer for help, or look for an alternative app.",
+                    "why": "You have options - don't feel stuck!"
+                })
+        elif suspects:
+            # Lower confidence - suggest testing multiple
+            actions.append({
+                "step": 1,
+                "title": "Test your recently installed apps one by one",
+                "description": "Disable each recent app one at a time, checking your store after each to find the culprit.",
+                "why": "We found a few possible causes, so testing each one will pinpoint the exact issue."
+            })
+            suspect_names = [s["app_name"] for s in suspects[:3]]
+            actions.append({
+                "step": 2,
+                "title": f"Start with: {', '.join(suspect_names)}",
+                "description": "These apps were installed around the time issues started appearing.",
+                "why": "Testing in order of likelihood saves you time."
+            })
+            actions.append({
+                "step": 3,
+                "title": "If none of those fix it",
+                "description": "The issue might be from a theme update or a change you made manually. Check your theme's recent changes in Shopify admin → Online Store → Themes → Actions → Edit code → Older versions.",
+                "why": "Not all issues come from apps - theme updates can also cause problems."
+            })
+        else:
+            # No suspects - general guidance
+            actions.append({
+                "step": 1,
+                "title": "Review your recently installed apps",
+                "description": "Check which apps you've added in the last 2 weeks. Try disabling them one at a time.",
+                "why": "Most theme issues are caused by app conflicts."
+            })
+            actions.append({
+                "step": 2,
+                "title": "Check your theme customizations",
+                "description": "If you recently edited your theme code directly, those changes might be causing issues.",
+                "why": "Manual code changes can sometimes conflict with apps."
+            })
+            actions.append({
+                "step": 3,
+                "title": "If nothing works",
+                "description": "Try reverting your theme to a previous version: Shopify admin → Online Store → Themes → Actions → Edit code → Older versions.",
+                "why": "This can undo recent changes that may have caused the issue."
+            })
+        
+        # Always add this final action
+        actions.append({
+            "step": len(actions) + 1,
+            "title": "Still stuck? We're here to help",
+            "description": "Run another scan to get fresh data, or contact the app developer directly. You can also reach out to a Shopify Expert if the issue persists.",
+            "why": "Sometimes issues need expert eyes. Don't struggle alone!"
+        })
+        
+        return actions
+    
         """Build step-by-step actions for the merchant"""
         actions = []
         
