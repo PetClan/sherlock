@@ -152,7 +152,7 @@ async def get_scan_report(
     }
 
 
-@router.get("/diagnosis/{shop}")
+@router.get("/store-diagnosis/{shop}")
 async def get_store_diagnosis(
     shop: str,
     db: AsyncSession = Depends(get_db)
