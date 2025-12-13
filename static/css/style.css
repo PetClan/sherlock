@@ -2395,3 +2395,130 @@ code {
     background: linear-gradient(135deg, var(--gold-400) 0%, var(--gold-300) 100%);
     transform: translateY(-1px);
 }
+/* ==================== ROLLBACK TAB ==================== */
+
+.rollback-files-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rollback-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--navy-800);
+    border: 1px solid var(--navy-600);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.rollback-file-item:hover {
+    border-color: var(--gold-500);
+    background: var(--navy-700);
+}
+
+.rollback-file-info {
+    flex: 1;
+}
+
+.rollback-file-path {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.rollback-file-meta {
+    margin-top: 4px;
+}
+
+.rollback-file-action {
+    margin-left: 16px;
+}
+
+/* Version Timeline */
+.version-timeline {
+    position: relative;
+    padding-left: 24px;
+}
+
+.version-timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--navy-600);
+}
+
+.version-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    position: relative;
+}
+
+.version-item:not(:last-child) {
+    border-bottom: 1px solid var(--navy-700);
+}
+
+.version-marker {
+    position: absolute;
+    left: -24px;
+    top: 20px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    background: var(--navy-800);
+}
+
+.version-content {
+    flex: 1;
+}
+
+.version-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.version-date {
+    font-weight: 600;
+    color: var(--slate-200);
+}
+
+.version-meta {
+    margin-bottom: 8px;
+}
+
+.version-current {
+    background: rgba(16, 185, 129, 0.05);
+    margin-left: -16px;
+    padding-left: 16px;
+    margin-right: -16px;
+    padding-right: 16px;
+    border-radius: 8px;
+}
+
+/* Rollback History */
+.rollback-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rollback-history-item {
+    padding: 12px 16px;
+    background: var(--navy-800);
+    border: 1px solid var(--navy-600);
+    border-radius: 8px;
+}
+
+.rollback-history-info {
+    flex: 1;
+}

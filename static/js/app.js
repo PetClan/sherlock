@@ -629,14 +629,14 @@ function getActionAdvice(issue) {
 }
 function getViewPageLink(file) {
     if (!file) return '';
-
+    
     // Get the shop domain from state
     const shopDomain = state.shop ? state.shop.replace('.myshopify.com', '') : null;
     if (!shopDomain) return '';
-
+    
     let pagePath = '';
     let linkText = '';
-
+    
     if (file.includes('product')) {
         pagePath = '/products';
         linkText = 'View a product page';
@@ -652,11 +652,11 @@ function getViewPageLink(file) {
     } else {
         return '';
     }
-
+    
     const storeUrl = 'https://' + shopDomain + '.myshopify.com' + pagePath;
-
-    return '<a href="' + storeUrl + '" target="_blank" style="color: var(--gold-400); font-size: 12px; margin-left: 12px; text-decoration: none;">' +
-        linkText + ' →</a>';
+    
+    return '<a href="' + storeUrl + '" target="_blank" style="color: var(--gold-400); font-size: 12px; margin-left: 12px; text-decoration: none;">' + 
+           linkText + ' →</a>';
 }
 
 function backToDashboard() {
@@ -1379,6 +1379,446 @@ function showReportError(message) {
         '<div style="padding: 16px; background: var(--crimson-bg); border: 1px solid var(--crimson-500); border-radius: var(--radius-md);">' +
         '<p style="color: var(--crimson-400);">❌ ' + escapeHtml(message) + '</p>' +
         '</div>';
+}
+// ==================== ROLLBACK TAB ====================
+
+async function loadRollbackFiles() {
+    const container = document.getElementById('rollback-files-content');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading file versions...</p></div>';
+
+    try {
+        // First get the active theme ID
+        const storeData = await api('/store/' + state.shop);
+        const themeId = storeData.active_theme_id;
+
+        if (!themeId) {
+            container.innerHTML =
+                '<div class="empty-state">' +
+                '<div class="empty-state-icon">⚠️</div>' +
+                '<h3>No Theme Found</h3>' +
+                '<p>Run a full scan first to capture your theme files.</p>' +
+                '</div>';
+            return;
+        }
+
+        state.activeThemeId = themeId;
+
+        const result = await api('/rollback/files/' + state.shop + '/' + themeId);
+        renderRollbackFiles(result);
+    } catch (error) {
+        console.error('Load rollback files error:', error);
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">📁</div>' +
+            '<h3>No File History Yet</h3>' +
+            '<p>Sherlock will start tracking your theme files after the first scan. Run a full scan to begin.</p>' +
+            '<button class="btn btn-primary" onclick="startScan(\'full\')" style="margin-top: 16px;">Run Full Scan</button>' +
+            '</div>';
+    }
+}
+
+function renderRollbackFiles(data) {
+    const container = document.getElementById('rollback-files-content');
+    const files = data.files || [];
+
+    if (files.length === 0) {
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">📁</div>' +
+            '<h3>No File History Yet</h3>' +
+            '<p>Run a full scan to start tracking your theme files.</p>' +
+            '</div>';
+        return;
+    }
+
+    let html = '<div class="rollback-files-list">';
+
+    files.forEach(function (file) {
+        const isAppOwned = file.is_app_owned;
+        const appBadge = isAppOwned && file.app_owner_guess
+            ? '<span class="badge badge-warning" style="margin-left: 8px;">App: ' + escapeHtml(file.app_owner_guess) + '</span>'
+            : '';
+
+        const versionText = file.version_count === 1 ? '1 version' : file.version_count + ' versions';
+
+        html +=
+            '<div class="rollback-file-item" onclick="loadFileVersions(\'' + escapeHtml(file.file_path) + '\')" style="cursor: pointer;">' +
+            '<div class="rollback-file-info">' +
+            '<div class="rollback-file-path">' +
+            '<span style="color: var(--gold-400); margin-right: 8px;">📄</span>' +
+            '<strong>' + escapeHtml(file.file_path) + '</strong>' +
+            appBadge +
+            '</div>' +
+            '<div class="rollback-file-meta">' +
+            '<span class="badge badge-info">' + versionText + '</span>' +
+            '</div>' +
+            '</div>' +
+            '<div class="rollback-file-action">' +
+            '<span style="color: var(--slate-400);">View History →</span>' +
+            '</div>' +
+            '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+async function loadFileVersions(filePath) {
+    const filesCard = document.getElementById('rollback-files-content').closest('.card');
+    const historyCard = document.getElementById('version-history-card');
+    const container = document.getElementById('version-history-content');
+    const title = document.getElementById('version-history-title');
+
+    // Show history card, keep files card visible
+    historyCard.classList.remove('hidden');
+    title.textContent = '📁 ' + filePath;
+    state.selectedFilePath = filePath;
+
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading versions...</p></div>';
+
+    try {
+        const result = await api('/rollback/versions/' + state.shop + '/' + state.activeThemeId + '?file_path=' + encodeURIComponent(filePath));
+        renderFileVersions(result, filePath);
+    } catch (error) {
+        console.error('Load versions error:', error);
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">⚠️</div>' +
+            '<h3>Error Loading Versions</h3>' +
+            '<p>' + escapeHtml(error.message) + '</p>' +
+            '</div>';
+    }
+}
+
+function renderFileVersions(data, filePath) {
+    const container = document.getElementById('version-history-content');
+    const versions = data.versions || [];
+
+    if (versions.length === 0) {
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">📁</div>' +
+            '<h3>No Versions Found</h3>' +
+            '</div>';
+        return;
+    }
+
+    let html = '<div class="version-timeline">';
+
+    versions.forEach(function (version, index) {
+        const isCurrent = index === 0;
+        const date = new Date(version.created_at);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        const sizeStr = version.file_size ? formatFileSize(version.file_size) : 'Unknown size';
+
+        html +=
+            '<div class="version-item ' + (isCurrent ? 'version-current' : '') + '">' +
+            '<div class="version-marker">' +
+            (isCurrent ? '<span style="color: var(--emerald-400);">●</span>' : '<span style="color: var(--slate-500);">○</span>') +
+            '</div>' +
+            '<div class="version-content">' +
+            '<div class="version-header">' +
+            '<span class="version-date">' + dateStr + ' at ' + timeStr + '</span>' +
+            (isCurrent ? '<span class="badge badge-success" style="margin-left: 8px;">Current</span>' : '') +
+            '</div>' +
+            '<div class="version-meta">' +
+            '<span style="color: var(--slate-500); font-size: 13px;">' + sizeStr + '</span>' +
+            '</div>' +
+            '<div class="version-actions" style="margin-top: 12px;">';
+
+        if (!isCurrent) {
+            html +=
+                '<button class="btn btn-secondary btn-sm" onclick="compareVersions(\'' + version.id + '\', \'' + versions[0].id + '\')" style="margin-right: 8px;">' +
+                '🔍 Compare with Current' +
+                '</button>' +
+                '<button class="btn btn-primary btn-sm" onclick="confirmRollback(\'' + version.id + '\', \'' + escapeHtml(filePath) + '\', \'' + dateStr + '\')">' +
+                '🔄 Restore This Version' +
+                '</button>';
+        } else {
+            html += '<span style="color: var(--slate-500); font-size: 13px;">This is the current version</span>';
+        }
+
+        html +=
+            '</div>' +
+            '</div>' +
+            '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function closeVersionHistory() {
+    document.getElementById('version-history-card').classList.add('hidden');
+    state.selectedFilePath = null;
+}
+
+async function compareVersions(oldVersionId, newVersionId) {
+    try {
+        const result = await api('/rollback/compare?version_id_1=' + oldVersionId + '&version_id_2=' + newVersionId);
+        showCompareModal(result);
+    } catch (error) {
+        console.error('Compare error:', error);
+        showNotification('Failed to compare versions: ' + error.message, 'error');
+    }
+}
+
+function showCompareModal(data) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('compare-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'compare-modal';
+        modal.className = 'modal hidden';
+        modal.innerHTML =
+            '<div class="modal-content" style="max-width: 900px; max-height: 80vh;">' +
+            '<div class="modal-header">' +
+            '<h2>🔍 Compare Versions</h2>' +
+            '<button class="modal-close" onclick="closeCompareModal()">&times;</button>' +
+            '</div>' +
+            '<div class="modal-body" id="compare-modal-body" style="overflow-y: auto; max-height: 60vh;">' +
+            '</div>' +
+            '<div class="modal-footer">' +
+            '<button class="btn btn-secondary" onclick="closeCompareModal()">Close</button>' +
+            '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+    }
+
+    const body = document.getElementById('compare-modal-body');
+
+    const date1 = new Date(data.version_1.created_at).toLocaleString();
+    const date2 = new Date(data.version_2.created_at).toLocaleString();
+
+    if (data.same_content) {
+        body.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">✅</div>' +
+            '<h3>Files are identical</h3>' +
+            '<p>No changes between these versions.</p>' +
+            '</div>';
+    } else {
+        body.innerHTML =
+            '<div style="margin-bottom: 16px;">' +
+            '<p><strong>File:</strong> ' + escapeHtml(data.file_path) + '</p>' +
+            '<p><strong>Size change:</strong> ' + (data.size_diff > 0 ? '+' : '') + data.size_diff + ' bytes</p>' +
+            '</div>' +
+            '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' +
+            '<div>' +
+            '<h4 style="margin-bottom: 8px; color: var(--slate-400);">📅 Old Version (' + date1 + ')</h4>' +
+            '<pre style="background: var(--navy-900); border: 1px solid var(--navy-600); border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 11px; color: var(--slate-300); max-height: 400px; overflow-y: auto;">' +
+            escapeHtml(data.version_1.content || '(empty)') +
+            '</pre>' +
+            '</div>' +
+            '<div>' +
+            '<h4 style="margin-bottom: 8px; color: var(--emerald-400);">📅 Current Version (' + date2 + ')</h4>' +
+            '<pre style="background: var(--navy-900); border: 1px solid var(--navy-600); border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 11px; color: var(--slate-300); max-height: 400px; overflow-y: auto;">' +
+            escapeHtml(data.version_2.content || '(empty)') +
+            '</pre>' +
+            '</div>' +
+            '</div>';
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function closeCompareModal() {
+    document.getElementById('compare-modal').classList.add('hidden');
+}
+
+function confirmRollback(versionId, filePath, dateStr) {
+    // Create confirmation modal
+    let modal = document.getElementById('rollback-confirm-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'rollback-confirm-modal';
+        modal.className = 'modal hidden';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML =
+        '<div class="modal-content" style="max-width: 500px;">' +
+        '<div class="modal-header">' +
+        '<h2>🔄 Confirm Rollback</h2>' +
+        '<button class="modal-close" onclick="closeRollbackConfirmModal()">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<div style="background: var(--amber-bg); border: 1px solid var(--amber-500); border-radius: 8px; padding: 16px; margin-bottom: 16px;">' +
+        '<p style="color: var(--amber-400); margin: 0;">⚠️ <strong>Warning:</strong> This will overwrite the current version of this file in your live theme.</p>' +
+        '</div>' +
+        '<p><strong>File:</strong> ' + escapeHtml(filePath) + '</p>' +
+        '<p><strong>Restore to:</strong> ' + escapeHtml(dateStr) + '</p>' +
+        '<p style="margin-top: 16px; color: var(--slate-400);">This action can be undone by restoring to a different version.</p>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button class="btn btn-secondary" onclick="closeRollbackConfirmModal()">Cancel</button>' +
+        '<button class="btn btn-primary" onclick="executeRollback(\'' + versionId + '\')" id="rollback-execute-btn">' +
+        '🔄 Restore Now' +
+        '</button>' +
+        '</div>' +
+        '</div>';
+
+    modal.classList.remove('hidden');
+}
+
+function closeRollbackConfirmModal() {
+    document.getElementById('rollback-confirm-modal').classList.add('hidden');
+}
+
+async function executeRollback(versionId) {
+    const btn = document.getElementById('rollback-execute-btn');
+    btn.disabled = true;
+    btn.textContent = 'Restoring...';
+
+    try {
+        const result = await fetch('/api/v1/rollback/restore/' + state.shop, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                version_id: versionId,
+                mode: 'direct_live',
+                user_confirmed: true
+            })
+        }).then(r => r.json());
+
+        if (result.success) {
+            showNotification('✅ File restored successfully!', 'success');
+            closeRollbackConfirmModal();
+            // Reload the file versions
+            if (state.selectedFilePath) {
+                loadFileVersions(state.selectedFilePath);
+            }
+            loadRollbackHistory();
+        } else if (result.error === 'app_owned_warning') {
+            // Show app-owned warning
+            showAppOwnedWarning(versionId, result);
+        } else {
+            showNotification('❌ Rollback failed: ' + (result.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Rollback error:', error);
+        showNotification('❌ Rollback failed: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Restore Now';
+    }
+}
+
+function showAppOwnedWarning(versionId, result) {
+    const modal = document.getElementById('rollback-confirm-modal');
+    modal.innerHTML =
+        '<div class="modal-content" style="max-width: 500px;">' +
+        '<div class="modal-header">' +
+        '<h2>⚠️ App-Owned File Warning</h2>' +
+        '<button class="modal-close" onclick="closeRollbackConfirmModal()">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<div style="background: var(--crimson-bg); border: 1px solid var(--crimson-500); border-radius: 8px; padding: 16px; margin-bottom: 16px;">' +
+        '<p style="color: var(--crimson-400); margin: 0;">🚨 <strong>This file appears to belong to an app:</strong> ' + escapeHtml(result.app_owner_guess || 'Unknown') + '</p>' +
+        '</div>' +
+        '<p>Rolling back this file may affect how that app works. The app might overwrite your changes the next time it runs.</p>' +
+        '<p style="margin-top: 12px;"><strong>Recommendation:</strong> Contact the app developer if you\'re having issues, or proceed only if you understand the risks.</p>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button class="btn btn-secondary" onclick="closeRollbackConfirmModal()">Cancel</button>' +
+        '<button class="btn btn-primary" onclick="executeRollbackForced(\'' + versionId + '\')" style="background: var(--crimson-500);">' +
+        '⚠️ Restore Anyway' +
+        '</button>' +
+        '</div>' +
+        '</div>';
+}
+
+async function executeRollbackForced(versionId) {
+    try {
+        const result = await fetch('/api/v1/rollback/restore/' + state.shop, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                version_id: versionId,
+                mode: 'direct_live',
+                user_confirmed: true
+            })
+        }).then(r => r.json());
+
+        if (result.success) {
+            showNotification('✅ File restored successfully!', 'success');
+            closeRollbackConfirmModal();
+            if (state.selectedFilePath) {
+                loadFileVersions(state.selectedFilePath);
+            }
+            loadRollbackHistory();
+        } else {
+            showNotification('❌ Rollback failed: ' + (result.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Rollback error:', error);
+        showNotification('❌ Rollback failed: ' + error.message, 'error');
+    }
+}
+
+async function loadRollbackHistory() {
+    const container = document.getElementById('rollback-history-content');
+
+    try {
+        const result = await api('/rollback/history/' + state.shop + '?limit=20');
+        renderRollbackHistory(result);
+    } catch (error) {
+        console.error('Load rollback history error:', error);
+        // Keep the empty state
+    }
+}
+
+function renderRollbackHistory(data) {
+    const container = document.getElementById('rollback-history-content');
+    const rollbacks = data.rollbacks || [];
+
+    if (rollbacks.length === 0) {
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">📋</div>' +
+            '<h3>No Rollbacks Yet</h3>' +
+            '<p>When you restore a file to a previous version, it will appear here.</p>' +
+            '</div>';
+        return;
+    }
+
+    let html = '<div class="rollback-history-list">';
+
+    rollbacks.forEach(function (rollback) {
+        const date = new Date(rollback.created_at);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+        const statusBadge = rollback.status === 'completed'
+            ? '<span class="badge badge-success">✅ Completed</span>'
+            : rollback.status === 'failed'
+                ? '<span class="badge badge-danger">❌ Failed</span>'
+                : '<span class="badge badge-warning">⏳ Pending</span>';
+
+        html +=
+            '<div class="rollback-history-item">' +
+            '<div class="rollback-history-info">' +
+            '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">' +
+            '<strong>' + escapeHtml(rollback.file_path) + '</strong>' +
+            statusBadge +
+            '</div>' +
+            '<div style="color: var(--slate-500); font-size: 13px;">' +
+            dateStr + ' at ' + timeStr +
+            (rollback.was_app_owned ? ' · <span style="color: var(--amber-400);">App-owned file</span>' : '') +
+            '</div>' +
+            '</div>' +
+            '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 // ==================== UTILITY FUNCTIONS ====================
