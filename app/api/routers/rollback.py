@@ -396,3 +396,74 @@ async def restore_full_theme(
         "total_files": len(files),
         "errors": errors if errors else None
     }
+@router.get("/debug/{shop}")
+async def debug_rollback(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Debug endpoint to diagnose rollback issues"""
+    import httpx
+    
+    # Get store
+    result = await db.execute(
+        select(Store).where(Store.shopify_domain.contains(shop))
+    )
+    store = result.scalar_one_or_none()
+    
+    if not store:
+        return {"error": "Store not found"}
+    
+    # Get active theme
+    theme_service = ThemeSnapshotService(db)
+    active_theme = await theme_service.get_active_theme(store)
+    
+    if not active_theme:
+        return {"error": "No active theme found"}
+    
+    theme_id = active_theme.get("id")
+    
+    debug_results = {
+        "shop": store.shopify_domain,
+        "active_theme_id": theme_id,
+        "active_theme_name": active_theme.get("name"),
+    }
+    
+    async with httpx.AsyncClient() as client:
+        # Test 1: Can we GET the theme?
+        theme_response = await client.get(
+            f"https://{store.shopify_domain}/admin/api/2024-01/themes/{theme_id}.json",
+            headers={"X-Shopify-Access-Token": store.access_token}
+        )
+        debug_results["get_theme_status"] = theme_response.status_code
+        
+        # Test 2: Can we GET an asset?
+        asset_response = await client.get(
+            f"https://{store.shopify_domain}/admin/api/2024-01/themes/{theme_id}/assets.json?asset[key]=layout/theme.liquid",
+            headers={"X-Shopify-Access-Token": store.access_token}
+        )
+        debug_results["get_asset_status"] = asset_response.status_code
+        
+        # Test 3: Try a PUT (this will likely fail)
+        if asset_response.status_code == 200:
+            asset_data = asset_response.json()
+            original_content = asset_data.get("asset", {}).get("value", "")
+            
+            # Try to PUT the same content back (no actual change)
+            put_response = await client.put(
+                f"https://{store.shopify_domain}/admin/api/2024-01/themes/{theme_id}/assets.json",
+                headers={
+                    "X-Shopify-Access-Token": store.access_token,
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "asset": {
+                        "key": "layout/theme.liquid",
+                        "value": original_content
+                    }
+                }
+            )
+            debug_results["put_asset_status"] = put_response.status_code
+            debug_results["put_asset_response"] = put_response.text[:500]
+            debug_results["put_request_id"] = put_response.headers.get("x-request-id")
+    
+    return debug_results
