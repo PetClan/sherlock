@@ -235,7 +235,7 @@ class ThemeAnalyzerService:
                 issue_type=issue_data["issue_type"],
                 severity=issue_data["severity"],
                 line_number=issue_data.get("line_number"),
-                code_snippet=issue_data.get("code_snippet"),
+                code_snippet=(issue_data.get("code_snippet") or "")[:250],
                 likely_source=issue_data.get("likely_source"),
                 confidence=issue_data.get("confidence", 0.0)
             )
