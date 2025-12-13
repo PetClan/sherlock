@@ -504,16 +504,51 @@ function renderScanReport(report) {
         report.issues.forEach(function (issue) {
             const severityClass = issue.severity === 'high' ? 'danger' :
                 issue.severity === 'medium' ? 'warning' : 'info';
+            const severityLabel = issue.severity === 'high' ? 'Needs attention' :
+                issue.severity === 'medium' ? 'Worth checking' : 'Minor';
+
+            // Get plain English description
+            const friendlyType = getFriendlyIssueType(issue.type || issue.issue_type);
+            const friendlyFile = getFriendlyFilePath(issue.file);
+
             issuesHtml +=
-                '<div class="card" style="margin-bottom: 12px; border-left: 4px solid var(--' + (severityClass === 'danger' ? 'crimson' : severityClass === 'warning' ? 'amber' : 'gold') + '-500);">' +
-                '<div class="card-body">' +
-                '<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">' +
-                '<span class="badge badge-' + severityClass + '">' + issue.severity + '</span>' +
-                '<strong>' + escapeHtml(issue.issue_type) + '</strong>' +
+                '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--' + (severityClass === 'danger' ? 'crimson' : severityClass === 'warning' ? 'amber' : 'gold') + '-500);">' +
+                '<div class="card-body" style="padding: 20px;">' +
+
+                // Header with severity
+                '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">' +
+                '<span class="badge badge-' + severityClass + '">' + severityLabel + '</span>' +
+                '<span style="color: var(--slate-500); font-size: 12px;">' + escapeHtml(issue.type || issue.issue_type || '') + '</span>' +
                 '</div>' +
-                '<p style="margin-bottom: 8px;">' + escapeHtml(issue.description) + '</p>' +
-                (issue.app_name ? '<p style="color: var(--slate-400); font-size: 13px;">App: ' + escapeHtml(issue.app_name) + '</p>' : '') +
-                (issue.recommendation ? '<p style="color: var(--gold-400); font-size: 13px;">💡 ' + escapeHtml(issue.recommendation) + '</p>' : '') +
+
+                // Main description
+                '<h4 style="margin-bottom: 8px; color: var(--slate-100);">' + escapeHtml(friendlyType) + '</h4>' +
+                '<p style="margin-bottom: 12px; color: var(--slate-300);">' + escapeHtml(issue.description) + '</p>' +
+
+                // Details section
+                '<div style="background: var(--navy-800); border-radius: 8px; padding: 12px; margin-top: 12px;">' +
+
+                // Suspected app
+                (issue.likely_source ?
+                    '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
+                    '<span style="color: var(--slate-500);">🎯 Suspected app:</span>' +
+                    '<span style="color: var(--gold-400); font-weight: 600;">' + escapeHtml(issue.likely_source) + '</span>' +
+                    '</div>' : '') +
+
+                // File location
+                (issue.file ?
+                    '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
+                    '<span style="color: var(--slate-500);">📁 Location:</span>' +
+                    '<span style="color: var(--slate-300);">' + escapeHtml(friendlyFile) + '</span>' +
+                    '</div>' : '') +
+
+                // What to do
+                '<div style="display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--navy-600);">' +
+                '<span style="color: var(--slate-500);">💡 What to do:</span>' +
+                '<span style="color: var(--slate-300);">' + getActionAdvice(issue) + '</span>' +
+                '</div>' +
+
+                '</div>' +
                 '</div>' +
                 '</div>';
         });
@@ -533,6 +568,54 @@ function renderScanReport(report) {
         '<h3 style="margin-bottom: 16px;">Findings</h3>' +
         issuesHtml +
         '</div>';
+}
+
+function getFriendlyIssueType(type) {
+    const types = {
+        'css_conflict': 'Styling Conflict',
+        'injected_script': 'Third-Party Script Detected',
+        'duplicate_code': 'Duplicate Code Found',
+        'global_css': 'Global Style Override',
+        'conflict': 'App Conflict',
+        'error': 'Code Error'
+    };
+    return types[type] || type || 'Issue Detected';
+}
+
+function getFriendlyFilePath(file) {
+    if (!file) return 'Unknown location';
+
+    const friendly = {
+        'layout/theme.liquid': 'Main theme layout (affects entire store)',
+        'templates/product.liquid': 'Product page template',
+        'templates/collection.liquid': 'Collection page template',
+        'templates/cart.liquid': 'Cart page template',
+        'templates/index.liquid': 'Homepage template',
+        'snippets/': 'Theme snippets folder'
+    };
+
+    for (const [path, description] of Object.entries(friendly)) {
+        if (file.includes(path)) return description;
+    }
+
+    return file;
+}
+
+function getActionAdvice(issue) {
+    if (issue.likely_source) {
+        return 'Try temporarily disabling "' + issue.likely_source + '" to see if this resolves the issue. If it does, contact the app developer for support.';
+    }
+
+    const advice = {
+        'css_conflict': 'Check your recently installed apps that modify your store\'s appearance.',
+        'injected_script': 'Review apps that add tracking or popups to your store.',
+        'duplicate_code': 'This may slow your store. Check if multiple apps are loading the same library.',
+        'global_css': 'An app is adding styles that affect your whole store. Check recent app installs.',
+        'conflict': 'Two or more apps may be trying to do the same thing.',
+        'error': 'This needs attention. Consider contacting a Shopify expert if unsure.'
+    };
+
+    return advice[issue.type] || advice[issue.issue_type] || 'Review your recently installed apps for potential causes.';
 }
 
 function backToDashboard() {
