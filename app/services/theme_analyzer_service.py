@@ -65,12 +65,19 @@ CRITICAL_FILES = [
     "sections/",
 ]
 
-# Error patterns in Liquid code
+# Error patterns in Liquid code - only flag definite errors, not false positives
+# Note: Balanced tag checking (if/endif, for/endfor) requires proper parsing,
+# not regex. These patterns only catch clear syntax errors.
 LIQUID_ERROR_PATTERNS = [
-    (r'{%\s*(?!end)[a-z]+[^%]*(?<!%)}(?!})', "Unclosed Liquid tag"),
-    (r'{{[^}]*(?!}})$', "Unclosed Liquid output"),
-    (r'{%\s*if\s+[^%]*%}(?!.*{%\s*endif\s*%})', "Missing endif"),
-    (r'{%\s*for\s+[^%]*%}(?!.*{%\s*endfor\s*%})', "Missing endfor"),
+    # Empty tags (definitely wrong)
+    (r'{%\s*%}', "Empty Liquid tag"),
+    (r'{{\s*}}', "Empty Liquid output"),
+    # Nested/malformed tags (definitely wrong)
+    (r'{{[^}]*{{', "Nested Liquid output tags"),
+    (r'{%[^%]*{%', "Nested Liquid tags"),
+    # Common typos
+    (r'{%\s*elseif\s', "Use 'elsif' not 'elseif' in Liquid"),
+    (r'{%\s*foreach\s', "Use 'for' not 'foreach' in Liquid"),
 ]
 
 
