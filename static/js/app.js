@@ -535,12 +535,22 @@ function renderScanReport(report) {
                     '<span style="color: var(--gold-400); font-weight: 600;">' + escapeHtml(issue.likely_source) + '</span>' +
                     '</div>' : '') +
 
-                // File location
-                (issue.file ?
-                    '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
-                    '<span style="color: var(--slate-500);">📁 Location:</span>' +
-                    '<span style="color: var(--slate-300);">' + escapeHtml(friendlyFile) + '</span>' +
-                    '</div>' : '') +
+            // File location with link
+            (issue.file ?
+                '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
+                '<span style="color: var(--slate-500);">📁 Location:</span>' +
+                '<span style="color: var(--slate-300);">' + escapeHtml(friendlyFile) + '</span>' +
+                getViewPageLink(issue.file) +
+                '</div>' : '') +
+
+            // Code snippet if available
+            (issue.code_snippet ?
+                '<div style="margin-top: 12px; margin-bottom: 8px;">' +
+                '<div style="color: var(--slate-500); margin-bottom: 6px;">📝 Code causing issue:</div>' +
+                '<pre style="background: var(--navy-900); border: 1px solid var(--navy-600); border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 12px; color: var(--slate-300); margin: 0;">' +
+                escapeHtml(issue.code_snippet) +
+                '</pre>' +
+                '</div>' : '') +
 
                 // What to do
                 '<div style="display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--navy-600);">' +
@@ -616,6 +626,37 @@ function getActionAdvice(issue) {
     };
 
     return advice[issue.type] || advice[issue.issue_type] || 'Review your recently installed apps for potential causes.';
+}
+function getViewPageLink(file) {
+    if (!file) return '';
+
+    // Get the shop domain from state
+    const shopDomain = state.shop ? state.shop.replace('.myshopify.com', '') : null;
+    if (!shopDomain) return '';
+
+    let pagePath = '';
+    let linkText = '';
+
+    if (file.includes('product')) {
+        pagePath = '/products';
+        linkText = 'View a product page';
+    } else if (file.includes('collection')) {
+        pagePath = '/collections/all';
+        linkText = 'View collections';
+    } else if (file.includes('cart')) {
+        pagePath = '/cart';
+        linkText = 'View cart';
+    } else if (file.includes('index') || file.includes('layout/theme')) {
+        pagePath = '/';
+        linkText = 'View homepage';
+    } else {
+        return '';
+    }
+
+    const storeUrl = 'https://' + shopDomain + '.myshopify.com' + pagePath;
+
+    return '<a href="' + storeUrl + '" target="_blank" style="color: var(--gold-400); font-size: 12px; margin-left: 12px; text-decoration: none;">' +
+        linkText + ' →</a>';
 }
 
 function backToDashboard() {
