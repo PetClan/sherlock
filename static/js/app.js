@@ -1387,11 +1387,10 @@ async function loadRollbackFiles() {
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading file versions...</p></div>';
 
     try {
-        // First get the active theme ID
-        const storeData = await api('/store/' + state.shop);
-        const themeId = storeData.active_theme_id;
+        // Get files with versions (endpoint handles theme ID internally)
+        const data = await api('/rollback/files/' + state.shop);
 
-        if (!themeId) {
+        if (!data.theme_id) {
             container.innerHTML =
                 '<div class="empty-state">' +
                 '<div class="empty-state-icon">⚠️</div>' +
@@ -1401,10 +1400,8 @@ async function loadRollbackFiles() {
             return;
         }
 
-        state.activeThemeId = themeId;
-
-        const result = await api('/rollback/files/' + state.shop + '/' + themeId);
-        renderRollbackFiles(result);
+        state.activeThemeId = data.theme_id;
+        renderRollbackFiles(data);
     } catch (error) {
         console.error('Load rollback files error:', error);
         container.innerHTML =
