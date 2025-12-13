@@ -24,6 +24,11 @@ class RollbackRequest(BaseModel):
     user_confirmed: bool = False
     notes: Optional[str] = None
 
+class FullRestoreRequest(BaseModel):
+    date: str  # YYYY-MM-DD format
+    theme_id: Optional[str] = None
+    mode: str = "direct_live"
+
 
 @router.get("/files/{shop}")
 async def get_files_with_versions(
@@ -268,3 +273,125 @@ async def compare_versions(
         raise HTTPException(status_code=400, detail=result["error"])
     
     return result
+@router.post("/restore-full/{shop}")
+async def restore_full_theme(
+    shop: str,
+    request: FullRestoreRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Restore all theme files to a specific date.
+    This will restore every file that has a version from that date.
+    """
+    from datetime import datetime, timedelta
+    
+    # Get store
+    result = await db.execute(
+        select(Store).where(Store.shopify_domain.contains(shop))
+    )
+    store = result.scalar_one_or_none()
+
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+
+    if not store.access_token:
+        raise HTTPException(status_code=401, detail="Store not authenticated")
+
+    # Get active theme if not specified
+    theme_id = request.theme_id
+    if not theme_id:
+        theme_service = ThemeSnapshotService(db)
+        active_theme = await theme_service.get_active_theme(store)
+        if active_theme:
+            theme_id = str(active_theme.get("id", ""))
+        else:
+            raise HTTPException(status_code=404, detail="No active theme found")
+
+    # Parse date and create date range
+    try:
+        target_date = datetime.strptime(request.date, "%Y-%m-%d")
+        date_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        date_end = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+    rollback_service = RollbackService(db)
+    
+    # Get all files with versions
+    files = await rollback_service.get_files_with_versions(store.id, theme_id)
+    
+    files_restored = 0
+    files_skipped = 0
+    errors = []
+
+    for file_info in files:
+        file_path = file_info["file_path"]
+        
+        # Get versions for this file from the target date
+        versions = await rollback_service.get_file_versions(
+            store_id=store.id,
+            theme_id=theme_id,
+            file_path=file_path,
+            limit=50
+        )
+        
+        # Find the latest version from the target date
+        target_version = None
+        for v in versions:
+            version_date = v.created_at.replace(tzinfo=None)
+            if date_start <= version_date <= date_end:
+                target_version = v
+                break  # Versions are ordered by date desc, so first match is the latest from that day
+        
+        if not target_version:
+            # No version from that date, try to find the most recent version BEFORE that date
+            for v in versions:
+                version_date = v.created_at.replace(tzinfo=None)
+                if version_date < date_start:
+                    target_version = v
+                    break
+        
+        if not target_version:
+            files_skipped += 1
+            continue
+        
+        # Check if this version is already the current version (skip if so)
+        if versions and versions[0].id == target_version.id:
+            files_skipped += 1
+            continue
+        
+        # Perform the rollback for this file
+        try:
+            result = await rollback_service.rollback_file(
+                store=store,
+                version_id=target_version.id,
+                mode=request.mode,
+                user_confirmed=True,  # Auto-confirm for full restore
+                performed_by="user_full_restore",
+                notes=f"Full restore to {request.date}"
+            )
+            
+            if result.get("success"):
+                files_restored += 1
+            else:
+                errors.append({
+                    "file": file_path,
+                    "error": result.get("error", "Unknown error")
+                })
+        except Exception as e:
+            errors.append({
+                "file": file_path,
+                "error": str(e)
+            })
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "date": request.date,
+        "theme_id": theme_id,
+        "files_restored": files_restored,
+        "files_skipped": files_skipped,
+        "total_files": len(files),
+        "errors": errors if errors else None
+    }
