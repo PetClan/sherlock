@@ -1515,7 +1515,7 @@ async function fetchRestoreDates() {
 
         // Get versions from first file to get available dates
         const firstFile = files[0];
-        const versionsResult = await api('/rollback/versions/' + state.shop + '/' + state.activeThemeId + '?file_path=' + encodeURIComponent(firstFile.file_path));
+        const versionsResult = await api('/rollback/versions/' + state.shop + '/' + encodeURIComponent(firstFile.file_path) + '?theme_id=' + state.activeThemeId);
         const versions = versionsResult.versions || [];
 
         // Group by date
