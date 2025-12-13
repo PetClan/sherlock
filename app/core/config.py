@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Shopify App Credentials
     shopify_api_key: str = ""
     shopify_api_secret: str = ""
-    shopify_scopes: str = "read_themes,read_products,read_script_tags,read_content"
+    shopify_scopes: str = "read_themes,write_themes,read_products,read_script_tags,read_content"
     
     # App URL (for OAuth callback)
     app_url: str = "http://localhost:8000"
