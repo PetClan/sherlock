@@ -255,40 +255,52 @@
 
         <!-- Rollback Tab -->
         <div id="tab-rollback" class="tab-content hidden">
-            <!-- File Version History (shown when a file is selected) - AT TOP -->
-            <div class="card hidden" id="version-history-card" style="margin-bottom: 24px;">
+            <!-- Simple Theme Protection View -->
+            <div class="card" style="margin-bottom: 24px;" id="theme-protection-card">
                 <div class="card-header">
-                    <h3 class="card-title" id="version-history-title">📁 File History</h3>
-                    <button class="btn btn-secondary btn-sm" onclick="closeVersionHistory()">
-                        ← Back to Files
-                    </button>
+                    <h3 class="card-title">🛡️ Theme Protection</h3>
                 </div>
-                <div class="card-body" id="version-history-content">
-                </div>
-            </div>
-
-            <!-- Theme File Versions -->
-            <div class="card" style="margin-bottom: 24px;">
-                <div class="card-header">
-                    <h3 class="card-title">📄 Theme File Versions</h3>
-                    <button class="btn btn-primary btn-sm" onclick="loadRollbackFiles()">
-                        Load File History
-                    </button>
-                </div>
-                <div class="card-body" id="rollback-files-content">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
-                        <h3>Rollback Protection</h3>
-                        <p>Sherlock tracks changes to your theme files. If an app breaks something, you can restore
-                            files to a
-                            previous working version.</p>
-                        <button class="btn btn-primary" onclick="loadRollbackFiles()" style="margin-top: 16px;">
-                            View File History
-                        </button>
+                <div class="card-body" id="theme-protection-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading restore points...</p>
                     </div>
                 </div>
             </div>
-
+        
+            <!-- Advanced Options (collapsed by default) -->
+            <div class="card" style="margin-bottom: 24px;" id="advanced-rollback-card">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleAdvancedRollback()">
+                    <h3 class="card-title">⚙️ Advanced Options</h3>
+                    <span id="advanced-toggle-icon" style="color: var(--slate-400);">▼ Show</span>
+                </div>
+                <div class="card-body hidden" id="advanced-rollback-content">
+                    <!-- File Version History (shown when a file is selected) -->
+                    <div class="hidden" id="version-history-section" style="margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4 id="version-history-title" style="margin: 0; color: var(--gold-400);">📁 File History</h4>
+                            <button class="btn btn-secondary btn-sm" onclick="closeVersionHistory()">
+                                ← Back to Files
+                            </button>
+                        </div>
+                        <div id="version-history-content"></div>
+                    </div>
+        
+                    <!-- File List -->
+                    <div id="rollback-files-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4 style="margin: 0; color: var(--slate-300);">Individual Files</h4>
+                            <button class="btn btn-secondary btn-sm" onclick="loadRollbackFiles()">
+                                Refresh
+                            </button>
+                        </div>
+                        <div id="rollback-files-content">
+                            <p style="color: var(--slate-500);">Click "Refresh" to load individual theme files.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
             <!-- Rollback History -->
             <div class="card">
                 <div class="card-header">

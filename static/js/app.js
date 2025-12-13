@@ -730,6 +730,9 @@ function switchTab(tabName, el) {
     if (tabName === 'community') {
         loadMostReportedApps();
     }
+    if (tabName === 'rollback') {
+        loadRestorePoints();
+    }
 }
 
 // ==================== CONFLICTS TAB ====================
@@ -1381,6 +1384,317 @@ function showReportError(message) {
         '</div>';
 }
 // ==================== ROLLBACK TABS ====================
+// ==================== SIMPLE ROLLBACK VIEW ====================
+
+async function loadRestorePoints() {
+    const container = document.getElementById('theme-protection-content');
+
+    try {
+        const result = await api('/rollback/files/' + state.shop);
+        const files = result.files || [];
+
+        if (files.length === 0) {
+            container.innerHTML =
+                '<div class="empty-state">' +
+                '<div class="empty-state-icon">🛡️</div>' +
+                '<h3>No Backups Yet</h3>' +
+                '<p>Run a scan to start backing up your theme files.</p>' +
+                '</div>';
+            return;
+        }
+
+        // Get unique dates from all file versions
+        const allDates = new Set();
+        let latestBackup = null;
+
+        // We need to fetch versions for each file to get dates
+        // For now, use the file data we have and fetch restore points from API
+        const restorePointsResult = await api('/rollback/restore-points/' + state.shop);
+        const restorePoints = restorePointsResult.restore_points || [];
+
+        if (restorePoints.length === 0) {
+            container.innerHTML =
+                '<div class="empty-state">' +
+                '<div class="empty-state-icon">🛡️</div>' +
+                '<h3>No Restore Points Yet</h3>' +
+                '<p>Sherlock will create restore points as it monitors your theme.</p>' +
+                '</div>';
+            return;
+        }
+
+        renderRestorePoints(restorePoints);
+
+    } catch (error) {
+        console.error('Load restore points error:', error);
+        // Fallback: try to build restore points from files
+        loadRestorePointsFallback();
+    }
+}
+
+async function loadRestorePointsFallback() {
+    const container = document.getElementById('theme-protection-content');
+
+    try {
+        const result = await api('/rollback/files/' + state.shop);
+        const files = result.files || [];
+
+        if (files.length === 0) {
+            container.innerHTML =
+                '<div class="empty-state">' +
+                '<div class="empty-state-icon">🛡️</div>' +
+                '<h3>No Backups Yet</h3>' +
+                '<p>Run a scan to start backing up your theme files.</p>' +
+                '</div>';
+            return;
+        }
+
+        // Build simple restore points from file count
+        const totalVersions = files.reduce((sum, f) => sum + (f.version_count || 0), 0);
+        const fileCount = files.length;
+
+        let html = '<div class="theme-protection-simple">';
+
+        // Status section
+        html += '<div style="text-align: center; padding: 24px 0; border-bottom: 1px solid var(--slate-700); margin-bottom: 24px;">';
+        html += '<div style="font-size: 48px; margin-bottom: 16px;">✅</div>';
+        html += '<h3 style="color: var(--emerald-400); margin-bottom: 8px;">Your Theme is Protected</h3>';
+        html += '<p style="color: var(--slate-400);">' + fileCount + ' files backed up · ' + totalVersions + ' restore points available</p>';
+        html += '</div>';
+
+        // Restore options
+        html += '<div style="margin-bottom: 24px;">';
+        html += '<h4 style="color: var(--slate-300); margin-bottom: 16px;">Something broke? Restore your theme:</h4>';
+
+        html += '<div class="restore-options">';
+        html += '<button class="btn btn-secondary" onclick="showRestoreDatePicker()" style="width: 100%; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">';
+        html += '<span>🔄 Restore to an Earlier Date</span>';
+        html += '<span style="color: var(--slate-500);">→</span>';
+        html += '</button>';
+        html += '</div>';
+
+        html += '</div>';
+
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // Also load the files into advanced section
+        loadRollbackFiles();
+
+    } catch (error) {
+        console.error('Fallback restore points error:', error);
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">⚠️</div>' +
+            '<h3>Error Loading Backups</h3>' +
+            '<p>' + escapeHtml(error.message) + '</p>' +
+            '</div>';
+    }
+}
+
+function showRestoreDatePicker() {
+    const container = document.getElementById('theme-protection-content');
+
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading available restore dates...</p></div>';
+
+    // Fetch all versions to get available dates
+    fetchRestoreDates();
+}
+
+async function fetchRestoreDates() {
+    const container = document.getElementById('theme-protection-content');
+
+    try {
+        const result = await api('/rollback/files/' + state.shop);
+        const files = result.files || [];
+
+        if (files.length === 0) {
+            loadRestorePointsFallback();
+            return;
+        }
+
+        // Get versions from first file to get available dates
+        const firstFile = files[0];
+        const versionsResult = await api('/rollback/versions/' + state.shop + '/' + state.activeThemeId + '?file_path=' + encodeURIComponent(firstFile.file_path));
+        const versions = versionsResult.versions || [];
+
+        // Group by date
+        const dateMap = {};
+        versions.forEach(function (v) {
+            const date = new Date(v.created_at);
+            const dateKey = date.toISOString().split('T')[0];
+            const dateLabel = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+            if (!dateMap[dateKey]) {
+                dateMap[dateKey] = {
+                    label: dateLabel,
+                    date: dateKey,
+                    latestVersion: v,
+                    isToday: isToday(date),
+                    isYesterday: isYesterday(date)
+                };
+            }
+        });
+
+        const dates = Object.values(dateMap).sort((a, b) => b.date.localeCompare(a.date));
+
+        renderRestoreDateOptions(dates, files.length);
+
+    } catch (error) {
+        console.error('Fetch restore dates error:', error);
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<div class="empty-state-icon">⚠️</div>' +
+            '<h3>Error Loading Dates</h3>' +
+            '<p>' + escapeHtml(error.message) + '</p>' +
+            '<button class="btn btn-primary" onclick="loadRestorePointsFallback()" style="margin-top: 16px;">Go Back</button>' +
+            '</div>';
+    }
+}
+
+function isToday(date) {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+}
+
+function isYesterday(date) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return date.toDateString() === yesterday.toDateString();
+}
+
+function renderRestoreDateOptions(dates, fileCount) {
+    const container = document.getElementById('theme-protection-content');
+
+    let html = '<div class="restore-date-picker">';
+
+    // Back button
+    html += '<button class="btn btn-secondary btn-sm" onclick="loadRestorePointsFallback()" style="margin-bottom: 24px;">';
+    html += '← Back';
+    html += '</button>';
+
+    html += '<h4 style="color: var(--slate-300); margin-bottom: 8px;">Choose a restore point:</h4>';
+    html += '<p style="color: var(--slate-500); margin-bottom: 24px;">This will restore all ' + fileCount + ' theme files to how they were on that date.</p>';
+
+    html += '<div class="restore-date-list">';
+
+    dates.forEach(function (d, index) {
+        if (d.isToday) {
+            html += '<div class="restore-date-item restore-date-current">';
+            html += '<div class="restore-date-info">';
+            html += '<span class="restore-date-label">📅 Today</span>';
+            html += '<span class="restore-date-sub">' + d.label + '</span>';
+            html += '</div>';
+            html += '<span class="badge badge-success">Current</span>';
+            html += '</div>';
+        } else {
+            const dayLabel = d.isYesterday ? 'Yesterday' : d.label;
+            html += '<div class="restore-date-item" onclick="confirmRestore(\'' + d.date + '\', \'' + escapeHtml(dayLabel) + '\')">';
+            html += '<div class="restore-date-info">';
+            html += '<span class="restore-date-label">📅 ' + dayLabel + '</span>';
+            if (d.isYesterday) {
+                html += '<span class="restore-date-sub">' + d.label + '</span>';
+            }
+            html += '</div>';
+            html += '<span style="color: var(--gold-400);">Restore →</span>';
+            html += '</div>';
+        }
+    });
+
+    html += '</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+function confirmRestore(dateKey, dateLabel) {
+    // Show confirmation modal
+    let modal = document.getElementById('restore-confirm-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'restore-confirm-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML =
+        '<div class="modal-content" style="max-width: 500px;">' +
+        '<div class="modal-header">' +
+        '<h2>🔄 Confirm Restore</h2>' +
+        '<button class="modal-close" onclick="closeRestoreConfirmModal()">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+        '<p style="font-size: 16px; margin-bottom: 16px;">You are about to restore your theme to:</p>' +
+        '<div style="background: var(--slate-800); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">' +
+        '<div style="font-size: 24px; margin-bottom: 8px;">📅</div>' +
+        '<div style="color: var(--gold-400); font-size: 18px; font-weight: 600;">' + escapeHtml(dateLabel) + '</div>' +
+        '</div>' +
+        '<div style="background: var(--amber-900); border: 1px solid var(--amber-600); border-radius: 8px; padding: 16px; margin-bottom: 16px;">' +
+        '<p style="color: var(--amber-200); margin: 0;">⚠️ This will restore all theme files to how they were on this date. Your current theme will be backed up first.</p>' +
+        '</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+        '<button class="btn btn-secondary" onclick="closeRestoreConfirmModal()">Cancel</button>' +
+        '<button class="btn btn-primary" onclick="executeFullRestore(\'' + dateKey + '\')" id="restore-confirm-btn">' +
+        '🔄 Restore Theme' +
+        '</button>' +
+        '</div>' +
+        '</div>';
+
+    modal.classList.remove('hidden');
+}
+
+function closeRestoreConfirmModal() {
+    const modal = document.getElementById('restore-confirm-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+async function executeFullRestore(dateKey) {
+    const btn = document.getElementById('restore-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = 'Restoring...';
+
+    try {
+        const result = await fetch('/api/v1/rollback/restore-full/' + state.shop, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date: dateKey,
+                theme_id: state.activeThemeId
+            })
+        }).then(r => r.json());
+
+        if (result.success) {
+            showNotification('✅ Theme restored successfully! ' + (result.files_restored || 0) + ' files restored.', 'success');
+            closeRestoreConfirmModal();
+            loadRestorePointsFallback();
+            loadRollbackHistory();
+        } else {
+            showNotification('❌ Restore failed: ' + (result.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Full restore error:', error);
+        showNotification('❌ Restore failed: ' + error.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Restore Theme';
+    }
+}
+
+function toggleAdvancedRollback() {
+    const content = document.getElementById('advanced-rollback-content');
+    const icon = document.getElementById('advanced-toggle-icon');
+
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.textContent = '▲ Hide';
+        loadRollbackFiles();
+    } else {
+        content.classList.add('hidden');
+        icon.textContent = '▼ Show';
+    }
+}
 
 async function loadRollbackFiles() {
     const container = document.getElementById('rollback-files-content');

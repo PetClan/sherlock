@@ -2522,3 +2522,61 @@ code {
 .rollback-history-info {
     flex: 1;
 }
+/* Simple Restore View */
+.theme-protection-simple {
+    padding: 8px 0;
+}
+
+.restore-options {
+    margin-top: 16px;
+}
+
+/* Restore Date Picker */
+.restore-date-picker {
+    padding: 8px 0;
+}
+
+.restore-date-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.restore-date-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--navy-800);
+    border: 1px solid var(--navy-600);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.restore-date-item:hover:not(.restore-date-current) {
+    border-color: var(--gold-500);
+    background: var(--navy-700);
+}
+
+.restore-date-current {
+    cursor: default;
+    border-color: var(--emerald-600);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.restore-date-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.restore-date-label {
+    font-weight: 600;
+    color: var(--slate-200);
+}
+
+.restore-date-sub {
+    font-size: 13px;
+    color: var(--slate-500);
+}
