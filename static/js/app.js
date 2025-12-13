@@ -1474,7 +1474,7 @@ async function loadFileVersions(filePath) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading versions...</p></div>';
 
     try {
-        const result = await api('/rollback/versions/' + state.shop + '/' + state.activeThemeId + '?file_path=' + encodeURIComponent(filePath));
+        const result = await api('/rollback/versions/' + state.shop + '/' + encodeURIComponent(filePath) + '?theme_id=' + state.activeThemeId);
         renderFileVersions(result, filePath);
     } catch (error) {
         console.error('Load versions error:', error);
