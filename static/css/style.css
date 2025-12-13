@@ -2378,7 +2378,7 @@ code {
 }
 
 .diagnosis-dismiss {
-    background: var(--gold-500);
+    background: linear-gradient(135deg, var(--gold-500) 0%, var(--white) 100%);
     border: none;
     color: var(--navy-900);
     padding: 12px 24px;
@@ -2392,6 +2392,6 @@ code {
 }
 
 .diagnosis-dismiss:hover {
-    background: var(--gold-400);
+    background: linear-gradient(135deg, var(--gold-400) 0%, var(--gold-300) 100%);
     transform: translateY(-1px);
 }

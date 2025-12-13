@@ -385,9 +385,9 @@ class IssueCorrelationService:
         app = suspect["app_name"]
         
         if confidence >= 80:
-            return f"'{app}' is very likely causing the issue. It was {suspect['reasoning'].lower()}."
+            return f"'{app}' appears to be causing the issue. It was {suspect['reasoning'].lower()}."
         elif confidence >= 60:
-            return f"'{app}' is likely the cause. It was {suspect['reasoning'].lower()}."
+            return f"'{app}' may be the cause. It was {suspect['reasoning'].lower()}."
         elif confidence >= 40:
             return f"'{app}' may be involved. It was {suspect['reasoning'].lower()}."
         else:
@@ -421,7 +421,7 @@ class IssueCorrelationService:
                     "step": 2,
                     "title": f"Try disabling '{primary['app_name']}' first",
                     "description": f"Go to your Shopify admin → Apps, find '{primary['app_name']}', and disable it. Check if your store works normally.",
-                    "why": f"Since '{primary['app_name']}' was installed more recently, it's the more likely culprit."
+                    "why": f"Since '{primary['app_name']}' was installed more recently, it may be the cause."
                 })
                 actions.append({
                     "step": 3,
@@ -467,13 +467,13 @@ class IssueCorrelationService:
                     "step": 1,
                     "title": f"Disable '{primary['app_name']}' temporarily",
                     "description": f"Go to your Shopify admin → Apps, find '{primary['app_name']}', and disable it. This won't delete anything, just turns it off.",
-                    "why": f"This app is {primary['confidence_label'].lower()} causing the issue based on when it was installed."
+                    "why": f"This app may be causing the issue based on when it was installed."
                 })
                 actions.append({
                     "step": 2,
                     "title": "Check if the problem is fixed",
                     "description": "Open your store in a new browser window (or incognito mode) and check if things are back to normal.",
-                    "why": "This confirms whether that app was the cause."
+                    "why": "This helps confirm whether that app was involved."
                 })
                 actions.append({
                     "step": 3,
