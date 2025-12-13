@@ -109,6 +109,8 @@ async function loadDashboard() {
 
         // Load site health / protection status
         loadSiteHealth();
+        // Load diagnosis for alert banner
+        loadDiagnosis();
 
     } catch (error) {
         console.error('Dashboard load error:', error);
@@ -848,6 +850,101 @@ async function loadMostReportedApps() {
             '<p>Could not load reported apps.</p>' +
             '</div>';
     }
+}
+
+// ==================== DIAGNOSIS ALERT ====================
+
+async function loadDiagnosis() {
+    try {
+        const diagnosis = await api('/scan/store-diagnosis/' + state.shop);
+        renderDiagnosisAlert(diagnosis);
+    } catch (error) {
+        console.error('Diagnosis load error:', error);
+        // Don't show error to user - just hide the alert
+        document.getElementById('diagnosis-alert').classList.add('hidden');
+    }
+}
+
+function renderDiagnosisAlert(diagnosis) {
+    const container = document.getElementById('diagnosis-alert');
+
+    // If healthy, hide the alert
+    if (diagnosis.status === 'healthy' || diagnosis.status === 'unknown') {
+        container.classList.add('hidden');
+        return;
+    }
+
+    // Show alert for issues
+    container.classList.remove('hidden');
+
+    const issueCount = diagnosis.issue_count || 0;
+    const suspect = diagnosis.primary_suspect;
+    const actions = diagnosis.recommended_actions || [];
+
+    // Determine alert severity
+    let alertClass = 'alert-warning';
+    let icon = '⚠️';
+    if (suspect && suspect.confidence >= 70) {
+        alertClass = 'alert-danger';
+        icon = '🚨';
+    }
+
+    container.className = 'diagnosis-alert ' + alertClass;
+
+    let html = '<div class="diagnosis-alert-header">' +
+        '<span class="diagnosis-alert-icon">' + icon + '</span>' +
+        '<div>' +
+        '<h3 class="diagnosis-alert-title">Sherlock Found ' + issueCount + ' Issue' + (issueCount !== 1 ? 's' : '') + '</h3>' +
+        '<p class="diagnosis-alert-subtitle">Here\'s what we know and what you can do about it</p>' +
+        '</div>' +
+        '</div>';
+
+    // Show primary suspect if found
+    if (suspect) {
+        const confidenceClass = suspect.confidence >= 80 ? 'very-likely' :
+            suspect.confidence >= 60 ? 'likely' : 'possibly';
+
+        html += '<div class="diagnosis-suspect">' +
+            '<div class="diagnosis-suspect-header">' +
+            '<span class="diagnosis-suspect-name">🎯 ' + escapeHtml(suspect.app_name) + '</span>' +
+            '<span class="diagnosis-confidence ' + confidenceClass + '">' + escapeHtml(suspect.confidence_label) + '</span>' +
+            '</div>' +
+            '<p class="diagnosis-suspect-message">' + escapeHtml(suspect.message) + '</p>' +
+            '</div>';
+    }
+
+    // Show recommended actions
+    if (actions.length > 0) {
+        html += '<div class="diagnosis-actions">' +
+            '<div class="diagnosis-actions-title">What to do next:</div>';
+
+        actions.forEach(function (action) {
+            html += '<div class="diagnosis-action">' +
+                '<div class="diagnosis-action-step">' +
+                '<span class="diagnosis-action-number">' + action.step + '</span>' +
+                '<div class="diagnosis-action-content">' +
+                '<div class="diagnosis-action-title">' + escapeHtml(action.title) + '</div>' +
+                '<div class="diagnosis-action-description">' + escapeHtml(action.description) + '</div>' +
+                '<div class="diagnosis-action-why">' + escapeHtml(action.why) + '</div>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+        });
+
+        html += '</div>';
+    }
+
+    // Dismiss button
+    html += '<button class="diagnosis-dismiss" onclick="dismissDiagnosis()">Got it, I\'ll check this</button>';
+
+    container.innerHTML = html;
+}
+
+function dismissDiagnosis() {
+    const container = document.getElementById('diagnosis-alert');
+    container.classList.add('hidden');
+    // Store dismissal in session so it doesn't reappear until page refresh
+    sessionStorage.setItem('diagnosis_dismissed', 'true');
 }
 
 // ==================== INVESTIGATE APP MODAL ====================
