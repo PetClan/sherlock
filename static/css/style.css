@@ -2378,18 +2378,20 @@ code {
 }
 
 .diagnosis-dismiss {
-    background: transparent;
-    border: 1px solid var(--slate-600);
-    color: var(--slate-400);
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 13px;
+    background: var(--gold-500);
+    border: none;
+    color: var(--navy-900);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    margin-top: 12px;
+    margin-top: 16px;
     transition: all 0.2s;
+    display: inline-block;
 }
 
 .diagnosis-dismiss:hover {
-    border-color: var(--slate-400);
-    color: var(--slate-200);
+    background: var(--gold-400);
+    transform: translateY(-1px);
 }
