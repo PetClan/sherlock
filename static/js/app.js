@@ -1380,7 +1380,7 @@ function showReportError(message) {
         '<p style="color: var(--crimson-400);">❌ ' + escapeHtml(message) + '</p>' +
         '</div>';
 }
-// ==================== ROLLBACK TAB ====================
+// ==================== ROLLBACK TABS ====================
 
 async function loadRollbackFiles() {
     const container = document.getElementById('rollback-files-content');
