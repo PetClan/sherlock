@@ -230,13 +230,13 @@ class ThemeAnalyzerService:
             issue = ThemeIssue(
                 store_id=store.id,
                 theme_id=theme_id,
-                theme_name=None,  # Could fetch this
-                file_path=issue_data["file_path"],
-                issue_type=issue_data["issue_type"],
-                severity=issue_data["severity"],
+                theme_name=None,
+                file_path=(issue_data.get("file_path") or "unknown")[:250],
+                issue_type=(issue_data.get("issue_type") or "unknown")[:50],
+                severity=issue_data.get("severity", "medium"),
                 line_number=issue_data.get("line_number"),
                 code_snippet=(issue_data.get("code_snippet") or "")[:250],
-                likely_source=issue_data.get("likely_source"),
+                likely_source=(issue_data.get("likely_source") or "")[:250] if issue_data.get("likely_source") else None,
                 confidence=issue_data.get("confidence", 0.0)
             )
             self.db.add(issue)
@@ -332,38 +332,44 @@ class ThemeAnalyzerService:
         
         return issues
     
-    async def _check_duplicate_scripts(
-        self,
-        store: Store,
-        files: Dict[str, str],
-        theme_id: Optional[str]
-    ) -> List[Dict[str, Any]]:
-        """Check for duplicate script includes across files"""
-        issues = []
-        script_sources = {}  # {script_url: [file_paths]}
+async def _check_duplicate_scripts(
+    self,
+    store: Store,
+    files: Dict[str, str],
+    theme_id: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Check for duplicate script includes across files"""
+    issues = []
+    script_sources = {}  # {script_url: [file_paths]}
+    
+    for file_path, content in files.items():
+        # Find all script src attributes
+        scripts = re.findall(r'<script[^>]*src=["\']([^"\']+)["\']', content, re.IGNORECASE)
         
-        for file_path, content in files.items():
-            # Find all script src attributes
-            scripts = re.findall(r'<script[^>]*src=["\']([^"\']+)["\']', content, re.IGNORECASE)
+        for src in scripts:
+            if src not in script_sources:
+                script_sources[src] = []
+            script_sources[src].append(file_path)
+    
+    # Find duplicates
+    for src, paths in script_sources.items():
+        if len(paths) > 1:
+            # Use first file as the file_path (not the full list)
+            primary_file = paths[0]
             
-            for src in scripts:
-                if src not in script_sources:
-                    script_sources[src] = []
-                script_sources[src].append(file_path)
-        
-        # Find duplicates
-        for src, paths in script_sources.items():
-            if len(paths) > 1:
-                issues.append({
-                    "file_path": ", ".join(paths),
-                    "issue_type": "duplicate_script",
-                    "severity": "medium",
-                    "likely_source": self._extract_app_from_url(src),
-                    "confidence": 80.0,
-                    "code_snippet": f"Script '{src}' loaded in {len(paths)} files: {', '.join(paths)}"
-                })
-        
-        return issues
+            # Create a short description
+            snippet = f"Script '{src[:100]}' loaded in {len(paths)} files"
+            
+            issues.append({
+                "file_path": primary_file,
+                "issue_type": "duplicate_script",
+                "severity": "medium",
+                "likely_source": self._extract_app_from_url(src),
+                "confidence": 80.0,
+                "code_snippet": snippet
+            })
+    
+    return issues
     
     def _get_severity(self, issue_type: str, file_path: str) -> str:
         """Determine severity based on issue type and location"""
