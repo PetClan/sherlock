@@ -328,3 +328,26 @@ async def webhook_shop_redact(request: Request, db: AsyncSession = Depends(get_d
             print(f"🗑️ [GDPR] All data deleted for {shop}")
     
     return Response(status_code=200)
+
+@router.get("/debug/scopes")
+async def debug_scopes(shop: str, db: AsyncSession = Depends(get_db)):
+    """Debug: Check what scopes the current token has"""
+    import httpx
+    
+    auth_service = ShopifyAuthService(db)
+    store = await auth_service.get_store_by_domain(shop)
+    
+    if not store or not store.access_token:
+        return {"error": "Store not found or no token"}
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"https://{store.shopify_domain}/admin/oauth/access_scopes.json",
+            headers={"X-Shopify-Access-Token": store.access_token}
+        )
+        
+        return {
+            "shop": store.shopify_domain,
+            "status_code": response.status_code,
+            "scopes": response.json() if response.status_code == 200 else response.text
+        }
