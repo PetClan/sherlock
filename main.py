@@ -1091,6 +1091,30 @@ async def get_store_diagnosis(shop: str, db: AsyncSession = Depends(get_db)):
     
     return diagnosis
 
+
+@app.get("/api/v1/scan/clear-issues/{shop}")
+async def clear_theme_issues(shop: str, db: AsyncSession = Depends(get_db)):
+    """
+    Clear all theme issues for a store (debug endpoint)
+    """
+    from sqlalchemy import delete
+    
+    store = await get_store_by_domain(db, shop)
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    
+    delete_result = await db.execute(
+        delete(ThemeIssue).where(ThemeIssue.store_id == store.id)
+    )
+    await db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Cleared theme issues for {shop}",
+        "deleted_count": delete_result.rowcount
+    }
+
+
 # ==================== Run Server ====================
 
 if __name__ == "__main__":
