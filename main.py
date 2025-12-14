@@ -240,13 +240,22 @@ async def run_scan_background(store_id: str, diagnosis_id: str, scan_type: str):
 @app.get("/")
 async def root(request: Request):
     """
-    Root endpoint - redirects browsers to install page, returns API info for programmatic access.
+    Root endpoint - serves preview page for pre-launch.
+    Change back to RedirectResponse(url="/install") when ready to launch.
     """
     # Check if this is a browser request
     accept_header = request.headers.get("accept", "")
     
     if "text/html" in accept_header:
-        # Browser request - redirect to install page
+        # Browser request - serve preview page (PRE-LAUNCH)
+        templates_path = os.path.join(os.path.dirname(__file__), "templates", "preview.html")
+        
+        if os.path.exists(templates_path):
+            with open(templates_path, "r", encoding="utf-8") as f:
+                html_content = f.read()
+            return HTMLResponse(content=html_content)
+        
+        # Fallback to install page if preview doesn't exist
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/install")
     
