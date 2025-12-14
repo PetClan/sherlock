@@ -200,3 +200,36 @@ async def clear_theme_issues(
         "message": f"Cleared theme issues for {shop}",
         "deleted_count": delete_result.rowcount
     }
+
+
+@router.get("/clear-issues/{shop}")
+async def clear_theme_issues_get(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Clear all theme issues for a store (GET version for browser testing)
+    """
+    from app.db.models import ThemeIssue
+    from sqlalchemy import delete
+    
+    # Find store
+    result = await db.execute(
+        select(Store).where(Store.shopify_domain == shop)
+    )
+    store = result.scalar()
+    
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    
+    # Delete all theme issues for this store
+    delete_result = await db.execute(
+        delete(ThemeIssue).where(ThemeIssue.store_id == store.id)
+    )
+    await db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Cleared theme issues for {shop}",
+        "deleted_count": delete_result.rowcount
+    }
