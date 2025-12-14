@@ -1329,7 +1329,7 @@ async function submitAppReport() {
 
     const btn = document.getElementById('report-submit-btn');
     btn.disabled = true;
-    btn.textContent = '🔍 Searching...';
+    btn.textContent = '🚨 Reporting...';
 
     try {
         const params = new URLSearchParams({
