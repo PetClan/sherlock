@@ -134,19 +134,9 @@ async def shopify_auth_callback(
 async def auth_success(shop: str):
     """
     Authentication success page.
-    Shown after successful app installation.
+    Redirects to dashboard after successful app installation.
     """
-    return {
-        "success": True,
-        "message": f"Sherlock successfully installed on {shop}!",
-        "next_steps": [
-            "Your store is now connected",
-            "Run your first diagnostic scan",
-            "Visit the dashboard to view results"
-        ],
-        "dashboard_url": f"/dashboard?shop={shop}",
-        "api_docs": "/docs"
-    }
+    return RedirectResponse(url=f"/dashboard?shop={shop}")
 
 
 @router.get("/verify")
