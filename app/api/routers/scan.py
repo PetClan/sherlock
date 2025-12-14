@@ -167,3 +167,51 @@ async def get_store_diagnosis(
     diagnosis = await service.get_store_diagnosis(shop)
     
     return diagnosis
+@router.get("/store-diagnosis/{shop}")
+async def get_store_diagnosis(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get full diagnosis for a store
+    Identifies issues, correlates with recent apps, and provides actions
+    """
+    from app.services.issue_correlation_service import IssueCorrelationService
+    
+    service = IssueCorrelationService(db)
+    diagnosis = await service.get_store_diagnosis(shop)
+    
+    return diagnosis
+
+
+@router.delete("/clear-issues/{shop}")
+async def clear_theme_issues(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Clear all theme issues for a store (admin/debug endpoint)
+    """
+    from app.db.models import ThemeIssue
+    
+    # Find store
+    result = await db.execute(
+        select(Store).where(Store.shopify_domain == shop)
+    )
+    store = result.scalar()
+    
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+    
+    # Delete all theme issues for this store
+    from sqlalchemy import delete
+    delete_result = await db.execute(
+        delete(ThemeIssue).where(ThemeIssue.store_id == store.id)
+    )
+    await db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Cleared theme issues for {shop}",
+        "deleted_count": delete_result.rowcount
+    }
