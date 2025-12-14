@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sherlock - Coming Soon | Your Store's Detective</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+
+    <style>
+        /* ============================================
+           SHERLOCK PREVIEW PAGE - STANDALONE CSS
+           ============================================ */
+
+        :root {
+            /* Primary Colors - Deep Navy */
+            --navy-900: #0c1222;
+            --navy-800: #0f172a;
+            --navy-700: #1e293b;
+            --navy-600: #334155;
+            --navy-500: #475569;
+
+            /* Accent Colors - Police Blue */
+            --gold-500: #0d4f8b;
+            --gold-400: #1a6fc2;
+            --gold-300: #4a9ae6;
+            --gold-glow: rgba(13, 79, 139, 0.3);
+
+            /* Status Colors */
+            --emerald-500: #10b981;
+            --emerald-400: #34d399;
+            --emerald-bg: rgba(16, 185, 129, 0.15);
+
+            --amber-500: #f59e0b;
+            --amber-400: #fbbf24;
+            --amber-bg: rgba(245, 158, 11, 0.15);
+
+            --crimson-500: #ef4444;
+            --crimson-400: #f87171;
+            --crimson-bg: rgba(239, 68, 68, 0.15);
+
+            /* Neutrals */
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --white: #ffffff;
+
+            /* Typography */
+            --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        /* ==================== BASE RESET ==================== */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: linear-gradient(180deg, var(--navy-800) 0%, var(--navy-900) 100%);
+            color: var(--slate-100);
+            font-size: 16px;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* ==================== LAUNCHING SOON RIBBON ==================== */
+        .launching-soon-ribbon {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .launching-soon-ribbon::before {
+            content: 'LAUNCHING SOON';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 50%, var(--gold-500) 100%);
+            color: var(--white);
+            font-family: var(--font-display);
+            font-size: 72px;
+            font-weight: 800;
+            letter-spacing: 20px;
+            text-transform: uppercase;
+            padding: 30px 300px;
+            white-space: nowrap;
+            opacity: 0.9;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ==================== HEADER ==================== */
+        .header {
+            background: var(--navy-900);
+            border-bottom: 1px solid rgba(26, 111, 194, 0.3);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: repeating-conic-gradient(var(--gold-500) 0deg 90deg, var(--white) 90deg 180deg) 50% / 22px 22px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px var(--gold-glow);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-name {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 1px;
+        }
+
+        .logo-tagline {
+            font-size: 11px;
+            color: var(--gold-400);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* ==================== BUTTONS ==================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: not-allowed;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            text-decoration: none;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold-500) 0%, var(--white) 100%);
+            color: var(--navy-900);
+        }
+
+        .btn-secondary {
+            background: var(--navy-700);
+            color: var(--slate-200);
+            border: 1px solid var(--navy-600);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        /* ==================== MAIN LAYOUT ==================== */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* ==================== HERO SECTION ==================== */
+        .hero-section {
+            text-align: center;
+            padding: 40px 20px 30px;
+            margin-bottom: 10px;
+        }
+
+        .hero-icon {
+            font-size: 48px;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            background: var(--navy-700);
+            border: 2px solid var(--gold-500);
+            border-radius: 50%;
+            filter: drop-shadow(0 0 20px var(--gold-glow));
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 20px 10px rgba(59, 130, 246, 0.2);
+            }
+        }
+
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 12px;
+        }
+
+        .hero-title .highlight {
+            color: var(--gold-400);
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--slate-400);
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .built-for-shopify {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--slate-300);
+        }
+
+        .built-for-shopify .shopify-logo {
+            font-size: 18px;
+        }
+
+        /* ==================== TABS ==================== */
+        .tabs-container {
+            margin-bottom: 24px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--navy-800);
+            padding: 6px;
+            border-radius: var(--radius-lg);
+            overflow-x: auto;
+            border: 1px solid var(--navy-600);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--slate-400);
+            background: transparent;
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-md);
+            cursor: default;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--gold-500) 0%, var(--white) 100%);
+            color: var(--navy-900);
+            border-color: transparent;
+        }
+
+        /* ==================== PROTECTION CARD ==================== */
+        .protection-card {
+            background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-800) 100%);
+            border: 2px solid var(--navy-600);
+            border-radius: var(--radius-xl);
+            padding: 0;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .protection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 28px;
+            background: var(--navy-800);
+            border-bottom: 1px solid var(--navy-600);
+        }
+
+        .protection-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .protection-title-icon {
+            font-size: 28px;
+        }
+
+        .protection-title h2 {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .protection-body {
+            padding: 28px;
+        }
+
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border-radius: var(--radius-lg);
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-badge.low {
+            background: var(--emerald-bg);
+            color: var(--emerald-400);
+            border: 2px solid var(--emerald-500);
+        }
+
+        .status-badge .status-icon {
+            font-size: 20px;
+        }
+
+        .status-meta {
+            color: var(--slate-400);
+            font-size: 14px;
+        }
+
+        .status-message {
+            background: var(--navy-800);
+            border-left: 4px solid var(--gold-500);
+            padding: 16px 20px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin-bottom: 24px;
+        }
+
+        .status-message p {
+            color: var(--slate-300);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .status-message .detective-quote {
+            font-style: italic;
+            color: var(--slate-400);
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .protection-stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+        }
+
+        .protection-stat {
+            background: var(--navy-800);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-md);
+            padding: 20px 16px;
+            text-align: center;
+            position: relative;
+        }
+
+        .protection-stat-value {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .protection-stat-value.success {
+            color: var(--emerald-400);
+        }
+
+        .protection-stat-value.warning {
+            color: var(--amber-400);
+        }
+
+        .protection-stat-label {
+            font-size: 11px;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        /* ==================== CAPABILITIES SECTION ==================== */
+        .capabilities-section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-icon {
+            font-size: 24px;
+        }
+
+        .section-subtitle {
+            color: var(--slate-400);
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .capability-card {
+            background: var(--navy-700);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            cursor: default;
+        }
+
+        .capability-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .capability-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 6px;
+        }
+
+        .capability-desc {
+            font-size: 13px;
+            color: var(--slate-400);
+            line-height: 1.5;
+        }
+
+        /* ==================== CARDS ==================== */
+        .card {
+            background: var(--navy-700);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--navy-800);
+            border-bottom: 1px solid var(--navy-600);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* ==================== GRID ==================== */
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* ==================== STAT CARDS ==================== */
+        .stat-card {
+            background: var(--navy-700);
+            border: 1px solid var(--navy-600);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .stat-value.success {
+            color: var(--emerald-400);
+        }
+
+        .stat-value.warning {
+            color: var(--amber-400);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--slate-400);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ==================== EMPTY STATE ==================== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .empty-state h3 {
+            font-family: var(--font-display);
+            font-size: 18px;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: var(--slate-400);
+            font-size: 14px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* ==================== FOOTER ==================== */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--slate-500);
+            font-size: 13px;
+            border-top: 1px solid var(--navy-700);
+            margin-top: 40px;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1200px) {
+            .launching-soon-ribbon::before {
+                font-size: 56px;
+                letter-spacing: 16px;
+                padding: 24px 250px;
+            }
+
+            .capabilities-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .launching-soon-ribbon::before {
+                font-size: 48px;
+                letter-spacing: 12px;
+                padding: 20px 200px;
+            }
+
+            .protection-stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .launching-soon-ribbon::before {
+                font-size: 36px;
+                letter-spacing: 10px;
+                padding: 16px 150px;
+            }
+
+            .header-inner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .capabilities-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .protection-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                font-size: 28px;
+            }
+
+            .hero-subtitle {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .launching-soon-ribbon::before {
+                font-size: 28px;
+                letter-spacing: 8px;
+                padding: 14px 120px;
+            }
+
+            .main-container {
+                padding: 16px;
+            }
+
+            .header {
+                padding: 12px 16px;
+            }
+
+            .protection-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .protection-stat {
+                padding: 16px 12px;
+            }
+
+            .protection-stat-value {
+                font-size: 24px;
+            }
+
+            .tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .hero-section {
+                padding: 30px 10px 20px;
+            }
+
+            .hero-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Launching Soon Ribbon -->
+    <div class="launching-soon-ribbon"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon"></span>
+                <div class="logo-text">
+                    <span class="logo-name">SHERLOCK</span>
+                    <span class="logo-tagline">Your Store's Detective</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary">
+                    🔎 Investigate App
+                </button>
+                <button class="btn btn-secondary">
+                    🚨 Report an App
+                </button>
+                <button class="btn btn-primary">
+                    🔍 Run Full Scan
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-icon">🔍</div>
+            <h1 class="hero-title">Your Store is Under <span class="highlight">Protection</span></h1>
+            <p class="hero-subtitle">
+                Sherlock monitors your store 24/7 — diagnosing app conflicts, detecting invisible problems,
+                and watching for suspicious changes so nothing catches you by surprise.
+            </p>
+            <div class="built-for-shopify">
+                <span class="shopify-logo">🛍️</span>
+                Built for Shopify
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active">🏠 Dashboard</button>
+                <button class="tab">⚡ Conflicts</button>
+                <button class="tab">🧹 Orphan Code</button>
+                <button class="tab">📈 Timeline</button>
+                <button class="tab">🔄 Rollback</button>
+                <button class="tab">👥 Community</button>
+            </div>
+        </div>
+
+        <!-- Protection Status Card -->
+        <div class="protection-card">
+            <div class="protection-header">
+                <div class="protection-title">
+                    <span class="protection-title-icon">🛡️</span>
+                    <h2>Store Protection Status</h2>
+                </div>
+            </div>
+            <div class="protection-body">
+                <div class="status-banner">
+                    <div class="status-badge low">
+                        <span class="status-icon">✓</span>
+                        Low Risk
+                    </div>
+                    <span class="status-meta">Last scan: Just now</span>
+                </div>
+                <div class="status-message">
+                    <p>Your store appears to be in good health. No critical issues detected.</p>
+                    <p class="detective-quote">"All quiet on the storefront, but I remain vigilant."</p>
+                </div>
+                <div class="protection-stats">
+                    <div class="protection-stat">
+                        <div class="protection-stat-value">12</div>
+                        <div class="protection-stat-label">Apps Installed</div>
+                    </div>
+                    <div class="protection-stat">
+                        <div class="protection-stat-value success">0</div>
+                        <div class="protection-stat-label">Conflicts</div>
+                    </div>
+                    <div class="protection-stat">
+                        <div class="protection-stat-value warning">2</div>
+                        <div class="protection-stat-label">Warnings</div>
+                    </div>
+                    <div class="protection-stat">
+                        <div class="protection-stat-value">47</div>
+                        <div class="protection-stat-label">Files Tracked</div>
+                    </div>
+                    <div class="protection-stat">
+                        <div class="protection-stat-value success">3</div>
+                        <div class="protection-stat-label">Restore Points</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sherlock's Capabilities -->
+        <section class="capabilities-section">
+            <div class="section-header">
+                <h2><span class="section-icon">🔍</span> Sherlock's Capabilities</h2>
+                <p class="section-subtitle">"The tools of my trade, dear merchant. Click any card to examine the
+                    evidence."</p>
+            </div>
+            <div class="capabilities-grid">
+                <div class="capability-card">
+                    <div class="capability-icon">🛡️</div>
+                    <h3 class="capability-title">24/7 Monitoring</h3>
+                    <p class="capability-desc">Daily automated scans detect changes before they become problems.</p>
+                </div>
+                <div class="capability-card">
+                    <div class="capability-icon">📁</div>
+                    <h3 class="capability-title">File Tracking</h3>
+                    <p class="capability-desc">Every theme file is tracked with checksums to detect unauthorized
+                        modifications.</p>
+                </div>
+                <div class="capability-card">
+                    <div class="capability-icon">⚡</div>
+                    <h3 class="capability-title">Conflict Detection</h3>
+                    <p class="capability-desc">Identifies apps that conflict with each other based on community reports.
+                    </p>
+                </div>
+                <div class="capability-card">
+                    <div class="capability-icon">🧹</div>
+                    <h3 class="capability-title">Orphan Code Finder</h3>
+                    <p class="capability-desc">Finds code left behind by uninstalled apps that slows down your store.
+                    </p>
+                </div>
+                <div class="capability-card">
+                    <div class="capability-icon">📊</div>
+                    <h3 class="capability-title">Performance Impact</h3>
+                    <p class="capability-desc">Tracks how each app affects your store's loading speed over time.</p>
+                </div>
+                <div class="capability-card">
+                    <div class="capability-icon">🔄</div>
+                    <h3 class="capability-title">Rollback Protection</h3>
+                    <p class="capability-desc">Restore theme files to previous versions if an app causes problems.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Cards -->
+        <div id="stats-container" style="margin-bottom: 24px;">
+            <div class="grid grid-4">
+                <div class="card stat-card">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Scans This Week</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-value success">98%</div>
+                    <div class="stat-label">Store Health</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-value warning">2</div>
+                    <div class="stat-label">Issues Found</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-value">24/7</div>
+                    <div class="stat-label">Monitoring</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Investigations -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+                <h3 class="card-title">📋 Recent Investigations</h3>
+            </div>
+            <div class="card-body">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>Investigation History</h3>
+                    <p>Your scan history and investigation reports will appear here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suspect Apps -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🚨 Suspect Apps</h3>
+                <button class="btn btn-secondary btn-sm">View All Apps</button>
+            </div>
+            <div class="card-body">
+                <div class="empty-state">
+                    <div class="empty-state-icon">✓</div>
+                    <h3>All Clear</h3>
+                    <p>No suspect apps detected. Your store is looking healthy!</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>🔍 Sherlock for Shopify · Your Store's Detective · Built in Scotland by Clan Codename</p>
+    </footer>
+</body>
+
+</html>
