@@ -166,8 +166,8 @@ class IssueCorrelationService:
         for issue in issues:
             issue_date = issue.detected_at
             
-            # If issue already has attribution, use it
-            if issue.likely_source:
+            # If issue already has attribution, use it (but skip "Unknown")
+            if issue.likely_source and issue.likely_source.lower() != "unknown":
                 app_name = issue.likely_source
                 if app_name not in correlations:
                     correlations[app_name] = {
