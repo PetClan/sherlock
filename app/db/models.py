@@ -438,3 +438,65 @@ class CustomerRating(Base):
         Index("idx_ratings_store", "store_id"),
         Index("idx_ratings_created", "created_at"),
     )
+
+
+class AppSignature(Base):
+    """Learned app signatures - Sherlock's knowledge base"""
+    __tablename__ = "app_signatures"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    
+    # Pattern identification
+    domain = Column(String(255), nullable=False, index=True)  # e.g., "cdn.klaviyo.com"
+    url_pattern = Column(String(500), nullable=True)  # More specific pattern if needed
+    
+    # App identification
+    app_name = Column(String(255), nullable=False)  # e.g., "Klaviyo"
+    app_handle = Column(String(255), nullable=True)  # URL-friendly name
+    
+    # Learning metrics
+    times_seen = Column(Integer, default=1)  # How many times this pattern was seen
+    stores_seen = Column(Integer, default=1)  # How many different stores
+    confidence = Column(Float, default=50.0)  # 0-100, increases with more sightings
+    
+    # Verification
+    is_confirmed = Column(Boolean, default=False)  # Manually verified or high confidence
+    is_from_hardcoded = Column(Boolean, default=False)  # Part of original known list
+    
+    # Timestamps
+    first_seen = Column(DateTime(timezone=True), server_default=func.now())
+    last_seen = Column(DateTime(timezone=True), server_default=func.now())
+    
+    __table_args__ = (
+        Index("idx_app_sig_domain", "domain"),
+        Index("idx_app_sig_app", "app_name"),
+        Index("idx_app_sig_confidence", "confidence"),
+    )
+
+
+class AppSignatureSighting(Base):
+    """Track where signatures were seen - for learning"""
+    __tablename__ = "app_signature_sightings"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    
+    # Link to signature
+    signature_id = Column(String(36), ForeignKey("app_signatures.id", ondelete="CASCADE"), nullable=False)
+    
+    # Where it was seen
+    store_id = Column(String(36), ForeignKey("stores.id", ondelete="CASCADE"), nullable=False)
+    
+    # What apps were installed when this was seen
+    installed_apps = Column(JSON, nullable=True)  # List of app names installed at time of sighting
+    
+    # Match info
+    matched_app = Column(String(255), nullable=True)  # Which installed app matched the domain
+    match_confidence = Column(Float, default=0.0)  # How confident in this specific match
+    
+    # Timestamp
+    seen_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    __table_args__ = (
+        Index("idx_sighting_sig", "signature_id"),
+        Index("idx_sighting_store", "store_id"),
+    )

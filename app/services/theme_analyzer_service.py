@@ -325,17 +325,10 @@ class ThemeAnalyzerService:
                     "code_snippet": error_desc
                 })
         
-        # Check for excessive inline scripts
-        inline_scripts = re.findall(r'<script[^>]*>.*?</script>', content, re.DOTALL)
-        if len(inline_scripts) > 5:
-            issues.append({
-                "file_path": file_path,
-                "issue_type": "excessive_scripts",
-                "severity": "medium",
-                "likely_source": "Multiple apps",
-                "confidence": 70.0,
-                "code_snippet": f"Found {len(inline_scripts)} inline script blocks"
-            })
+        # Note: We removed the "excessive_scripts" check because:
+        # 1. Shopify themes naturally have many inline scripts (10-20+ is normal)
+        # 2. Without attribution to specific apps, this is not actionable
+        # 3. It was causing false alarms that erode merchant trust
         
         return issues
     
@@ -350,28 +343,42 @@ class ThemeAnalyzerService:
         script_sources = {}  # {script_url: [file_paths]}
         
         for file_path, content in files.items():
-            # Find all script src attributes
-            scripts = re.findall(r'<script[^>]*src=["\']([^"\']+)["\']', content, re.IGNORECASE)
+            # Find all script src attributes (only static URLs, not Liquid)
+            scripts = re.findall(r'<script[^>]*src=["\']([^"\'{}]+)["\']', content, re.IGNORECASE)
             
             for src in scripts:
+                # Skip Liquid templated URLs, relative paths, and Shopify CDN (normal theme assets)
+                if '{{' in src or '}}' in src:
+                    continue
+                if src.startswith('/'):
+                    continue
+                if 'cdn.shopify.com' in src:
+                    continue
+                if not src.startswith('http'):
+                    continue
+                    
                 if src not in script_sources:
                     script_sources[src] = []
                 script_sources[src].append(file_path)
         
-        # Find duplicates
+        # Find duplicates - only flag if same external script loaded 3+ times
         for src, paths in script_sources.items():
-            if len(paths) > 1:
-                # Use first file as the file_path (not the full list)
+            if len(paths) >= 3:
+                # Use first file as the file_path
                 primary_file = paths[0]
                 
-                # Create a short description
-                snippet = f"Script '{src[:100]}' loaded in {len(paths)} files"
+                # Only flag if we can identify the app
+                app_name = self._extract_app_from_url(src)
+                if app_name == "Unknown":
+                    continue
+                
+                snippet = f"Script from {app_name} loaded in {len(paths)} files"
                 
                 issues.append({
                     "file_path": primary_file,
                     "issue_type": "duplicate_script",
-                    "severity": "medium",
-                    "likely_source": self._extract_app_from_url(src),
+                    "severity": "low",
+                    "likely_source": app_name,
                     "confidence": 80.0,
                     "code_snippet": snippet
                 })
