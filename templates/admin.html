@@ -620,7 +620,13 @@
 
             <div id="login-error" class="login-error"></div>
 
-            <input type="password" id="password-input" class="login-input" placeholder="Enter admin password" autofocus>
+            <div style="position: relative;">
+                <input type="password" id="password-input" class="login-input" placeholder="Enter admin password"
+                    autofocus style="padding-right: 45px;">
+                <button type="button" onclick="togglePassword()"
+                    style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; color: var(--slate-400);"
+                    id="toggle-password">👁️</button>
+            </div>
             <button onclick="attemptLogin()" class="login-btn">Access Portal</button>
         </div>
     </div>
@@ -962,6 +968,18 @@
         document.getElementById('password-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') attemptLogin();
         });
+        function togglePassword() {
+            const input = document.getElementById('password-input');
+            const toggle = document.getElementById('toggle-password');
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                toggle.textContent = '👁️';
+            }
+        }
+
 
         async function attemptLogin() {
             const password = document.getElementById('password-input').value;
