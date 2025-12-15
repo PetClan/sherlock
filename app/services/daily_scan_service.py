@@ -144,6 +144,9 @@ class DailyScanService:
         """
         Scan CSS files from the current scan for risks
         
+        Only scans NEW, CHANGED, or APP-OWNED files - not the entire theme.
+        This prevents false positives from normal theme CSS.
+        
         Args:
             store_id: The store ID
             scan_id: The current scan ID
@@ -153,12 +156,20 @@ class DailyScanService:
         """
         all_issues = []
         
-        # Get theme files from this scan that are CSS or Liquid
+        # Only get files that are NEW, CHANGED, or APP-OWNED
+        # This avoids flagging normal theme CSS as risky
+        from sqlalchemy import or_
+        
         result = await self.db.execute(
             select(ThemeFileVersion).where(
                 and_(
                     ThemeFileVersion.store_id == store_id,
-                    ThemeFileVersion.scan_id == scan_id
+                    ThemeFileVersion.scan_id == scan_id,
+                    or_(
+                        ThemeFileVersion.is_new == True,
+                        ThemeFileVersion.is_changed == True,
+                        ThemeFileVersion.is_app_owned == True
+                    )
                 )
             )
         )
