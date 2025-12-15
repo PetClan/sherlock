@@ -11,7 +11,8 @@ import httpx
 import re
 import json
 
-from app.db.models import Store, ThemeIssue
+from app.db.models import Store, ThemeIssue, InstalledApp
+from app.services.app_signature_service import AppSignatureService
 
 
 # Patterns that indicate app-injected code
@@ -208,6 +209,7 @@ class ThemeAnalyzerService:
         3. Check for conflicts
         4. Detect errors
         5. Store issues in database
+        6. Learn new app signatures
         """
         print(f"🔍 [ThemeAnalyzer] Analyzing theme for {store.shopify_domain}")
         
@@ -221,15 +223,24 @@ class ThemeAnalyzerService:
                 "issues": []
             }
         
+        # Get installed apps for this store (for learning)
+        installed_apps_result = await self.db.execute(
+            select(InstalledApp).where(InstalledApp.store_id == store.id)
+        )
+        installed_apps = [app.app_name for app in installed_apps_result.scalars().all()]
+        
+        # Initialize signature service for learning
+        signature_service = AppSignatureService(self.db)
+        
         all_issues = []
         
         # Analyze each file
         for file_path, content in files.items():
-            issues = await self._analyze_file(store, file_path, content, theme_id)
+            issues = await self._analyze_file(store, file_path, content, theme_id, installed_apps, signature_service)
             all_issues.extend(issues)
         
         # Check for duplicate scripts across files
-        duplicate_issues = await self._check_duplicate_scripts(store, files, theme_id)
+        duplicate_issues = await self._check_duplicate_scripts(store, files, theme_id, installed_apps, signature_service)
         all_issues.extend(duplicate_issues)
         
         # Store issues in database
@@ -273,21 +284,24 @@ class ThemeAnalyzerService:
         }
     
     async def _analyze_file(
-        self, 
-        store: Store, 
-        file_path: str, 
+        self,
+        store: Store,
+        file_path: str,
         content: str,
-        theme_id: Optional[str]
+        theme_id: Optional[str],
+        installed_apps: List[str] = None,
+        signature_service: AppSignatureService = None
     ) -> List[Dict[str, Any]]:
         """Analyze a single file for issues"""
         issues = []
+        installed_apps = installed_apps or []
         
         if not content:
             return issues
         
         lines = content.split("\n")
         
-        # Check for app injection patterns
+        # Check for app injection patterns (hardcoded known patterns)
         for pattern, app_name, issue_type in APP_INJECTION_PATTERNS:
             matches = list(re.finditer(pattern, content, re.IGNORECASE | re.DOTALL))
             
@@ -308,10 +322,58 @@ class ThemeAnalyzerService:
                     "issue_type": issue_type,
                     "severity": severity,
                     "line_number": line_num,
-                    "code_snippet": snippet[:500],  # Limit size
+                    "code_snippet": snippet[:500],
                     "likely_source": app_name,
                     "confidence": 85.0 if app_name != "Unknown" else 50.0
                 })
+        
+        # Smart detection: Find ALL external scripts and identify them
+        if signature_service:
+            script_urls = re.findall(r'<script[^>]*src=["\']([^"\']+)["\']', content, re.IGNORECASE)
+            
+            for url in script_urls:
+                # Skip Liquid templated URLs
+                if '{{' in url or '}}' in url:
+                    continue
+                # Skip relative URLs
+                if not url.startswith('http'):
+                    continue
+                
+                # Use signature service to identify
+                result = await signature_service.identify_script(url, store.id, installed_apps)
+                
+                # If identified (not whitelisted, not unknown)
+                if result["source"] not in ["whitelisted", "invalid"]:
+                    app_name = result["app_name"]
+                    confidence = result["confidence"]
+                    
+                    # Check if this app is installed
+                    is_installed = any(
+                        app_name and app_name.lower() in installed.lower()
+                        for installed in installed_apps
+                    ) if app_name else False
+                    
+                    # If script found but app NOT installed = orphan code
+                    if app_name and not is_installed and result["source"] in ["known", "learned"]:
+                        issues.append({
+                            "file_path": file_path,
+                            "issue_type": "orphan_script",
+                            "severity": "medium",
+                            "likely_source": app_name,
+                            "confidence": confidence,
+                            "code_snippet": f"Script from '{app_name}' found but app is not installed. This may be leftover code."
+                        })
+                    
+                    # If unknown domain, report it
+                    elif result["source"] == "unknown" and result["domain"]:
+                        issues.append({
+                            "file_path": file_path,
+                            "issue_type": "external_script",
+                            "severity": "low",
+                            "likely_source": f"Unknown ({result['domain']})",
+                            "confidence": 30.0,
+                            "code_snippet": f"External script from: {result['domain']}"
+                        })
         
         # Check for Liquid syntax errors
         for pattern, error_desc in LIQUID_ERROR_PATTERNS:
@@ -325,22 +387,20 @@ class ThemeAnalyzerService:
                     "code_snippet": error_desc
                 })
         
-        # Note: We removed the "excessive_scripts" check because:
-        # 1. Shopify themes naturally have many inline scripts (10-20+ is normal)
-        # 2. Without attribution to specific apps, this is not actionable
-        # 3. It was causing false alarms that erode merchant trust
-        
         return issues
     
     async def _check_duplicate_scripts(
         self,
         store: Store,
         files: Dict[str, str],
-        theme_id: Optional[str]
+        theme_id: Optional[str],
+        installed_apps: List[str] = None,
+        signature_service: AppSignatureService = None
     ) -> List[Dict[str, Any]]:
         """Check for duplicate script includes across files"""
         issues = []
         script_sources = {}  # {script_url: [file_paths]}
+        installed_apps = installed_apps or []
         
         for file_path, content in files.items():
             # Find all script src attributes (only static URLs, not Liquid)
@@ -367,10 +427,18 @@ class ThemeAnalyzerService:
                 # Use first file as the file_path
                 primary_file = paths[0]
                 
-                # Only flag if we can identify the app
-                app_name = self._extract_app_from_url(src)
-                if app_name == "Unknown":
-                    continue
+                # Try to identify using signature service first
+                app_name = None
+                if signature_service:
+                    result = await signature_service.identify_script(src, store.id, installed_apps)
+                    if result["app_name"] and result["source"] != "whitelisted":
+                        app_name = result["app_name"]
+                
+                # Fall back to URL extraction
+                if not app_name:
+                    app_name = self._extract_app_from_url(src)
+                    if app_name == "Unknown":
+                        continue
                 
                 snippet = f"Script from {app_name} loaded in {len(paths)} files"
                 
