@@ -939,83 +939,284 @@
                     </div>
                 </div>
 
-                <!-- Scaling Roadmap -->
+                <!-- Pricing Tiers -->
                 <div class="admin-section">
                     <div class="section-header">
-                        <h2 class="section-title">📈 Scaling Roadmap</h2>
+                        <h2 class="section-title">💰 Pricing Tiers (Planned)</h2>
                     </div>
                     <div class="section-body">
                         <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Store Count</th>
-                                    <th>Status</th>
-                                    <th>Action Required</th>
-                                    <th>Est. Scan Time</th>
+                                    <th>Tier</th>
+                                    <th>Price</th>
+                                    <th>Theme History</th>
+                                    <th>Scan Frequency</th>
+                                    <th>Priority</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td><strong>1-70 stores</strong></td>
-                                    <td><span class="badge badge-success" id="scale-phase1">Current Phase</span></td>
-                                    <td>None - current setup handles this</td>
-                                    <td>~7 minutes</td>
+                                    <td><strong>Standard</strong></td>
+                                    <td>$29/mo</td>
+                                    <td>7 days</td>
+                                    <td>Daily</td>
+                                    <td><span class="badge badge-success">High</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>70-100 stores</strong></td>
-                                    <td><span class="badge badge-warning" id="scale-phase2">Upcoming</span></td>
-                                    <td>Increase batch size to 20 parallel</td>
-                                    <td>~10 minutes</td>
+                                    <td><strong>Professional</strong></td>
+                                    <td>$69/mo</td>
+                                    <td>30 days</td>
+                                    <td>Daily</td>
+                                    <td><span class="badge badge-success">High</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>100-500 stores</strong></td>
-                                    <td><span class="badge badge-info" id="scale-phase3">Future</span></td>
-                                    <td>Stagger scans throughout day + 30 parallel</td>
-                                    <td>~25 minutes</td>
+                                    <td><strong>Enterprise</strong></td>
+                                    <td>$99/mo</td>
+                                    <td>90 days</td>
+                                    <td>Daily</td>
+                                    <td><span class="badge badge-success">High</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>500-1000 stores</strong></td>
-                                    <td><span class="badge badge-info" id="scale-phase4">Future</span></td>
-                                    <td>Add Redis job queue + background workers</td>
-                                    <td>~50 minutes</td>
+                                    <td><strong>Free Trial</strong></td>
+                                    <td>$0 (14 days)</td>
+                                    <td>7 days</td>
+                                    <td>Daily</td>
+                                    <td><span class="badge badge-warning">Medium</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>1000+ stores</strong></td>
-                                    <td><span class="badge badge-info" id="scale-phase5">Future</span></td>
-                                    <td>Multiple worker instances on Railway</td>
-                                    <td>Distributed</td>
+                                    <td><strong>Inactive</strong></td>
+                                    <td>-</td>
+                                    <td>7 days</td>
+                                    <td>Weekly</td>
+                                    <td><span class="badge badge-info">Low</span></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Implementation Notes -->
+                <!-- Data Retention Policy -->
                 <div class="admin-section">
                     <div class="section-header">
-                        <h2 class="section-title">📝 Implementation Notes</h2>
+                        <h2 class="section-title">🗄️ Data Retention Policy</h2>
                     </div>
                     <div class="section-body">
-                        <div style="line-height: 1.8;">
-                            <p><strong>Phase 2 (70+ stores):</strong></p>
-                            <p style="color: var(--slate-400); margin-bottom: 16px;">In <code>main.py</code>, change
-                                <code>PARALLEL_BATCH_SIZE = 10</code> to <code>PARALLEL_BATCH_SIZE = 20</code>
-                            </p>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Data Type</th>
+                                    <th>Standard ($29)</th>
+                                    <th>Professional ($69)</th>
+                                    <th>Enterprise ($99)</th>
+                                    <th>Implementation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Theme file snapshots</strong></td>
+                                    <td>7 days</td>
+                                    <td>30 days</td>
+                                    <td>90 days</td>
+                                    <td><span class="badge badge-warning">TODO</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Performance snapshots</strong></td>
+                                    <td colspan="3">Daily for 30 days → Weekly thereafter</td>
+                                    <td><span class="badge badge-warning">TODO</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Scan results</strong></td>
+                                    <td colspan="3">30 days visible → Archive after 90 days</td>
+                                    <td><span class="badge badge-warning">TODO</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>App signature learning</strong></td>
+                                    <td colspan="3">Keep forever (community knowledge)</td>
+                                    <td><span class="badge badge-success">Active</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                            <p><strong>Phase 3 (100+ stores):</strong></p>
-                            <p style="color: var(--slate-400); margin-bottom: 16px;">Split stores into groups, scan
-                                different groups
-                                at different hours (e.g., A-M at 2 AM, N-Z at 4 AM)</p>
+                <!-- Abuse Limits -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">🛡️ Abuse Limits</h2>
+                    </div>
+                    <div class="section-body">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Limit Type</th>
+                                    <th>Value</th>
+                                    <th>Reason</th>
+                                    <th>Implementation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>On-demand scans per day</strong></td>
+                                    <td>5</td>
+                                    <td>Prevent API abuse</td>
+                                    <td><span class="badge badge-warning">TODO</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Restores per day</strong></td>
+                                    <td>3</td>
+                                    <td>Prevent accidental damage</td>
+                                    <td><span class="badge badge-warning">TODO</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Theme snapshots stored</strong></td>
+                                    <td>7-90 days (by tier)</td>
+                                    <td>Storage cost control</td>
+                                    <td><span class="badge badge-warning">TODO</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                            <p><strong>Phase 4 (500+ stores):</strong></p>
-                            <p style="color: var(--slate-400); margin-bottom: 16px;">Add Redis + Celery or similar job
-                                queue. Each
-                                scan becomes a queued job processed by worker processes.</p>
+                <!-- Full Scaling Roadmap -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">🚀 Scaling Roadmap to 100,000 Stores</h2>
+                    </div>
+                    <div class="section-body">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Phase</th>
+                                    <th>Stores</th>
+                                    <th>Status</th>
+                                    <th>Infrastructure</th>
+                                    <th>Est. Cost</th>
+                                    <th>Scan Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Phase 1</strong></td>
+                                    <td>1-70</td>
+                                    <td><span class="badge badge-success" id="scale-phase1">Current</span></td>
+                                    <td>Railway + APScheduler (10 parallel)</td>
+                                    <td>~$20/mo</td>
+                                    <td>~7 min</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phase 2</strong></td>
+                                    <td>70-500</td>
+                                    <td><span class="badge badge-info" id="scale-phase2">Next</span></td>
+                                    <td>Increase to 50 parallel</td>
+                                    <td>~$30/mo</td>
+                                    <td>~10 min</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phase 3</strong></td>
+                                    <td>500-2,000</td>
+                                    <td><span class="badge badge-info" id="scale-phase3">Future</span></td>
+                                    <td>Redis queue + 3 workers</td>
+                                    <td>~$80/mo</td>
+                                    <td>~20 min</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phase 4</strong></td>
+                                    <td>2,000-10,000</td>
+                                    <td><span class="badge badge-info" id="scale-phase4">Future</span></td>
+                                    <td>Redis + 10 workers + DB scaling</td>
+                                    <td>~$200/mo</td>
+                                    <td>~30 min</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phase 5</strong></td>
+                                    <td>10,000-50,000</td>
+                                    <td><span class="badge badge-info" id="scale-phase5">Future</span></td>
+                                    <td>Dedicated DB + 25 workers + CDN</td>
+                                    <td>~$500/mo</td>
+                                    <td>~45 min</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phase 6</strong></td>
+                                    <td>50,000-100,000</td>
+                                    <td><span class="badge badge-info" id="scale-phase6">Future</span></td>
+                                    <td>AWS/GCP + auto-scaling + sharded DB</td>
+                                    <td>~$1,500/mo</td>
+                                    <td>~60 min</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                            <p><strong>Phase 5 (1000+ stores):</strong></p>
-                            <p style="color: var(--slate-400);">Scale horizontally with multiple Railway worker services
-                                sharing the
-                                Redis queue.</p>
+                <!-- Safeguards Checklist -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">✅ Safeguards Checklist (100K Ready)</h2>
+                    </div>
+                    <div class="section-body">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <div>
+                                <h4 style="color: var(--gold-400); margin-bottom: 12px;">🔄 Queue & Jobs</h4>
+                                <div style="line-height: 2;">
+                                    <p>⏳ Durable queue (Redis/SQS)</p>
+                                    <p>⏳ Idempotent jobs (safe to retry)</p>
+                                    <p>⏳ Dead-letter queue for failures</p>
+                                    <p>⏳ Max runtime enforcement per job</p>
+                                    <p>⏳ Job status visibility</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--gold-400); margin-bottom: 12px;">🛑 API Protection</h4>
+                                <div style="line-height: 2;">
+                                    <p>⏳ Global scan scheduler (not per-store cron)</p>
+                                    <p>⏳ Per-store scan windows</p>
+                                    <p>⏳ Backoff + retry with jitter</p>
+                                    <p>⏳ Kill switch (pause all scanning)</p>
+                                    <p>⏳ Priority tiers (paid → free → idle)</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--gold-400); margin-bottom: 12px;">💾 Data Management</h4>
+                                <div style="line-height: 2;">
+                                    <p>⏳ Retention policies per tier</p>
+                                    <p>⏳ Snapshot thinning (daily → weekly)</p>
+                                    <p>⏳ Archive old data to cold storage</p>
+                                    <p>⏳ Hard caps per store (with warnings)</p>
+                                    <p>⏳ Merchant data export</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--gold-400); margin-bottom: 12px;">🔒 Restore Safety</h4>
+                                <div style="line-height: 2;">
+                                    <p>⏳ Dry-run diff preview</p>
+                                    <p>⏳ Explicit restore confirmation</p>
+                                    <p>⏳ Auto-snapshot before restore</p>
+                                    <p>⏳ Rollback-the-rollback capability</p>
+                                    <p>⏳ Rate-limit restores per store</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--gold-400); margin-bottom: 12px;">🚨 Incident Handling</h4>
+                                <div style="line-height: 2;">
+                                    <p>⏳ Incident mode toggle (reduced depth)</p>
+                                    <p>⏳ Queue prioritization</p>
+                                    <p>⏳ Read-only fallback mode</p>
+                                    <p>⏳ Status page</p>
+                                    <p>⏳ In-app delay messaging</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color: var(--gold-400); margin-bottom: 12px;">📊 Observability</h4>
+                                <div style="line-height: 2;">
+                                    <p>⏳ Queue depth monitoring</p>
+                                    <p>⏳ Scan duration percentiles</p>
+                                    <p>⏳ API error rate tracking</p>
+                                    <p>⏳ Restore failure rates</p>
+                                    <p>⏳ Cost per store calculation</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1027,15 +1228,65 @@
                     </div>
                     <div class="section-body">
                         <div style="line-height: 2;">
+                            <p><strong style="color: var(--amber-400);">🔶 BLOCKING:</strong></p>
                             <p>⏳ <strong>Shopify write_themes exemption</strong> - Applied, waiting for approval (needed
                                 for
-                                rollback feature)</p>
-                            <p>⏳ <strong>App Store scraper</strong> - Build functionality to scrape app reviews</p>
-                            <p>✅ <strong>Daily automated scans</strong> - Running at 3 AM UTC</p>
-                            <p>✅ <strong>CSS false positives</strong> - Fixed</p>
-                            <p>✅ <strong>Smart learning system</strong> - Active</p>
-                            <p>✅ <strong>Performance monitoring</strong> - Added to daily scans</p>
+                                rollback)</p>
+
+                            <p style="margin-top: 16px;"><strong style="color: var(--gold-400);">🔷 SECURITY:</strong>
+                            </p>
+                            <p>⏳ <strong>Remove admin footer link</strong> - Hide admin URL from public pages</p>
+                            <p>⏳ <strong>Set random admin credentials</strong> - Update ADMIN_SECRET_KEY and
+                                ADMIN_PASSWORD in
+                                Railway</p>
+
+                            <p style="margin-top: 16px;"><strong style="color: var(--emerald-400);">🔹
+                                    FEATURES:</strong></p>
+                            <p>⏳ <strong>Bot Behaviour Detector (Phase 4)</strong> - Tracking snippet, API,
+                                classification, UI</p>
+                            <p>⏳ <strong>Cloudflare blocklist templates</strong> - For Chinese scrapers/bots</p>
+                            <p>⏳ <strong>Tiered pricing implementation</strong> - $29/$69/$99 with retention limits</p>
+                            <p>⏳ <strong>Abuse limits implementation</strong> - 5 scans/day, 3 restores/day</p>
+                            <p>⏳ <strong>Data retention automation</strong> - Auto-prune old snapshots</p>
+
+                            <p style="margin-top: 16px;"><strong style="color: var(--slate-400);">⬜ LAUNCH:</strong></p>
+                            <p>⏳ <strong>Marketing site copy</strong> - codenamesherlock.com landing page</p>
+                            <p>⏳ <strong>Shopify App Store submission</strong> - Listing, screenshots, description</p>
+
+                            <p style="margin-top: 16px;"><strong style="color: var(--emerald-400);">✅
+                                    COMPLETED:</strong></p>
+                            <p>✅ Daily automated scans - Running at 3 AM UTC</p>
+                            <p>✅ CSS false positives - Fixed</p>
+                            <p>✅ Smart learning system - Active</p>
+                            <p>✅ Performance monitoring - Added to daily scans</p>
+                            <p>✅ Parallel batch scanning - 10 stores at once</p>
+                            <p>✅ Custom domain - app.codenamesherlock.com</p>
+                            <p>✅ OAuth success redirect - Fixed</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Strategic Note -->
+                <div class="admin-section" style="border: 2px solid var(--gold-500);">
+                    <div class="section-header"
+                        style="background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);">
+                        <h2 class="section-title" style="color: var(--white);">💡 Strategic Insight</h2>
+                    </div>
+                    <div class="section-body">
+                        <p style="font-size: 16px; line-height: 1.8; color: var(--slate-100);">
+                            <strong>Sherlock's moat is not scanning — it's historical memory + safe recovery.</strong>
+                        </p>
+                        <p style="margin-top: 12px; color: var(--slate-400); line-height: 1.8;">
+                            At 100,000 stores, your dataset becomes defensible. Community insights become predictive.
+                            Sherlock becomes <em>preventative</em>, not reactive.
+                        </p>
+                        <p style="margin-top: 12px; color: var(--slate-400); line-height: 1.8;">
+                            But only if: <strong>It is stable. It is trusted. It never surprises merchants in
+                                production.</strong>
+                        </p>
+                        <p style="margin-top: 16px; color: var(--amber-400);">
+                            ⚠️ If Sherlock ever causes Shopify API abuse, Shopify will delist it. This is existential.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -1545,9 +1796,9 @@
 
         function updateScalingBadges(storeCount) {
             // Reset all badges
-            document.getElementById('scale-phase1').textContent = 'Upcoming';
+            document.getElementById('scale-phase1').textContent = 'Next';
             document.getElementById('scale-phase1').className = 'badge badge-info';
-            document.getElementById('scale-phase2').textContent = 'Upcoming';
+            document.getElementById('scale-phase2').textContent = 'Next';
             document.getElementById('scale-phase2').className = 'badge badge-info';
             document.getElementById('scale-phase3').textContent = 'Future';
             document.getElementById('scale-phase3').className = 'badge badge-info';
@@ -1555,23 +1806,28 @@
             document.getElementById('scale-phase4').className = 'badge badge-info';
             document.getElementById('scale-phase5').textContent = 'Future';
             document.getElementById('scale-phase5').className = 'badge badge-info';
+            document.getElementById('scale-phase6').textContent = 'Future';
+            document.getElementById('scale-phase6').className = 'badge badge-info';
 
             // Set current phase
             if (storeCount < 70) {
-                document.getElementById('scale-phase1').textContent = 'Current Phase';
+                document.getElementById('scale-phase1').textContent = 'Current';
                 document.getElementById('scale-phase1').className = 'badge badge-success';
-            } else if (storeCount < 100) {
-                document.getElementById('scale-phase2').textContent = 'Current Phase';
-                document.getElementById('scale-phase2').className = 'badge badge-warning';
             } else if (storeCount < 500) {
-                document.getElementById('scale-phase3').textContent = 'Current Phase';
+                document.getElementById('scale-phase2').textContent = 'Current';
+                document.getElementById('scale-phase2').className = 'badge badge-warning';
+            } else if (storeCount < 2000) {
+                document.getElementById('scale-phase3').textContent = 'Current';
                 document.getElementById('scale-phase3').className = 'badge badge-warning';
-            } else if (storeCount < 1000) {
-                document.getElementById('scale-phase4').textContent = 'Current Phase';
+            } else if (storeCount < 10000) {
+                document.getElementById('scale-phase4').textContent = 'Current';
                 document.getElementById('scale-phase4').className = 'badge badge-warning';
+            } else if (storeCount < 50000) {
+                document.getElementById('scale-phase5').textContent = 'Current';
+                document.getElementById('scale-phase5').className = 'badge badge-warning';
             } else {
-                document.getElementById('scale-phase5').textContent = 'Current Phase';
-                document.getElementById('scale-phase5').className = 'badge badge-danger';
+                document.getElementById('scale-phase6').textContent = 'Current';
+                document.getElementById('scale-phase6').className = 'badge badge-danger';
             }
         }
 
