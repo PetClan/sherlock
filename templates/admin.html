@@ -648,6 +648,7 @@
                 <button class="tab-btn" onclick="switchTab('stores')">🏪 Stores</button>
                 <button class="tab-btn" onclick="switchTab('activity')">📋 Activity</button>
                 <button class="tab-btn" onclick="switchTab('reports')">🚨 App Reports</button>
+                <button class="tab-btn" onclick="switchTab('learning')">🧠 Learning</button>
                 <button class="tab-btn" onclick="switchTab('weekly')">📈 Weekly Report</button>
             </nav>
 
@@ -796,7 +797,100 @@
                     </div>
                 </div>
             </div>
+            <!-- Learning Tab -->
+            <div id="tab-learning" class="tab-content">
+                <!-- Learning Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Total Signatures</span>
+                            <span class="stat-card-icon">🧠</span>
+                        </div>
+                        <div class="stat-card-value" id="learning-total">-</div>
+                        <div class="stat-card-sub">App patterns identified</div>
+                    </div>
 
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Confirmed</span>
+                            <span class="stat-card-icon">✅</span>
+                        </div>
+                        <div class="stat-card-value success" id="learning-confirmed">-</div>
+                        <div class="stat-card-sub">High confidence (80%+)</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Auto-Learned</span>
+                            <span class="stat-card-icon">🤖</span>
+                        </div>
+                        <div class="stat-card-value" id="learning-auto">-</div>
+                        <div class="stat-card-sub">Learned from stores</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Unknown</span>
+                            <span class="stat-card-icon">❓</span>
+                        </div>
+                        <div class="stat-card-value warning" id="learning-unknown">-</div>
+                        <div class="stat-card-sub">Need identification</div>
+                    </div>
+                </div>
+
+                <div class="two-columns">
+                    <div>
+                        <!-- Known Signatures -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <h2 class="section-title">✅ Known App Signatures</h2>
+                            </div>
+                            <div class="section-body">
+                                <div id="signatures-loading" class="loading-spinner">
+                                    <div class="spinner"></div>
+                                </div>
+                                <table class="admin-table" id="signatures-table" style="display: none;">
+                                    <thead>
+                                        <tr>
+                                            <th>Domain</th>
+                                            <th>App Name</th>
+                                            <th>Confidence</th>
+                                            <th>Seen</th>
+                                            <th>Source</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="signatures-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- Unknown Domains -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <h2 class="section-title">❓ Unknown Domains</h2>
+                            </div>
+                            <div class="section-body">
+                                <div id="unknown-loading" class="loading-spinner">
+                                    <div class="spinner"></div>
+                                </div>
+                                <div id="unknown-list" style="display: none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Top Auto-Learned -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <h2 class="section-title">🤖 Recently Learned</h2>
+                            </div>
+                            <div class="section-body">
+                                <div id="top-learned-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Weekly Report Tab -->
             <div id="tab-weekly" class="tab-content">
                 <div id="weekly-report-loading" class="loading-spinner">
@@ -919,6 +1013,7 @@
             if (tabName === 'stores') loadStores();
             if (tabName === 'activity') loadFullActivity();
             if (tabName === 'reports') loadReports();
+            if (tabName === 'learning') loadLearning();
             if (tabName === 'weekly') loadWeeklyReport();
         }
 
@@ -1158,6 +1253,108 @@
             } catch (error) {
                 console.error('Failed to load weekly report:', error);
             }
+        }
+
+        async function loadLearning() {
+            loadLearningStats();
+            loadSignatures();
+            loadUnknownDomains();
+        }
+
+        async function loadLearningStats() {
+            try {
+                const data = await apiCall('/learning/stats');
+
+                document.getElementById('learning-total').textContent = data.total_signatures;
+                document.getElementById('learning-confirmed').textContent = data.confirmed;
+                document.getElementById('learning-auto').textContent = data.auto_learned;
+                document.getElementById('learning-unknown').textContent = data.unknown;
+
+                // Top learned
+                const topLearnedDiv = document.getElementById('top-learned-list');
+                if (data.top_learned && data.top_learned.length > 0) {
+                    topLearnedDiv.innerHTML = data.top_learned.map(item => `
+                        <div class="conflict-item">
+                            <div>
+                                <strong>${item.app_name}</strong>
+                                <div style="font-size: 12px; color: var(--slate-400);">${item.domain}</div>
+                            </div>
+                            <span class="badge badge-success">${item.confidence}%</span>
+                        </div>
+                    `).join('');
+                } else {
+                    topLearnedDiv.innerHTML = '<p style="color: var(--slate-400); text-align: center;">No auto-learned patterns yet</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load learning stats:', error);
+            }
+        }
+
+        async function loadSignatures() {
+            try {
+                const data = await apiCall('/learning/signatures?min_confidence=50');
+                const tbody = document.getElementById('signatures-body');
+                tbody.innerHTML = '';
+
+                if (!data.signatures || data.signatures.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--slate-400);">No signatures learned yet. Sherlock learns as stores connect and scan.</td></tr>';
+                } else {
+                    data.signatures.forEach(sig => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><code style="background: var(--navy-800); padding: 2px 6px; border-radius: 4px;">${sig.domain}</code></td>
+                            <td><strong>${sig.app_name}</strong></td>
+                            <td><span class="badge ${getConfidenceBadgeClass(sig.confidence)}">${sig.confidence}%</span></td>
+                            <td>${sig.times_seen}x (${sig.stores_seen} stores)</td>
+                            <td>${sig.is_from_hardcoded ? '📚 Hardcoded' : '🤖 Learned'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+
+                document.getElementById('signatures-loading').style.display = 'none';
+                document.getElementById('signatures-table').style.display = 'table';
+            } catch (error) {
+                console.error('Failed to load signatures:', error);
+                document.getElementById('signatures-loading').style.display = 'none';
+            }
+        }
+
+        async function loadUnknownDomains() {
+            try {
+                const data = await apiCall('/learning/unknown');
+                const container = document.getElementById('unknown-list');
+
+                if (!data.domains || data.domains.length === 0) {
+                    container.innerHTML = '<p style="color: var(--slate-400); text-align: center;">No unknown domains. Sherlock has identified all scripts!</p>';
+                } else {
+                    container.innerHTML = data.domains.map(item => `
+                        <div class="conflict-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <code style="background: var(--navy-800); padding: 2px 6px; border-radius: 4px;">${item.domain}</code>
+                                <span style="font-size: 12px; color: var(--slate-400);">${item.times_seen}x seen</span>
+                            </div>
+                            ${item.possible_apps && item.possible_apps.length > 0 ? `
+                                <div style="font-size: 12px; color: var(--slate-400);">
+                                    Possible: ${item.possible_apps.slice(0, 3).join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                }
+
+                document.getElementById('unknown-loading').style.display = 'none';
+                container.style.display = 'block';
+            } catch (error) {
+                console.error('Failed to load unknown domains:', error);
+                document.getElementById('unknown-loading').style.display = 'none';
+            }
+        }
+
+        function getConfidenceBadgeClass(confidence) {
+            if (confidence >= 80) return 'badge-success';
+            if (confidence >= 50) return 'badge-warning';
+            return 'badge-danger';
         }
 
         // Helper functions
