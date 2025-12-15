@@ -113,6 +113,22 @@ async def lifespan(app: FastAPI):
         print(f"⚠️  Database initialization warning: {e}")
         print("   (This is normal if database doesn't exist yet)")
     
+    # Initialize system settings (kill switches, rate limits)
+    try:
+        from app.db.database import AsyncSessionLocal
+        from app.services.system_settings_service import SystemSettingsService
+        
+        async with AsyncSessionLocal() as db:
+            settings_service = SystemSettingsService(db)
+            created = await settings_service.initialize_defaults()
+            await db.commit()
+            if created:
+                print(f"✅ Initialized {len(created)} system settings")
+            else:
+                print("✅ System settings already configured")
+    except Exception as e:
+        print(f"⚠️  System settings initialization warning: {e}")
+    
     # Start the scheduler for daily scans
     # Runs at 3:00 AM UTC every day
     scheduler.add_job(
