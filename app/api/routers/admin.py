@@ -12,7 +12,7 @@ from typing import Optional
 import os
 
 from app.db.database import get_db
-from app.db.models import Store, ReportedApp, Diagnosis, DailyScan, InstalledApp
+from app.db.models import Store, ReportedApp, Diagnosis, DailyScan, InstalledApp, AppSignature, AppSignatureSighting
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -407,5 +407,243 @@ async def get_weekly_report(
             "avg_satisfaction": avg_satisfaction,
             "recent_feedback": recent_feedback
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/{secret_key}/learning/signatures")
+async def get_learned_signatures(
+    secret_key: str,
+    password: str = Query(...),
+    min_confidence: float = Query(default=0),
+    limit: int = Query(default=100, ge=1, le=500),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all learned app signatures"""
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        result = await db.execute(
+            select(AppSignature)
+            .where(AppSignature.confidence >= min_confidence)
+            .order_by(desc(AppSignature.confidence), desc(AppSignature.times_seen))
+            .limit(limit)
+        )
+        signatures = result.scalars().all()
+        
+        total = await db.scalar(
+            select(func.count(AppSignature.id))
+            .where(AppSignature.confidence >= min_confidence)
+        )
+        
+        return {
+            "total": total or 0,
+            "signatures": [
+                {
+                    "id": str(s.id),
+                    "domain": s.domain,
+                    "app_name": s.app_name,
+                    "confidence": s.confidence,
+                    "times_seen": s.times_seen,
+                    "stores_seen": s.stores_seen,
+                    "is_confirmed": s.is_confirmed,
+                    "is_from_hardcoded": s.is_from_hardcoded,
+                    "first_seen": s.first_seen.isoformat() if s.first_seen else None,
+                    "last_seen": s.last_seen.isoformat() if s.last_seen else None
+                }
+                for s in signatures
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{secret_key}/learning/unknown")
+async def get_unknown_domains(
+    secret_key: str,
+    password: str = Query(...),
+    limit: int = Query(default=50, ge=1, le=200),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get unknown domains that haven't been identified yet"""
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        # Get signatures with 0 confidence (unknown)
+        result = await db.execute(
+            select(AppSignature)
+            .where(AppSignature.confidence == 0)
+            .order_by(desc(AppSignature.times_seen))
+            .limit(limit)
+        )
+        unknown_sigs = result.scalars().all()
+        
+        unknown_domains = []
+        for sig in unknown_sigs:
+            # Get sightings to find possible apps
+            sightings_result = await db.execute(
+                select(AppSignatureSighting)
+                .where(AppSignatureSighting.signature_id == sig.id)
+                .limit(10)
+            )
+            sightings = sightings_result.scalars().all()
+            
+            # Collect all installed apps across sightings
+            all_apps = set()
+            for s in sightings:
+                if s.installed_apps:
+                    all_apps.update(s.installed_apps)
+            
+            unknown_domains.append({
+                "domain": sig.domain,
+                "times_seen": sig.times_seen,
+                "stores_seen": sig.stores_seen,
+                "first_seen": sig.first_seen.isoformat() if sig.first_seen else None,
+                "last_seen": sig.last_seen.isoformat() if sig.last_seen else None,
+                "possible_apps": list(all_apps)[:10]  # Limit to 10 suggestions
+            })
+        
+        total_unknown = await db.scalar(
+            select(func.count(AppSignature.id))
+            .where(AppSignature.confidence == 0)
+        )
+        
+        return {
+            "total_unknown": total_unknown or 0,
+            "domains": unknown_domains
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{secret_key}/learning/stats")
+async def get_learning_stats(
+    secret_key: str,
+    password: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get overall learning statistics"""
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        # Total signatures
+        total_signatures = await db.scalar(select(func.count(AppSignature.id))) or 0
+        
+        # Confirmed (high confidence >= 80)
+        confirmed = await db.scalar(
+            select(func.count(AppSignature.id))
+            .where(AppSignature.confidence >= 80)
+        ) or 0
+        
+        # Learning (confidence 50-79)
+        learning = await db.scalar(
+            select(func.count(AppSignature.id))
+            .where(and_(AppSignature.confidence >= 50, AppSignature.confidence < 80))
+        ) or 0
+        
+        # Unknown (confidence 0)
+        unknown = await db.scalar(
+            select(func.count(AppSignature.id))
+            .where(AppSignature.confidence == 0)
+        ) or 0
+        
+        # From hardcoded list
+        hardcoded = await db.scalar(
+            select(func.count(AppSignature.id))
+            .where(AppSignature.is_from_hardcoded == True)
+        ) or 0
+        
+        # Learned automatically
+        auto_learned = await db.scalar(
+            select(func.count(AppSignature.id))
+            .where(and_(
+                AppSignature.is_from_hardcoded == False,
+                AppSignature.confidence > 0
+            ))
+        ) or 0
+        
+        # Total sightings
+        total_sightings = await db.scalar(select(func.count(AppSignatureSighting.id))) or 0
+        
+        # Unique stores that contributed
+        unique_stores = await db.scalar(
+            select(func.count(func.distinct(AppSignatureSighting.store_id)))
+        ) or 0
+        
+        # Top learned apps (non-hardcoded, by times seen)
+        top_learned_result = await db.execute(
+            select(AppSignature)
+            .where(and_(
+                AppSignature.is_from_hardcoded == False,
+                AppSignature.confidence > 0
+            ))
+            .order_by(desc(AppSignature.times_seen))
+            .limit(10)
+        )
+        top_learned = [
+            {"domain": s.domain, "app_name": s.app_name, "times_seen": s.times_seen, "confidence": s.confidence}
+            for s in top_learned_result.scalars().all()
+        ]
+        
+        return {
+            "total_signatures": total_signatures,
+            "confirmed": confirmed,
+            "learning": learning,
+            "unknown": unknown,
+            "hardcoded": hardcoded,
+            "auto_learned": auto_learned,
+            "total_sightings": total_sightings,
+            "unique_stores_contributed": unique_stores,
+            "top_learned": top_learned
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{secret_key}/learning/confirm")
+async def confirm_signature(
+    secret_key: str,
+    password: str = Query(...),
+    signature_id: str = Query(...),
+    app_name: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Manually confirm/update a signature"""
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        result = await db.execute(
+            select(AppSignature).where(AppSignature.id == signature_id)
+        )
+        signature = result.scalar_one_or_none()
+        
+        if not signature:
+            raise HTTPException(status_code=404, detail="Signature not found")
+        
+        signature.app_name = app_name
+        signature.confidence = 100.0
+        signature.is_confirmed = True
+        
+        await db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Confirmed {signature.domain} as {app_name}",
+            "signature": {
+                "id": str(signature.id),
+                "domain": signature.domain,
+                "app_name": signature.app_name,
+                "confidence": signature.confidence
+            }
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
