@@ -946,109 +946,14 @@
             </div>
             <!-- System Tab -->
             <div id="tab-system" class="tab-content">
-                <!-- Kill Switches - CRITICAL CONTROLS -->
-                <div class="admin-section" style="border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.05);">
-                    <div class="section-header">
-                        <h2 class="section-title">🚨 Kill Switches</h2>
-                        <span class="badge badge-danger">CRITICAL</span>
-                    </div>
-                    <div class="section-body">
-                        <p style="color: var(--slate-400); margin-bottom: 20px;">
-                            Emergency controls to instantly disable functionality. Use with caution.
-                        </p>
-
-                        <div class="kill-switches-grid"
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
-                            <!-- Master Kill Switch -->
-                            <div class="kill-switch-card"
-                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong style="color: var(--slate-200);">⛔ Master Kill Switch</strong>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggle-scanning-enabled"
-                                            onchange="toggleSetting('scanning_enabled', this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL scanning
-                                    (daily +
-                                    on-demand)</p>
-                            </div>
-
-                            <!-- Daily Scans Switch -->
-                            <div class="kill-switch-card"
-                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong style="color: var(--slate-200);">🕐 Daily Scans</strong>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggle-daily-scans-enabled"
-                                            onchange="toggleSetting('daily_scans_enabled', this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables automated 3 AM
-                                    UTC daily
-                                    scans</p>
-                            </div>
-
-                            <!-- Restores Switch -->
-                            <div class="kill-switch-card"
-                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
-                                <div
-                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong style="color: var(--slate-200);">📝 Read-Only Mode</strong>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggle-restores-enabled"
-                                            onchange="toggleSetting('restores_enabled', this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL theme
-                                    restores/rollbacks</p>
-                            </div>
-                        </div>
-
-                        <!-- Rate Limits -->
-                        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--navy-600);">
-                            <h3 style="color: var(--slate-200); margin-bottom: 16px;">📊 Rate Limits</h3>
-                            <div
-                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
-                                    <label style="color: var(--slate-400); font-size: 12px;">Max On-Demand
-                                        Scans/Day</label>
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                                        <input type="number" id="input-max-scans" value="5" min="1" max="50"
-                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
-                                        <button
-                                            onclick="updateRateLimit('max_on_demand_scans_per_day', document.getElementById('input-max-scans').value)"
-                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
-                                    </div>
-                                </div>
-                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
-                                    <label style="color: var(--slate-400); font-size: 12px;">Max Restores/Day</label>
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                                        <input type="number" id="input-max-restores" value="3" min="1" max="20"
-                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
-                                        <button
-                                            onclick="updateRateLimit('max_restores_per_day', document.getElementById('input-max-restores').value)"
-                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
-                                    </div>
-                                </div>
-                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
-                                    <label style="color: var(--slate-400); font-size: 12px;">API Buffer %</label>
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                                        <input type="number" id="input-api-buffer" value="20" min="5" max="50"
-                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
-                                        <button
-                                            onclick="updateRateLimit('api_rate_limit_buffer', document.getElementById('input-api-buffer').value)"
-                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Emergency Button -->
+                <div style="margin-bottom: 20px;">
+                    <button
+                        onclick="document.getElementById('kill-switches-section').scrollIntoView({ behavior: 'smooth' })"
+                        style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        🚨 Emergency Kill Switches
+                        <span style="font-size: 12px; opacity: 0.8;">↓</span>
+                    </button>
                 </div>
 
                 <!-- Current Status -->
@@ -1419,8 +1324,7 @@
 
                 <!-- Strategic Note -->
                 <div class="admin-section" style="border: 2px solid var(--gold-500);">
-                    <div class="section-header"
-                        style="background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);">
+                    <div class="section-header" style="background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);">
                         <h2 class="section-title" style="color: var(--white);">💡 Strategic Insight</h2>
                     </div>
                     <div class="section-body">
@@ -1440,8 +1344,107 @@
                         </p>
                     </div>
                 </div>
-            </div>
-            <!-- Weekly Report Tab -->
+                
+                <!-- Kill Switches - CRITICAL CONTROLS -->
+                <div id="kill-switches-section" class="admin-section"
+                    style="border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.05);">
+                    <div class="section-header">
+                        <h2 class="section-title">🚨 Kill Switches</h2>
+                        <span class="badge badge-danger">CRITICAL</span>
+                    </div>
+                    <div class="section-body">
+                        <p style="color: var(--slate-400); margin-bottom: 20px;">
+                            Emergency controls to instantly disable functionality. Use with caution.
+                        </p>
+                
+                        <div class="kill-switches-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                            <!-- Master Kill Switch -->
+                            <div class="kill-switch-card"
+                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: var(--slate-200);">⛔ Master Kill Switch</strong>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-scanning-enabled"
+                                            onchange="toggleSetting('scanning_enabled', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL scanning (daily +
+                                    on-demand)</p>
+                            </div>
+                
+                            <!-- Daily Scans Switch -->
+                            <div class="kill-switch-card"
+                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: var(--slate-200);">🕐 Daily Scans</strong>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-daily-scans-enabled"
+                                            onchange="toggleSetting('daily_scans_enabled', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables automated 3 AM UTC daily scans
+                                </p>
+                            </div>
+                
+                            <!-- Restores Switch -->
+                            <div class="kill-switch-card"
+                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: var(--slate-200);">📝 Read-Only Mode</strong>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-restores-enabled"
+                                            onchange="toggleSetting('restores_enabled', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL theme restores/rollbacks
+                                </p>
+                            </div>
+                        </div>
+                
+                        <!-- Rate Limits -->
+                        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--navy-600);">
+                            <h3 style="color: var(--slate-200); margin-bottom: 16px;">📊 Rate Limits</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
+                                    <label style="color: var(--slate-400); font-size: 12px;">Max On-Demand Scans/Day</label>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <input type="number" id="input-max-scans" value="5" min="1" max="50"
+                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
+                                        <button
+                                            onclick="updateRateLimit('max_on_demand_scans_per_day', document.getElementById('input-max-scans').value)"
+                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
+                                    </div>
+                                </div>
+                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
+                                    <label style="color: var(--slate-400); font-size: 12px;">Max Restores/Day</label>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <input type="number" id="input-max-restores" value="3" min="1" max="20"
+                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
+                                        <button
+                                            onclick="updateRateLimit('max_restores_per_day', document.getElementById('input-max-restores').value)"
+                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
+                                    </div>
+                                </div>
+                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
+                                    <label style="color: var(--slate-400); font-size: 12px;">API Buffer %</label>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <input type="number" id="input-api-buffer" value="20" min="5" max="50"
+                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
+                                        <button
+                                            onclick="updateRateLimit('api_rate_limit_buffer', document.getElementById('input-api-buffer').value)"
+                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <!-- Weekly Report Tab -->
             <div id="tab-weekly" class="tab-content">
                 <div id="weekly-report-loading" class="loading-spinner">
                     <div class="spinner"></div>
