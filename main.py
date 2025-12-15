@@ -115,10 +115,10 @@ async def lifespan(app: FastAPI):
     
     # Initialize system settings (kill switches, rate limits)
     try:
-        from app.db.database import AsyncSessionLocal
+        from app.db.database import async_session
         from app.services.system_settings_service import SystemSettingsService
         
-        async with AsyncSessionLocal() as db:
+        async with async_session() as db:
             settings_service = SystemSettingsService(db)
             created = await settings_service.initialize_defaults()
             await db.commit()
