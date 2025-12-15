@@ -12,6 +12,7 @@ from app.db.models import Store, DailyScan, ThemeFileVersion, ScriptTagSnapshot
 from app.services.theme_snapshot_service import ThemeSnapshotService
 from app.services.script_tag_service import ScriptTagService
 from app.services.css_risk_service import CSSRiskService, CSSIssue
+from app.services.performance_service import PerformanceService
 
 
 class DailyScanService:
@@ -22,6 +23,7 @@ class DailyScanService:
         self.theme_service = ThemeSnapshotService(db)
         self.script_service = ScriptTagService(db)
         self.css_service = CSSRiskService()
+        self.performance_service = PerformanceService(db)
     
     async def run_daily_scan(self, store: Store) -> DailyScan:
         """
@@ -78,6 +80,10 @@ class DailyScanService:
             css_issues = await self._scan_css_risks(store.id, scan.id)
             css_risk = self.css_service.calculate_risk_score(css_issues)
             
+            # 4. Performance measurement
+            print(f"⏱️ [DailyScan] Measuring performance...")
+            performance_results = await self.performance_service.measure_page_performance(store, "homepage")
+            
             # Update scan with results
             scan.files_total = theme_results.get("files_total", 0)
             scan.files_changed = theme_results.get("files_changed", 0)
@@ -103,7 +109,8 @@ class DailyScanService:
             risk_level, risk_reasons = self._calculate_risk_level(
                 theme_results=theme_results,
                 script_results=script_results,
-                css_risk=css_risk
+                css_risk=css_risk,
+                performance_results=performance_results
             )
             
             scan.risk_level = risk_level
@@ -191,7 +198,8 @@ class DailyScanService:
         self,
         theme_results: Dict[str, Any],
         script_results: Dict[str, Any],
-        css_risk: Dict[str, Any]
+        css_risk: Dict[str, Any],
+        performance_results: Dict[str, Any] = None
     ) -> tuple[str, List[str]]:
         """
         Calculate overall risk level from scan results
@@ -201,6 +209,7 @@ class DailyScanService:
         """
         risk_reasons = []
         risk_score = 0
+        performance_results = performance_results or {}
         
         # Theme file changes
         files_changed = theme_results.get("files_changed", 0)
@@ -243,6 +252,46 @@ class DailyScanService:
         elif css_level == "medium":
             risk_score += 15
             risk_reasons.append(f"Medium CSS conflict risk ({css_risk.get('total_issues', 0)} issues)")
+        
+        # Performance risks
+        perf_score = performance_results.get("performance_score", 100)
+        load_time = performance_results.get("load_time_ms", 0)
+        
+        if perf_score < 40:
+            risk_score += 25
+            risk_reasons.append(f"Poor performance score ({perf_score}/100)")
+        elif perf_score < 60:
+            risk_score += 15
+            risk_reasons.append(f"Below average performance ({perf_score}/100)")
+        
+        if load_time > 6000:
+            risk_score += 20
+            risk_reasons.append(f"Very slow page load ({load_time}ms)")
+        elif load_time > 4000:
+            risk_score += 10
+            risk_reasons.append(f"Slow page load ({load_time}ms)")
+        
+        # Determine level
+        
+        # Performance risks
+        perf_score = performance_results.get("performance_score", 100)
+        load_time = performance_results.get("load_time_ms", 0)
+        
+        if perf_score < 40:
+            risk_score += 25
+            risk_reasons.append(f"Poor performance score ({perf_score}/100)")
+        elif perf_score < 60:
+            risk_score += 15
+            risk_reasons.append(f"Below average performance ({perf_score}/100)")
+        
+        if load_time > 6000:
+            risk_score += 20
+            risk_reasons.append(f"Very slow page load ({load_time}ms)")
+        elif load_time > 4000:
+            risk_score += 10
+            risk_reasons.append(f"Slow page load ({load_time}ms)")
+        
+        # Determine level
         
         # Determine level
         if risk_score >= 50:
