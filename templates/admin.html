@@ -735,7 +735,7 @@
                         <div class="stat-card-value success" id="stat-revenue">$0</div>
                         <div class="price-input-group">
                             <span class="price-label">Price per store: $</span>
-                            <input type="number" id="price-per-store" class="price-input" value="9" min="0" step="0.01"
+                            <input type="number" id="price-per-store" class="price-input" value="29" min="0" step="0.01"
                                 onchange="updateRevenue()">
                         </div>
                     </div>
@@ -1793,7 +1793,7 @@
                     document.getElementById('report-satisfaction-score').textContent = 'No ratings yet';
                 }
 
-                const price = parseFloat(document.getElementById('price-per-store').value) || 9;
+                const price = parseFloat(document.getElementById('price-per-store').value) || 29;
                 document.getElementById('report-revenue').textContent = '$' + (data.total_stores * price).toFixed(2);
 
                 // Feedback
