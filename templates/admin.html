@@ -656,6 +656,7 @@
                 <button class="tab-btn" onclick="switchTab('reports')">🚨 App Reports</button>
                 <button class="tab-btn" onclick="switchTab('learning')">🧠 Learning</button>
                 <button class="tab-btn" onclick="switchTab('weekly')">📈 Weekly Report</button>
+                <button class="tab-btn" onclick="switchTab('system')">⚙️ System</button>
             </nav>
 
             <!-- Dashboard Tab -->
@@ -897,6 +898,147 @@
                     </div>
                 </div>
             </div>
+            <!-- System Tab -->
+            <div id="tab-system" class="tab-content">
+                <!-- Current Status -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Active Stores</span>
+                            <span class="stat-card-icon">🏪</span>
+                        </div>
+                        <div class="stat-card-value" id="system-active-stores">-</div>
+                        <div class="stat-card-sub">Currently connected</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Scan Batch Size</span>
+                            <span class="stat-card-icon">⚡</span>
+                        </div>
+                        <div class="stat-card-value">10</div>
+                        <div class="stat-card-sub">Parallel scans</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Est. Scan Time</span>
+                            <span class="stat-card-icon">⏱️</span>
+                        </div>
+                        <div class="stat-card-value" id="system-scan-time">-</div>
+                        <div class="stat-card-sub">All stores</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">Daily Scan</span>
+                            <span class="stat-card-icon">🕐</span>
+                        </div>
+                        <div class="stat-card-value" style="font-size: 24px;">3:00 AM</div>
+                        <div class="stat-card-sub">UTC daily</div>
+                    </div>
+                </div>
+
+                <!-- Scaling Roadmap -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">📈 Scaling Roadmap</h2>
+                    </div>
+                    <div class="section-body">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Store Count</th>
+                                    <th>Status</th>
+                                    <th>Action Required</th>
+                                    <th>Est. Scan Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1-70 stores</strong></td>
+                                    <td><span class="badge badge-success" id="scale-phase1">Current Phase</span></td>
+                                    <td>None - current setup handles this</td>
+                                    <td>~7 minutes</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>70-100 stores</strong></td>
+                                    <td><span class="badge badge-warning" id="scale-phase2">Upcoming</span></td>
+                                    <td>Increase batch size to 20 parallel</td>
+                                    <td>~10 minutes</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>100-500 stores</strong></td>
+                                    <td><span class="badge badge-info" id="scale-phase3">Future</span></td>
+                                    <td>Stagger scans throughout day + 30 parallel</td>
+                                    <td>~25 minutes</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>500-1000 stores</strong></td>
+                                    <td><span class="badge badge-info" id="scale-phase4">Future</span></td>
+                                    <td>Add Redis job queue + background workers</td>
+                                    <td>~50 minutes</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>1000+ stores</strong></td>
+                                    <td><span class="badge badge-info" id="scale-phase5">Future</span></td>
+                                    <td>Multiple worker instances on Railway</td>
+                                    <td>Distributed</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Implementation Notes -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">📝 Implementation Notes</h2>
+                    </div>
+                    <div class="section-body">
+                        <div style="line-height: 1.8;">
+                            <p><strong>Phase 2 (70+ stores):</strong></p>
+                            <p style="color: var(--slate-400); margin-bottom: 16px;">In <code>main.py</code>, change
+                                <code>PARALLEL_BATCH_SIZE = 10</code> to <code>PARALLEL_BATCH_SIZE = 20</code>
+                            </p>
+
+                            <p><strong>Phase 3 (100+ stores):</strong></p>
+                            <p style="color: var(--slate-400); margin-bottom: 16px;">Split stores into groups, scan
+                                different groups
+                                at different hours (e.g., A-M at 2 AM, N-Z at 4 AM)</p>
+
+                            <p><strong>Phase 4 (500+ stores):</strong></p>
+                            <p style="color: var(--slate-400); margin-bottom: 16px;">Add Redis + Celery or similar job
+                                queue. Each
+                                scan becomes a queued job processed by worker processes.</p>
+
+                            <p><strong>Phase 5 (1000+ stores):</strong></p>
+                            <p style="color: var(--slate-400);">Scale horizontally with multiple Railway worker services
+                                sharing the
+                                Redis queue.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Tasks -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">📋 Pending Tasks</h2>
+                    </div>
+                    <div class="section-body">
+                        <div style="line-height: 2;">
+                            <p>⏳ <strong>Shopify write_themes exemption</strong> - Applied, waiting for approval (needed
+                                for
+                                rollback feature)</p>
+                            <p>⏳ <strong>App Store scraper</strong> - Build functionality to scrape app reviews</p>
+                            <p>✅ <strong>Daily automated scans</strong> - Running at 3 AM UTC</p>
+                            <p>✅ <strong>CSS false positives</strong> - Fixed</p>
+                            <p>✅ <strong>Smart learning system</strong> - Active</p>
+                            <p>✅ <strong>Performance monitoring</strong> - Added to daily scans</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Weekly Report Tab -->
             <div id="tab-weekly" class="tab-content">
                 <div id="weekly-report-loading" class="loading-spinner">
@@ -1033,6 +1175,7 @@
             if (tabName === 'reports') loadReports();
             if (tabName === 'learning') loadLearning();
             if (tabName === 'weekly') loadWeeklyReport();
+            if (tabName === 'system') loadSystem();
         }
 
         async function apiCall(endpoint) {
@@ -1373,6 +1516,63 @@
             if (confidence >= 80) return 'badge-success';
             if (confidence >= 50) return 'badge-warning';
             return 'badge-danger';
+        }
+
+        async function loadSystem() {
+            try {
+                const data = await apiCall('/stats/overview');
+                const activeStores = data.active_stores || 0;
+
+                document.getElementById('system-active-stores').textContent = activeStores;
+
+                // Calculate estimated scan time (60 seconds per store, 10 parallel)
+                const batchSize = 10;
+                const secondsPerStore = 60;
+                const batches = Math.ceil(activeStores / batchSize);
+                const totalSeconds = batches * secondsPerStore;
+                const minutes = Math.ceil(totalSeconds / 60);
+
+                document.getElementById('system-scan-time').textContent =
+                    activeStores === 0 ? '-' : `~${minutes} min`;
+
+                // Update scaling badges based on store count
+                updateScalingBadges(activeStores);
+
+            } catch (error) {
+                console.error('Failed to load system stats:', error);
+            }
+        }
+
+        function updateScalingBadges(storeCount) {
+            // Reset all badges
+            document.getElementById('scale-phase1').textContent = 'Upcoming';
+            document.getElementById('scale-phase1').className = 'badge badge-info';
+            document.getElementById('scale-phase2').textContent = 'Upcoming';
+            document.getElementById('scale-phase2').className = 'badge badge-info';
+            document.getElementById('scale-phase3').textContent = 'Future';
+            document.getElementById('scale-phase3').className = 'badge badge-info';
+            document.getElementById('scale-phase4').textContent = 'Future';
+            document.getElementById('scale-phase4').className = 'badge badge-info';
+            document.getElementById('scale-phase5').textContent = 'Future';
+            document.getElementById('scale-phase5').className = 'badge badge-info';
+
+            // Set current phase
+            if (storeCount < 70) {
+                document.getElementById('scale-phase1').textContent = 'Current Phase';
+                document.getElementById('scale-phase1').className = 'badge badge-success';
+            } else if (storeCount < 100) {
+                document.getElementById('scale-phase2').textContent = 'Current Phase';
+                document.getElementById('scale-phase2').className = 'badge badge-warning';
+            } else if (storeCount < 500) {
+                document.getElementById('scale-phase3').textContent = 'Current Phase';
+                document.getElementById('scale-phase3').className = 'badge badge-warning';
+            } else if (storeCount < 1000) {
+                document.getElementById('scale-phase4').textContent = 'Current Phase';
+                document.getElementById('scale-phase4').className = 'badge badge-warning';
+            } else {
+                document.getElementById('scale-phase5').textContent = 'Current Phase';
+                document.getElementById('scale-phase5').className = 'badge badge-danger';
+            }
         }
 
         // Helper functions
