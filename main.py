@@ -11,9 +11,13 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from typing import Optional, List
 from datetime import datetime
+import asyncio
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from app.core.config import settings
 from app.db.database import init_db, get_db
@@ -23,6 +27,50 @@ from app.services.app_scanner_service import AppScannerService
 from app.services.theme_analyzer_service import ThemeAnalyzerService
 from app.services.performance_service import PerformanceService
 from app.api import api_router
+
+
+# Global scheduler instance
+scheduler = AsyncIOScheduler()
+
+
+async def run_scheduled_daily_scans():
+    """
+    Run daily scans for all active stores
+    This is triggered automatically by the scheduler
+    """
+    from app.db.database import AsyncSessionLocal
+    from app.services.daily_scan_service import DailyScanService
+    
+    print("🕐 [Scheduler] Starting scheduled daily scans...")
+    
+    try:
+        async with AsyncSessionLocal() as db:
+            # Get all active stores
+            result = await db.execute(
+                select(Store).where(Store.is_active == True)
+            )
+            stores = result.scalars().all()
+            
+            print(f"📋 [Scheduler] Found {len(stores)} active stores to scan")
+            
+            for store in stores:
+                try:
+                    print(f"🔍 [Scheduler] Scanning {store.shopify_domain}...")
+                    scan_service = DailyScanService(db)
+                    scan = await scan_service.run_daily_scan(store)
+                    print(f"✅ [Scheduler] Completed scan for {store.shopify_domain}: {scan.risk_level} risk")
+                except Exception as e:
+                    print(f"❌ [Scheduler] Error scanning {store.shopify_domain}: {e}")
+                
+                # Small delay between stores to avoid rate limits
+                await asyncio.sleep(2)
+            
+            await db.commit()
+            
+        print(f"🏁 [Scheduler] Daily scans complete for {len(stores)} stores")
+        
+    except Exception as e:
+        print(f"❌ [Scheduler] Daily scan job failed: {e}")
 
 
 @asynccontextmanager
@@ -42,9 +90,22 @@ async def lifespan(app: FastAPI):
         print(f"⚠️  Database initialization warning: {e}")
         print("   (This is normal if database doesn't exist yet)")
     
+    # Start the scheduler for daily scans
+    # Runs at 3:00 AM UTC every day
+    scheduler.add_job(
+        run_scheduled_daily_scans,
+        CronTrigger(hour=3, minute=0),
+        id="daily_scans",
+        name="Daily store scans",
+        replace_existing=True
+    )
+    scheduler.start()
+    print("⏰ Scheduler started - Daily scans at 3:00 AM UTC")
+    
     yield
     
     # Shutdown
+    scheduler.shutdown()
     print("👋 Shutting down Sherlock...")
 
 
