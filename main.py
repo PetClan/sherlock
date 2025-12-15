@@ -39,57 +39,71 @@ async def run_scheduled_daily_scans():
     This is triggered automatically by the scheduler
     Runs in parallel batches for scalability
     """
-    from app.db.database import AsyncSessionLocal
+    from app.db.database import async_session
     from app.services.daily_scan_service import DailyScanService
+    from app.services.system_settings_service import SystemSettingsService
     
     PARALLEL_BATCH_SIZE = 10  # Number of stores to scan simultaneously
     
     print("🕐 [Scheduler] Starting scheduled daily scans...")
     
     try:
-        async with AsyncSessionLocal() as db:
+        # Check kill switches FIRST
+        async with async_session() as db:
+            settings_service = SystemSettingsService(db)
+            
+            # Check master kill switch
+            if not await settings_service.is_scanning_enabled():
+                print("⛔ [Scheduler] ABORTED - Scanning is disabled (kill switch active)")
+                return
+            
+            # Check daily scans specific switch
+            if not await settings_service.is_daily_scans_enabled():
+                print("⛔ [Scheduler] ABORTED - Daily scans are disabled")
+                return
+            
             # Get all active stores
             result = await db.execute(
                 select(Store).where(Store.is_active == True)
             )
             stores = result.scalars().all()
+        
+        print(f"📋 [Scheduler] Found {len(stores)} active stores to scan (batch size: {PARALLEL_BATCH_SIZE})")
+        
+        # Process in parallel batches
+        successful = 0
+        failed = 0
+        
+        for i in range(0, len(stores), PARALLEL_BATCH_SIZE):
+            batch = stores[i:i + PARALLEL_BATCH_SIZE]
+            batch_num = (i // PARALLEL_BATCH_SIZE) + 1
+            total_batches = (len(stores) + PARALLEL_BATCH_SIZE - 1) // PARALLEL_BATCH_SIZE
             
-            print(f"📋 [Scheduler] Found {len(stores)} active stores to scan (batch size: {PARALLEL_BATCH_SIZE})")
+            print(f"🔄 [Scheduler] Processing batch {batch_num}/{total_batches} ({len(batch)} stores)...")
             
-            # Process in parallel batches
-            successful = 0
-            failed = 0
+            # Create scan tasks for this batch
+            async def scan_store(store):
+                try:
+                    async with async_session() as store_db:
+                        scan_service = DailyScanService(store_db)
+                        scan = await scan_service.run_daily_scan(store)
+                        await store_db.commit()
+                        print(f"✅ [Scheduler] {store.shopify_domain}: {scan.risk_level} risk")
+                        return True
+                except Exception as e:
+                    print(f"❌ [Scheduler] {store.shopify_domain}: {e}")
+                    return False
             
-            for i in range(0, len(stores), PARALLEL_BATCH_SIZE):
-                batch = stores[i:i + PARALLEL_BATCH_SIZE]
-                batch_num = (i // PARALLEL_BATCH_SIZE) + 1
-                total_batches = (len(stores) + PARALLEL_BATCH_SIZE - 1) // PARALLEL_BATCH_SIZE
-                
-                print(f"🔄 [Scheduler] Processing batch {batch_num}/{total_batches} ({len(batch)} stores)...")
-                
-                # Create scan tasks for this batch
-                async def scan_store(store):
-                    try:
-                        async with AsyncSessionLocal() as store_db:
-                            scan_service = DailyScanService(store_db)
-                            scan = await scan_service.run_daily_scan(store)
-                            await store_db.commit()
-                            print(f"✅ [Scheduler] {store.shopify_domain}: {scan.risk_level} risk")
-                            return True
-                    except Exception as e:
-                        print(f"❌ [Scheduler] {store.shopify_domain}: {e}")
-                        return False
-                
-                # Run batch in parallel
-                results = await asyncio.gather(*[scan_store(store) for store in batch])
-                
-                successful += sum(1 for r in results if r)
-                failed += sum(1 for r in results if not r)
-                
-                # Small delay between batches
-                if i + PARALLEL_BATCH_SIZE < len(stores):
-                    await asyncio.sleep(5)
+            # Run batch in parallel
+            results = await asyncio.gather(*[scan_store(store) for store in batch])
             
+            successful += sum(1 for r in results if r)
+            failed += sum(1 for r in results if not r)
+            
+            # Small delay between batches
+            if i + PARALLEL_BATCH_SIZE < len(stores):
+                await asyncio.sleep(5)
+        
         print(f"🏁 [Scheduler] Daily scans complete: {successful} successful, {failed} failed")
         
     except Exception as e:
