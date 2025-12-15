@@ -511,3 +511,23 @@ class SystemSettings(Base):
     description = Column(String(500), nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     updated_by = Column(String(100), nullable=True)
+
+class StoreDailyUsage(Base):
+    """Track daily usage limits per store"""
+    __tablename__ = "store_daily_usage"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    store_id = Column(String(36), ForeignKey("stores.id", ondelete="CASCADE"), nullable=False)
+    usage_date = Column(String(10), nullable=False)  # Format: YYYY-MM-DD
+    
+    # Usage counters
+    scan_count = Column(Integer, default=0)
+    restore_count = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    __table_args__ = (
+        Index("idx_store_usage_date", "store_id", "usage_date", unique=True),
+    )
