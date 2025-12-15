@@ -900,12 +900,117 @@
             </div>
             <!-- System Tab -->
             <div id="tab-system" class="tab-content">
+                <!-- Kill Switches - CRITICAL CONTROLS -->
+                <div class="admin-section" style="border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.05);">
+                    <div class="section-header">
+                        <h2 class="section-title">🚨 Kill Switches</h2>
+                        <span class="badge badge-danger">CRITICAL</span>
+                    </div>
+                    <div class="section-body">
+                        <p style="color: var(--slate-400); margin-bottom: 20px;">
+                            Emergency controls to instantly disable functionality. Use with caution.
+                        </p>
+
+                        <div class="kill-switches-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
+                            <!-- Master Kill Switch -->
+                            <div class="kill-switch-card"
+                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: var(--slate-200);">⛔ Master Kill Switch</strong>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-scanning-enabled"
+                                            onchange="toggleSetting('scanning_enabled', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL scanning
+                                    (daily +
+                                    on-demand)</p>
+                            </div>
+
+                            <!-- Daily Scans Switch -->
+                            <div class="kill-switch-card"
+                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: var(--slate-200);">🕐 Daily Scans</strong>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-daily-scans-enabled"
+                                            onchange="toggleSetting('daily_scans_enabled', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables automated 3 AM
+                                    UTC daily
+                                    scans</p>
+                            </div>
+
+                            <!-- Restores Switch -->
+                            <div class="kill-switch-card"
+                                style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong style="color: var(--slate-200);">📝 Read-Only Mode</strong>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggle-restores-enabled"
+                                            onchange="toggleSetting('restores_enabled', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL theme
+                                    restores/rollbacks</p>
+                            </div>
+                        </div>
+
+                        <!-- Rate Limits -->
+                        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--navy-600);">
+                            <h3 style="color: var(--slate-200); margin-bottom: 16px;">📊 Rate Limits</h3>
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
+                                    <label style="color: var(--slate-400); font-size: 12px;">Max On-Demand
+                                        Scans/Day</label>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <input type="number" id="input-max-scans" value="5" min="1" max="50"
+                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
+                                        <button
+                                            onclick="updateRateLimit('max_on_demand_scans_per_day', document.getElementById('input-max-scans').value)"
+                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
+                                    </div>
+                                </div>
+                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
+                                    <label style="color: var(--slate-400); font-size: 12px;">Max Restores/Day</label>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <input type="number" id="input-max-restores" value="3" min="1" max="20"
+                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
+                                        <button
+                                            onclick="updateRateLimit('max_restores_per_day', document.getElementById('input-max-restores').value)"
+                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
+                                    </div>
+                                </div>
+                                <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
+                                    <label style="color: var(--slate-400); font-size: 12px;">API Buffer %</label>
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                        <input type="number" id="input-api-buffer" value="20" min="5" max="50"
+                                            style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
+                                        <button
+                                            onclick="updateRateLimit('api_rate_limit_buffer', document.getElementById('input-api-buffer').value)"
+                                            style="padding: 4px 12px; background: var(--gold); color: var(--navy-900); border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Current Status -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-card-header">
                             <span class="stat-card-label">Active Stores</span>
-                            <span class="stat-card-icon">🏪</span>
+                            <span class="stat-card-icon">🪝</span>
                         </div>
                         <div class="stat-card-value" id="system-active-stores">-</div>
                         <div class="stat-card-sub">Currently connected</div>
@@ -1789,6 +1894,9 @@
                 // Update scaling badges based on store count
                 updateScalingBadges(activeStores);
 
+                // Load kill switch settings
+                await loadSystemSettings();
+
             } catch (error) {
                 console.error('Failed to load system stats:', error);
             }
@@ -1878,6 +1986,123 @@
                 }).join(', ');
             }
             return '-';
+        }
+
+        // ==================== System Settings / Kill Switches ====================
+
+        async function loadSystemSettings() {
+            try {
+                const response = await fetch(`/api/v1/admin/${secretKey}/settings?password=${encodeURIComponent(adminPassword)}`);
+                if (!response.ok) throw new Error('Failed to load settings');
+
+                const data = await response.json();
+
+                if (data.success && data.settings) {
+                    // Update toggle switches
+                    const scanningEnabled = document.getElementById('toggle-scanning-enabled');
+                    const dailyScansEnabled = document.getElementById('toggle-daily-scans-enabled');
+                    const restoresEnabled = document.getElementById('toggle-restores-enabled');
+
+                    if (scanningEnabled) {
+                        scanningEnabled.checked = data.settings.scanning_enabled?.value === 'true';
+                    }
+                    if (dailyScansEnabled) {
+                        dailyScansEnabled.checked = data.settings.daily_scans_enabled?.value === 'true';
+                    }
+                    if (restoresEnabled) {
+                        restoresEnabled.checked = data.settings.restores_enabled?.value === 'true';
+                    }
+
+                    // Update rate limit inputs
+                    const maxScans = document.getElementById('input-max-scans');
+                    const maxRestores = document.getElementById('input-max-restores');
+                    const apiBuffer = document.getElementById('input-api-buffer');
+
+                    if (maxScans && data.settings.max_on_demand_scans_per_day) {
+                        maxScans.value = data.settings.max_on_demand_scans_per_day.value;
+                    }
+                    if (maxRestores && data.settings.max_restores_per_day) {
+                        maxRestores.value = data.settings.max_restores_per_day.value;
+                    }
+                    if (apiBuffer && data.settings.api_rate_limit_buffer) {
+                        apiBuffer.value = data.settings.api_rate_limit_buffer.value;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading system settings:', error);
+            }
+        }
+
+        async function toggleSetting(settingKey, enabled) {
+            const value = enabled ? 'true' : 'false';
+
+            try {
+                const response = await fetch(
+                    `/api/v1/admin/${secretKey}/settings/${settingKey}?value=${value}&password=${encodeURIComponent(adminPassword)}`,
+                    { method: 'POST' }
+                );
+
+                if (!response.ok) throw new Error('Failed to update setting');
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show feedback
+                    const statusText = enabled ? 'ENABLED' : 'DISABLED';
+                    const statusColor = enabled ? '#22c55e' : '#ef4444';
+                    showToast(`${settingKey.replace(/_/g, ' ').toUpperCase()} is now ${statusText}`, statusColor);
+                }
+            } catch (error) {
+                console.error('Error updating setting:', error);
+                showToast('Failed to update setting', '#ef4444');
+                // Revert the toggle
+                loadSystemSettings();
+            }
+        }
+
+        async function updateRateLimit(settingKey, value) {
+            try {
+                const response = await fetch(
+                    `/api/v1/admin/${secretKey}/settings/${settingKey}?value=${value}&password=${encodeURIComponent(adminPassword)}`,
+                    { method: 'POST' }
+                );
+
+                if (!response.ok) throw new Error('Failed to update setting');
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`${settingKey.replace(/_/g, ' ')} updated to ${value}`, '#22c55e');
+                }
+            } catch (error) {
+                console.error('Error updating rate limit:', error);
+                showToast('Failed to update rate limit', '#ef4444');
+            }
+        }
+
+        function showToast(message, color = '#22c55e') {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: ${color};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>

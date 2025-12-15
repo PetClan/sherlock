@@ -647,3 +647,65 @@ async def confirm_signature(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    # ==================== System Settings / Kill Switches ====================
+
+@router.get("/{secret_key}/settings")
+async def get_system_settings(
+    secret_key: str,
+    password: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all system settings"""
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        from app.services.system_settings_service import SystemSettingsService
+        settings_service = SystemSettingsService(db)
+        settings = await settings_service.get_all_settings()
+        
+        return {
+            "success": True,
+            "settings": settings
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{secret_key}/settings/{setting_key}")
+async def update_system_setting(
+    secret_key: str,
+    setting_key: str,
+    value: str = Query(..., description="New value for the setting"),
+    password: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update a system setting"""
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        from app.services.system_settings_service import SystemSettingsService
+        settings_service = SystemSettingsService(db)
+        
+        # Update the setting
+        setting = await settings_service.set_setting(
+            key=setting_key,
+            value=value,
+            updated_by="admin"
+        )
+        await db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Setting '{setting_key}' updated to '{value}'",
+            "setting": {
+                "key": setting.key,
+                "value": setting.value,
+                "updated_at": setting.updated_at.isoformat() if setting.updated_at else None
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

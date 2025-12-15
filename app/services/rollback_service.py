@@ -105,6 +105,17 @@ class RollbackService:
         Returns:
             Result dict with success status and details
         """
+        # Check kill switch - restores disabled (read-only mode)
+        from app.services.system_settings_service import SystemSettingsService
+        settings_service = SystemSettingsService(self.db)
+        
+        if not await settings_service.is_restores_enabled():
+            return {
+                "success": False,
+                "error": "read_only_mode",
+                "message": "Theme restores are currently disabled (read-only mode active). Contact support if this is unexpected."
+            }
+        
         # Get the version to restore
         version = await self.get_version_by_id(version_id)
         
