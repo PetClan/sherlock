@@ -9,6 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
+from datetime import datetime
 
 from app.db.database import Base
 
@@ -500,3 +501,13 @@ class AppSignatureSighting(Base):
         Index("idx_sighting_sig", "signature_id"),
         Index("idx_sighting_store", "store_id"),
     )
+class SystemSettings(Base):
+    """System-wide settings and kill switches"""
+    __tablename__ = "system_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    value = Column(String(500), nullable=False)
+    description = Column(String(500), nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = Column(String(100), nullable=True)
