@@ -709,3 +709,90 @@ async def update_system_setting(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+@router.post("/{secret_key}/stores/refresh-data")
+async def refresh_store_data(
+    secret_key: str,
+    password: str = Query(...),
+    shop: Optional[str] = Query(None, description="Specific shop to refresh, or leave empty for all"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Re-fetch shop data from Shopify API for all stores (or a specific store).
+    This updates timezone, shop_name, email, plan_name.
+    """
+    import httpx
+    
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    # Get stores to refresh
+    if shop:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain.contains(shop))
+        )
+        stores = result.scalars().all()
+    else:
+        result = await db.execute(
+            select(Store).where(Store.is_active == True)
+        )
+        stores = result.scalars().all()
+    
+    if not stores:
+        return {"success": False, "message": "No stores found"}
+    
+    updated = []
+    errors = []
+    
+    async with httpx.AsyncClient() as client:
+        for store in stores:
+            if not store.access_token:
+                errors.append({"shop": store.shopify_domain, "error": "No access token"})
+                continue
+            
+            try:
+                response = await client.get(
+                    f"https://{store.shopify_domain}/admin/api/2024-01/shop.json",
+                    headers={
+                        "X-Shopify-Access-Token": store.access_token,
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                
+                if response.status_code == 200:
+                    shop_data = response.json().get("shop", {})
+                    old_timezone = store.timezone
+                    
+                    store.shop_name = shop_data.get("name")
+                    store.email = shop_data.get("email")
+                    store.plan_name = shop_data.get("plan_name")
+                    store.timezone = shop_data.get("iana_timezone", "UTC")
+                    
+                    updated.append({
+                        "shop": store.shopify_domain,
+                        "timezone": store.timezone,
+                        "old_timezone": old_timezone
+                    })
+                else:
+                    errors.append({
+                        "shop": store.shopify_domain,
+                        "error": f"API returned {response.status_code}"
+                    })
+            except Exception as e:
+                errors.append({
+                    "shop": store.shopify_domain,
+                    "error": str(e)
+                })
+    
+    await db.commit()
+    
+    return {
+        "success": True,
+        "updated": len(updated),
+        "errors": len(errors),
+        "details": {
+            "updated": updated,
+            "errors": errors if errors else None
+        }
+    }    
