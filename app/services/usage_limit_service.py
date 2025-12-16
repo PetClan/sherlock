@@ -6,9 +6,16 @@ Tracks and enforces per-store daily usage limits
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from typing import Optional
 
-from app.db.models import StoreDailyUsage
+from app.db.models import StoreDailyUsage, Store
 from app.services.system_settings_service import SystemSettingsService
+
+# Try to import zoneinfo (Python 3.9+), fall back to pytz
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    from pytz import timezone as ZoneInfo
 
 
 class UsageLimitService:
@@ -18,13 +25,28 @@ class UsageLimitService:
         self.db = db
         self.settings_service = SystemSettingsService(db)
     
-    def _get_today(self) -> str:
-        """Get today's date in YYYY-MM-DD format (UTC)"""
+    def _get_today(self, store_timezone: Optional[str] = None) -> str:
+        """Get today's date in YYYY-MM-DD format in store's timezone"""
+        if store_timezone:
+            try:
+                tz = ZoneInfo(store_timezone)
+                return datetime.now(tz).strftime("%Y-%m-%d")
+            except Exception:
+                pass  # Fall back to UTC if timezone is invalid
+        
         return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    async def _get_store_timezone(self, store_id: str) -> Optional[str]:
+        """Get the timezone for a store"""
+        result = await self.db.execute(
+            select(Store.timezone).where(Store.id == store_id)
+        )
+        return result.scalar_one_or_none()
     
     async def _get_or_create_usage(self, store_id: str) -> StoreDailyUsage:
         """Get or create today's usage record for a store"""
-        today = self._get_today()
+        store_timezone = await self._get_store_timezone(store_id)
+        today = self._get_today(store_timezone)
         
         result = await self.db.execute(
             select(StoreDailyUsage).where(
@@ -59,7 +81,7 @@ class UsageLimitService:
                 "allowed": False,
                 "current": usage.scan_count,
                 "limit": limit,
-                "message": f"Daily scan limit reached ({limit} scans per day). Resets at midnight UTC."
+                "message": f"Daily scan limit reached ({limit} scans per day). Resets at midnight in your store's timezone."
             }
         
         return {
@@ -82,7 +104,7 @@ class UsageLimitService:
                 "allowed": False,
                 "current": usage.restore_count,
                 "limit": limit,
-                "message": f"Daily restore limit reached ({limit} restores per day). Resets at midnight UTC."
+                "message": f"Daily restore limit reached ({limit} restores per day). Resets at midnight in your store's timezone."
             }
         
         return {

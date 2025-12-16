@@ -215,8 +215,9 @@ class ShopifyAuthService:
                     store.shop_name = shop_data.get("name")
                     store.email = shop_data.get("email")
                     store.plan_name = shop_data.get("plan_name")
+                    store.timezone = shop_data.get("iana_timezone", "UTC")  # e.g., "America/New_York"
                     await self.db.flush()
-                    print(f"✅ [Auth] Updated shop info for {store.shopify_domain}")
+                    print(f"✅ [Auth] Updated shop info for {store.shopify_domain} (timezone: {store.timezone})")
         except Exception as e:
             print(f"⚠️ [Auth] Could not fetch shop info: {e}")
     

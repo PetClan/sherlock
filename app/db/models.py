@@ -28,6 +28,7 @@ class Store(Base):
     shop_name = Column(String(255), nullable=True)
     email = Column(String(255), nullable=True)
     plan_name = Column(String(100), nullable=True)
+    timezone = Column(String(100), nullable=True, default="UTC")  # Store's IANA timezone e.g. "America/New_York"
     is_active = Column(Boolean, default=True)
     installed_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
