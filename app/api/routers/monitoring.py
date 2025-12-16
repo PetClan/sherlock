@@ -31,6 +31,17 @@ async def trigger_daily_scan(
     - Detect CSS risks
     - Calculate overall risk level
     """
+    # Check kill switch first
+    from app.services.system_settings_service import SystemSettingsService
+    from app.services.usage_limit_service import UsageLimitService
+    
+    settings_service = SystemSettingsService(db)
+    if not await settings_service.is_scanning_enabled():
+        raise HTTPException(
+            status_code=503, 
+            detail="Scanning is temporarily disabled. Please try again later."
+        )
+    
     # Get store
     result = await db.execute(
         select(Store).where(Store.shopify_domain.contains(shop))
@@ -43,9 +54,22 @@ async def trigger_daily_scan(
     if not store.access_token:
         raise HTTPException(status_code=401, detail="Store not authenticated")
     
+    # Check daily scan limit
+    usage_service = UsageLimitService(db)
+    limit_check = await usage_service.can_scan(store.id)
+    
+    if not limit_check["allowed"]:
+        raise HTTPException(
+            status_code=429,
+            detail=limit_check["message"]
+        )
+    
     # Run scan
     scan_service = DailyScanService(db)
     scan = await scan_service.run_daily_scan(store)
+    
+    # Record the scan usage
+    await usage_service.record_scan(store.id)
     
     await db.commit()
     
@@ -63,7 +87,11 @@ async def trigger_daily_scan(
         "scripts_removed": scan.scripts_removed,
         "css_issues_found": scan.css_issues_found,
         "risk_reasons": scan.risk_reasons,
-        "completed_at": scan.completed_at.isoformat() if scan.completed_at else None
+        "completed_at": scan.completed_at.isoformat() if scan.completed_at else None,
+        "usage": {
+            "scans_used": limit_check["current"] + 1,
+            "scans_remaining": limit_check["remaining"] - 1
+        }
     }
 
 
