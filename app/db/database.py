@@ -13,11 +13,15 @@ database_url = settings.database_url
 if database_url.startswith("postgresql://"):
     database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Create async engine
+# Create async engine with robust connection settings
 engine = create_async_engine(
     database_url,
     echo=settings.debug,  # Log SQL queries in debug mode
-    future=True
+    future=True,
+    pool_pre_ping=True,  # Validate connections before use
+    pool_recycle=300,  # Recycle connections every 5 minutes
+    pool_size=5,  # Base pool size
+    max_overflow=10  # Allow up to 10 extra connections under load
 )
 
 # Create async session factory
