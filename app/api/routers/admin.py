@@ -16,9 +16,9 @@ from app.db.models import Store, ReportedApp, Diagnosis, DailyScan, InstalledApp
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-# Get secrets from environment
-ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "sherlock-hq-2025")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "YourSecurePassword123")
+# Get secrets from environment (must be set - no defaults for security)
+ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 
 def verify_secret_key(secret_key: str):
