@@ -253,7 +253,7 @@ async def clear_theme_issues_get(
     if not store:
         raise HTTPException(status_code=404, detail="Store not found")
     
-    # Delete all theme issues for this store
+    # Delete all theme issue for this store
     delete_result = await db.execute(
         delete(ThemeIssue).where(ThemeIssue.store_id == store.id)
     )
