@@ -173,6 +173,8 @@ async def rollback_file(
     
     If the file is app-owned, set user_confirmed=true to proceed despite warning.
     """
+    from app.services.usage_limit_service import UsageLimitService
+    
     # Get store
     result = await db.execute(
         select(Store).where(Store.shopify_domain.contains(shop))
@@ -185,8 +187,18 @@ async def rollback_file(
     if not store.access_token:
         raise HTTPException(status_code=401, detail="Store not authenticated")
     
+    # Check daily restore limit
+    usage_service = UsageLimitService(db)
+    limit_check = await usage_service.can_restore(store.id)
+    
+    if not limit_check["allowed"]:
+        raise HTTPException(
+            status_code=429,
+            detail=limit_check["message"]
+        )
+    
     rollback_service = RollbackService(db)
-    result = await rollback_service.rollback_file(
+    rollback_result = await rollback_service.rollback_file(
         store=store,
         version_id=request.version_id,
         mode=request.mode,
@@ -195,22 +207,33 @@ async def rollback_file(
         notes=request.notes
     )
     
-    await db.commit()
-    
-    if not result["success"]:
-        if result.get("error") == "app_owned_warning":
+    if not rollback_result["success"]:
+        if rollback_result.get("error") == "app_owned_warning":
             # Return 409 Conflict to indicate user confirmation needed
             return {
                 "success": False,
                 "requires_confirmation": True,
                 "warning": "app_owned",
-                "message": result["message"],
-                "app_owner_guess": result.get("app_owner_guess")
+                "message": rollback_result["message"],
+                "app_owner_guess": rollback_result.get("app_owner_guess")
             }
+        elif rollback_result.get("error") == "read_only_mode":
+            raise HTTPException(status_code=503, detail=rollback_result["message"])
         else:
-            raise HTTPException(status_code=400, detail=result.get("error", "Rollback failed"))
+            raise HTTPException(status_code=400, detail=rollback_result.get("error", "Rollback failed"))
     
-    return result
+    # Record the restore usage (only after success)
+    await usage_service.record_restore(store.id)
+    
+    await db.commit()
+    
+    # Add usage info to response
+    rollback_result["usage"] = {
+        "restores_used": limit_check["current"] + 1,
+        "restores_remaining": limit_check["remaining"] - 1
+    }
+    
+    return rollback_result
 
 
 @router.get("/history/{shop}")
@@ -284,6 +307,16 @@ async def restore_full_theme(
     This will restore every file that has a version from that date.
     """
     from datetime import datetime, timedelta
+    from app.services.system_settings_service import SystemSettingsService
+    from app.services.usage_limit_service import UsageLimitService
+    
+    # Check read-only mode first
+    settings_service = SystemSettingsService(db)
+    if not await settings_service.is_restores_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail="Theme restores are currently disabled (read-only mode active). Please try again later."
+        )
     
     # Get store
     result = await db.execute(
@@ -296,6 +329,16 @@ async def restore_full_theme(
 
     if not store.access_token:
         raise HTTPException(status_code=401, detail="Store not authenticated")
+
+    # Check daily restore limit
+    usage_service = UsageLimitService(db)
+    limit_check = await usage_service.can_restore(store.id)
+    
+    if not limit_check["allowed"]:
+        raise HTTPException(
+            status_code=429,
+            detail=limit_check["message"]
+        )
 
     # Get active theme if not specified
     theme_id = request.theme_id
@@ -385,6 +428,10 @@ async def restore_full_theme(
                 "error": str(e)
             })
 
+    # Record restore usage only if files were actually restored
+    if files_restored > 0:
+        await usage_service.record_restore(store.id)
+    
     await db.commit()
 
     return {
@@ -394,7 +441,11 @@ async def restore_full_theme(
         "files_restored": files_restored,
         "files_skipped": files_skipped,
         "total_files": len(files),
-        "errors": errors if errors else None
+        "errors": errors if errors else None,
+        "usage": {
+            "restores_used": limit_check["current"] + (1 if files_restored > 0 else 0),
+            "restores_remaining": limit_check["remaining"] - (1 if files_restored > 0 else 0)
+        }
     }
 @router.get("/debug/{shop}")
 async def debug_rollback(

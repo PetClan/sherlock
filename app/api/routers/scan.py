@@ -28,6 +28,17 @@ async def start_scan(
 ):
     """Start a diagnostic scan"""
     
+    # Check kill switch first
+    from app.services.system_settings_service import SystemSettingsService
+    from app.services.usage_limit_service import UsageLimitService
+    
+    settings_service = SystemSettingsService(db)
+    if not await settings_service.is_scanning_enabled():
+        raise HTTPException(
+            status_code=503, 
+            detail="Scanning is temporarily disabled. Please try again later."
+        )
+    
     # Find store
     result = await db.execute(
         select(Store).where(Store.shopify_domain == request.shop)
@@ -37,20 +48,40 @@ async def start_scan(
     if not store:
         raise HTTPException(status_code=404, detail="Store not found")
     
+    # Check daily scan limit
+    usage_service = UsageLimitService(db)
+    limit_check = await usage_service.can_scan(store.id)
+    
+    if not limit_check["allowed"]:
+        raise HTTPException(
+            status_code=429,
+            detail=limit_check["message"]
+        )
+    
     try:
         service = DiagnosisService(db)
         diagnosis = await service.start_diagnosis(
             store_id=store.id,
             scan_type=request.scan_type
         )
+        
+        # Record the scan usage
+        await usage_service.record_scan(store.id)
+        
         await db.commit()
         
         return {
             "success": True,
             "diagnosis_id": str(diagnosis.id),
             "status": diagnosis.status,
-            "scan_type": diagnosis.scan_type
+            "scan_type": diagnosis.scan_type,
+            "usage": {
+                "scans_used": limit_check["current"] + 1,
+                "scans_remaining": limit_check["remaining"] - 1
+            }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
