@@ -118,7 +118,7 @@ class UsageLimitService:
         """Record a scan was performed. Call AFTER successful scan."""
         usage = await self._get_or_create_usage(store_id)
         usage.scan_count += 1
-        usage.updated_at = datetime.now(timezone.utc)
+        usage.updated_at = datetime.utcnow()
         await self.db.flush()
         return usage
     
@@ -126,7 +126,7 @@ class UsageLimitService:
         """Record a restore was performed. Call AFTER successful restore."""
         usage = await self._get_or_create_usage(store_id)
         usage.restore_count += 1
-        usage.updated_at = datetime.now(timezone.utc)
+        usage.updated_at = datetime.utcnow()
         await self.db.flush()
         return usage
     
