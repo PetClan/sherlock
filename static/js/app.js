@@ -1661,95 +1661,152 @@ async function executeFullRestore(dateKey, dateLabel) {
     const modal = document.getElementById('restore-confirm-modal');
     const modalContent = modal.querySelector('.modal-content');
 
-    // Show progress state
-    modalContent.innerHTML =
-        '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
-        '<div class="scan-progress-spinner" style="margin: 0 auto 24px;"></div>' +
-        '<h3 style="color: var(--white); margin-bottom: 12px;">Restoring Theme Files...</h3>' +
-        '<p style="color: var(--slate-400); margin-bottom: 8px;">Sherlock is restoring your theme to ' + escapeHtml(dateLabel || dateKey) + '</p>' +
-        '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin: 16px 0; text-align: left;">' +
-        '<p style="color: var(--slate-400); margin: 0 0 8px 0; font-size: 13px;">⏱️ <strong>This may take 2-3 minutes</strong></p>' +
-        '<p style="color: var(--slate-500); margin: 0 0 8px 0; font-size: 13px;">Sherlock restores files carefully to respect Shopify API limits and keep your store safe.</p>' +
-        '<p style="color: var(--amber-400); margin: 0; font-size: 13px;">⚠️ Please stay on this page until complete.</p>' +
-        '</div>' +
-        '</div>';
+    // Show initial progress state
+    function updateProgressUI(phase, message, current, total, file) {
+        const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+        const progressBarWidth = total > 0 ? (current / total) * 100 : 0;
+
+        let phaseIcon = '🔍';
+        let phaseLabel = 'Preparing';
+        if (phase === 'restoring') {
+            phaseIcon = '🔄';
+            phaseLabel = 'Restoring';
+        }
+
+        modalContent.innerHTML =
+            '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
+            '<div class="scan-progress-spinner" style="margin: 0 auto 24px;"></div>' +
+            '<h3 style="color: var(--white); margin-bottom: 12px;">' + phaseIcon + ' ' + phaseLabel + ' Theme Files...</h3>' +
+            '<p style="color: var(--slate-400); margin-bottom: 16px;">Restoring to ' + escapeHtml(dateLabel || dateKey) + '</p>' +
+            '<div style="background: var(--navy-800); border-radius: 8px; padding: 20px; margin: 16px 0;">' +
+            '<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">' +
+            '<span style="color: var(--slate-400); font-size: 14px;">' + message + '</span>' +
+            '<span style="color: var(--emerald-400); font-size: 14px; font-weight: 600;">' + percentage + '%</span>' +
+            '</div>' +
+            '<div style="background: var(--navy-900); border-radius: 4px; height: 8px; overflow: hidden;">' +
+            '<div style="background: var(--emerald-500); height: 100%; width: ' + progressBarWidth + '%; transition: width 0.3s ease;"></div>' +
+            '</div>' +
+            '<p style="color: var(--slate-500); font-size: 13px; margin-top: 12px;">' + current + ' of ' + total + ' files</p>' +
+            (file ? '<p style="color: var(--slate-600); font-size: 12px; margin-top: 8px; font-family: monospace; word-break: break-all;">' + escapeHtml(file) + '</p>' : '') +
+            '</div>' +
+            '<p style="color: var(--amber-400); font-size: 13px; margin-top: 16px;">⚠️ Please stay on this page until complete</p>' +
+            '</div>';
+    }
+
+    // Show initial state
+    updateProgressUI('preparing', 'Connecting...', 0, 0, null);
 
     try {
-        // Make the real API call to restore theme files
-        const response = await fetch('/api/v1/rollback/restore-full/' + encodeURIComponent(state.shop), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                date: dateKey,
-                mode: 'direct_live'
-            })
+        // Use Server-Sent Events for real-time progress
+        const eventSource = new EventSource('/api/v1/rollback/restore-full-stream/' + encodeURIComponent(state.shop) + '?date=' + encodeURIComponent(dateKey));
+
+        let finalResult = null;
+
+        eventSource.addEventListener('progress', function (event) {
+            const data = JSON.parse(event.data);
+            updateProgressUI(data.phase, data.message, data.current, data.total, data.file || null);
         });
 
-        const result = await response.json();
+        eventSource.addEventListener('complete', function (event) {
+            eventSource.close();
+            finalResult = JSON.parse(event.data);
 
-        if (!response.ok) {
-            // Handle specific error cases
-            if (response.status === 429) {
-                throw new Error(result.detail || 'Daily restore limit reached. Please try again tomorrow.');
-            } else if (response.status === 503) {
-                throw new Error(result.detail || 'Theme restores are temporarily disabled. Please try again later.');
-            } else {
-                throw new Error(result.detail || 'Restore failed. Please try again.');
-            }
-        }
+            // Show success state
+            const filesRestored = finalResult.files_restored || 0;
+            const filesSkipped = finalResult.files_skipped || 0;
+            const errors = finalResult.errors || [];
 
-        // Show success state with real data
-        const filesRestored = result.files_restored || 0;
-        const filesSkipped = result.files_skipped || 0;
-        const totalFiles = result.total_files || 0;
-        const errors = result.errors || [];
-
-        let successHtml =
-            '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
-            '<div style="font-size: 64px; margin-bottom: 20px;">✅</div>' +
-            '<h3 style="color: var(--emerald-400); margin-bottom: 12px; font-size: 24px;">Theme Restored Successfully!</h3>' +
-            '<p style="color: var(--slate-300); margin-bottom: 24px;">' + filesRestored + ' files have been restored to their state on ' + escapeHtml(dateLabel || dateKey) + '</p>' +
-            '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">' +
-            '<p style="color: var(--slate-400); margin: 0; font-size: 14px;">✔ ' + filesRestored + ' files restored</p>' +
-            '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✔ ' + filesSkipped + ' files unchanged (already current)</p>' +
-            '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✔ Active theme updated</p>' +
-            '</div>';
-
-        // Show errors if any
-        if (errors.length > 0) {
-            successHtml +=
-                '<div style="background: var(--red-900); border: 1px solid var(--red-700); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">' +
-                '<p style="color: var(--red-400); margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">⚠️ ' + errors.length + ' file(s) could not be restored:</p>' +
-                errors.slice(0, 5).map(function (e) {
-                    return '<p style="color: var(--red-300); margin: 4px 0 0 0; font-size: 13px;">• ' + escapeHtml(e.file) + '</p>';
-                }).join('') +
-                (errors.length > 5 ? '<p style="color: var(--red-300); margin: 8px 0 0 0; font-size: 13px;">...and ' + (errors.length - 5) + ' more</p>' : '') +
+            let successHtml =
+                '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
+                '<div style="font-size: 64px; margin-bottom: 20px;">✅</div>' +
+                '<h3 style="color: var(--emerald-400); margin-bottom: 12px; font-size: 24px;">Theme Restored Successfully!</h3>' +
+                '<p style="color: var(--slate-300); margin-bottom: 24px;">' + filesRestored + ' files have been restored to their state on ' + escapeHtml(dateLabel || dateKey) + '</p>' +
+                '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">' +
+                '<p style="color: var(--slate-400); margin: 0; font-size: 14px;">✓ ' + filesRestored + ' files restored</p>' +
+                '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✓ ' + filesSkipped + ' files unchanged (already current)</p>' +
+                '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✓ Active theme updated</p>' +
                 '</div>';
-        }
 
-        // Show usage info if available
-        if (result.usage) {
+            if (errors.length > 0) {
+                successHtml +=
+                    '<div style="background: var(--red-900); border: 1px solid var(--red-700); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">' +
+                    '<p style="color: var(--red-400); margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">⚠️ ' + errors.length + ' file(s) could not be restored:</p>' +
+                    errors.slice(0, 5).map(function (e) {
+                        return '<p style="color: var(--red-300); margin: 4px 0 0 0; font-size: 13px;">• ' + escapeHtml(e.file) + '</p>';
+                    }).join('') +
+                    (errors.length > 5 ? '<p style="color: var(--red-300); margin: 8px 0 0 0; font-size: 13px;">...and ' + (errors.length - 5) + ' more</p>' : '') +
+                    '</div>';
+            }
+
+            if (finalResult.usage) {
+                successHtml +=
+                    '<p style="color: var(--slate-500); font-size: 13px; margin-bottom: 16px;">' +
+                    'Restores today: ' + finalResult.usage.restores_used + ' | Remaining: ' + finalResult.usage.restores_remaining +
+                    '</p>';
+            }
+
             successHtml +=
-                '<p style="color: var(--slate-500); font-size: 13px; margin-bottom: 16px;">' +
-                'Restores today: ' + result.usage.restores_used + ' | Remaining: ' + result.usage.restores_remaining +
-                '</p>';
-        }
+                '</div>' +
+                '<div class="modal-footer" style="justify-content: center;">' +
+                '<button class="btn btn-primary" onclick="closeRestoreConfirmModal(); loadRestorePointsFallback();">Done</button>' +
+                '</div>';
 
-        successHtml +=
-            '</div>' +
-            '<div class="modal-footer" style="justify-content: center;">' +
-            '<button class="btn btn-primary" onclick="closeRestoreConfirmModal(); loadRestorePointsFallback();">Done</button>' +
-            '</div>';
+            modalContent.innerHTML = successHtml;
+            showNotification('✅ Theme restored successfully! ' + filesRestored + ' files restored.', 'success');
+        });
 
-        modalContent.innerHTML = successHtml;
-        showNotification('✅ Theme restored successfully! ' + filesRestored + ' files restored.', 'success');
+        eventSource.addEventListener('error', function (event) {
+            eventSource.close();
+            let errorMessage = 'Connection lost. Please try again.';
+
+            try {
+                const data = JSON.parse(event.data);
+                errorMessage = data.error || errorMessage;
+            } catch (e) {
+                // Use default error message
+            }
+
+            modalContent.innerHTML =
+                '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
+                '<div style="font-size: 64px; margin-bottom: 20px;">❌</div>' +
+                '<h3 style="color: var(--red-400); margin-bottom: 12px; font-size: 24px;">Restore Failed</h3>' +
+                '<p style="color: var(--slate-300); margin-bottom: 24px;">' + escapeHtml(errorMessage) + '</p>' +
+                '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin-bottom: 24px;">' +
+                '<p style="color: var(--slate-400); margin: 0; font-size: 14px;">Your theme has not been modified. You can try again or contact support if the issue persists.</p>' +
+                '</div>' +
+                '</div>' +
+                '<div class="modal-footer" style="justify-content: center;">' +
+                '<button class="btn btn-secondary" onclick="closeRestoreConfirmModal();">Close</button>' +
+                '</div>';
+
+            showNotification('❌ Restore failed: ' + errorMessage, 'error');
+        });
+
+        eventSource.onerror = function () {
+            if (eventSource.readyState === EventSource.CLOSED) {
+                return; // Already handled
+            }
+            eventSource.close();
+
+            modalContent.innerHTML =
+                '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
+                '<div style="font-size: 64px; margin-bottom: 20px;">❌</div>' +
+                '<h3 style="color: var(--red-400); margin-bottom: 12px; font-size: 24px;">Connection Lost</h3>' +
+                '<p style="color: var(--slate-300); margin-bottom: 24px;">The connection to the server was interrupted.</p>' +
+                '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin-bottom: 24px;">' +
+                '<p style="color: var(--slate-400); margin: 0; font-size: 14px;">Some files may have been restored. Please check your theme and try again if needed.</p>' +
+                '</div>' +
+                '</div>' +
+                '<div class="modal-footer" style="justify-content: center;">' +
+                '<button class="btn btn-secondary" onclick="closeRestoreConfirmModal();">Close</button>' +
+                '</div>';
+
+            showNotification('❌ Connection lost during restore', 'error');
+        };
 
     } catch (error) {
         console.error('Restore error:', error);
 
-        // Show error state
         modalContent.innerHTML =
             '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
             '<div style="font-size: 64px; margin-bottom: 20px;">❌</div>' +

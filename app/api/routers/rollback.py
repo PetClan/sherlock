@@ -486,6 +486,184 @@ async def restore_full_theme(
             "restores_remaining": limit_check["remaining"] - (1 if files_restored > 0 else 0)
         }
     }
+
+@router.get("/restore-full-stream/{shop}")
+async def restore_full_theme_stream(
+    shop: str,
+    date: str,
+    theme_id: Optional[str] = None,
+    mode: str = "direct_live",
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Stream restore progress via Server-Sent Events (SSE).
+    Provides real-time updates as each file is restored.
+    """
+    from datetime import datetime
+    from fastapi.responses import StreamingResponse
+    from app.services.system_settings_service import SystemSettingsService
+    from app.services.usage_limit_service import UsageLimitService
+    import json
+    import asyncio
+    
+    async def event_generator():
+        try:
+            # Check read-only mode first
+            settings_service = SystemSettingsService(db)
+            if not await settings_service.is_restores_enabled():
+                yield f"event: error\ndata: {json.dumps({'error': 'Theme restores are currently disabled'})}\n\n"
+                return
+            
+            # Get store
+            result = await db.execute(
+                select(Store).where(Store.shopify_domain.contains(shop))
+            )
+            store = result.scalar_one_or_none()
+
+            if not store:
+                yield f"event: error\ndata: {json.dumps({'error': 'Store not found'})}\n\n"
+                return
+
+            if not store.access_token:
+                yield f"event: error\ndata: {json.dumps({'error': 'Store not authenticated'})}\n\n"
+                return
+
+            # Check daily restore limit
+            usage_service = UsageLimitService(db)
+            limit_check = await usage_service.can_restore(store.id)
+            
+            if not limit_check["allowed"]:
+                yield f"event: error\ndata: {json.dumps({'error': limit_check['message']})}\n\n"
+                return
+
+            # Get active theme if not specified
+            active_theme_id = theme_id
+            if not active_theme_id:
+                theme_service = ThemeSnapshotService(db)
+                active_theme = await theme_service.get_active_theme(store)
+                if active_theme:
+                    active_theme_id = str(active_theme.get("id", ""))
+                else:
+                    yield f"event: error\ndata: {json.dumps({'error': 'No active theme found'})}\n\n"
+                    return
+
+            # Parse date
+            try:
+                target_date = datetime.strptime(date, "%Y-%m-%d")
+                date_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+                date_end = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            except ValueError:
+                yield f"event: error\ndata: {json.dumps({'error': 'Invalid date format'})}\n\n"
+                return
+
+            rollback_service = RollbackService(db)
+            
+            # Get all files with versions
+            files = await rollback_service.get_files_with_versions(store.id, active_theme_id)
+            total_files = len(files)
+            
+            # Send initial status
+            yield f"event: progress\ndata: {json.dumps({'phase': 'preparing', 'message': 'Analyzing theme files...', 'current': 0, 'total': total_files})}\n\n"
+            
+            # Phase 1: Prepare files
+            files_to_restore = []
+            files_skipped = 0
+            
+            for idx, file_info in enumerate(files):
+                file_path = file_info["file_path"]
+                
+                versions = await rollback_service.get_file_versions(
+                    store_id=store.id,
+                    theme_id=active_theme_id,
+                    file_path=file_path,
+                    limit=50
+                )
+                
+                target_version = None
+                for v in versions:
+                    version_date = v.created_at.replace(tzinfo=None)
+                    if date_start <= version_date <= date_end:
+                        target_version = v
+                        break
+                
+                if not target_version:
+                    for v in versions:
+                        version_date = v.created_at.replace(tzinfo=None)
+                        if version_date < date_start:
+                            target_version = v
+                            break
+                
+                if not target_version:
+                    files_skipped += 1
+                    continue
+                
+                if versions and versions[0].id == target_version.id:
+                    files_skipped += 1
+                    continue
+                
+                files_to_restore.append({
+                    "file_path": file_path,
+                    "version": target_version
+                })
+                
+                # Send preparation progress every 10 files
+                if (idx + 1) % 10 == 0:
+                    yield f"event: progress\ndata: {json.dumps({'phase': 'preparing', 'message': f'Analyzing files... ({idx + 1}/{total_files})', 'current': idx + 1, 'total': total_files})}\n\n"
+            
+            total_to_restore = len(files_to_restore)
+            
+            yield f"event: progress\ndata: {json.dumps({'phase': 'restoring', 'message': f'Starting restore of {total_to_restore} files...', 'current': 0, 'total': total_to_restore, 'skipped': files_skipped})}\n\n"
+            
+            # Phase 2: Restore files one at a time
+            files_restored = 0
+            errors = []
+            
+            for idx, file_data in enumerate(files_to_restore):
+                file_path = file_data["file_path"]
+                
+                # Send progress update
+                yield f"event: progress\ndata: {json.dumps({'phase': 'restoring', 'message': f'Restoring {file_path}', 'current': idx + 1, 'total': total_to_restore, 'file': file_path})}\n\n"
+                
+                try:
+                    success = await rollback_service._update_theme_file(
+                        store=store,
+                        theme_id=active_theme_id,
+                        file_path=file_path,
+                        content=file_data["version"].content
+                    )
+                    
+                    if success:
+                        files_restored += 1
+                    else:
+                        errors.append({"file": file_path, "error": "Shopify API error"})
+                except Exception as e:
+                    errors.append({"file": file_path, "error": str(e)})
+                
+                # Rate limit delay
+                await asyncio.sleep(0.5)
+            
+            # Record restore usage
+            if files_restored > 0:
+                await usage_service.record_restore(store.id)
+            
+            await db.commit()
+            
+            # Send completion event
+            yield f"event: complete\ndata: {json.dumps({'success': True, 'files_restored': files_restored, 'files_skipped': files_skipped, 'total_files': total_files, 'errors': errors if errors else None, 'usage': {'restores_used': limit_check['current'] + 1, 'restores_remaining': limit_check['remaining'] - 1}})}\n\n"
+            
+        except Exception as e:
+            yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
 @router.get("/debug/{shop}")
 async def debug_rollback(
     shop: str,
