@@ -423,22 +423,20 @@ async def restore_full_theme(
     errors = []
     
     async def restore_file(file_data):
-        """Restore a single file"""
+        """Restore a single file - direct Shopify API call (no DB logging for speed)"""
         try:
-            result = await rollback_service.rollback_file(
+            # Call the Shopify API directly to avoid DB session conflicts
+            success = await rollback_service._update_theme_file(
                 store=store,
-                version_id=file_data["version_id"],
-                mode=request.mode,
-                user_confirmed=True,
-                performed_by="user_full_restore",
-                notes=f"Full restore to {request.date}",
-                target_theme_id=theme_id
+                theme_id=theme_id,
+                file_path=file_data["file_path"],
+                content=file_data["version"].content
             )
             
-            if result.get("success"):
+            if success:
                 return {"status": "success", "file_path": file_data["file_path"]}
             else:
-                return {"status": "error", "file_path": file_data["file_path"], "error": result.get("error", "Unknown error")}
+                return {"status": "error", "file_path": file_data["file_path"], "error": "Shopify API error"}
         except Exception as e:
             return {"status": "error", "file_path": file_data["file_path"], "error": str(e)}
     
