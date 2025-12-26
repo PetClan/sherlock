@@ -1667,7 +1667,11 @@ async function executeFullRestore(dateKey, dateLabel) {
         '<div class="scan-progress-spinner" style="margin: 0 auto 24px;"></div>' +
         '<h3 style="color: var(--white); margin-bottom: 12px;">Restoring Theme Files...</h3>' +
         '<p style="color: var(--slate-400); margin-bottom: 8px;">Sherlock is restoring your theme to ' + escapeHtml(dateLabel || dateKey) + '</p>' +
-        '<p style="color: var(--slate-500); font-size: 13px;">This may take a moment. Please do not close this window.</p>' +
+        '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin: 16px 0; text-align: left;">' +
+        '<p style="color: var(--slate-400); margin: 0 0 8px 0; font-size: 13px;">⏱️ <strong>This may take 2-3 minutes</strong></p>' +
+        '<p style="color: var(--slate-500); margin: 0 0 8px 0; font-size: 13px;">Sherlock restores files carefully to respect Shopify API limits and keep your store safe.</p>' +
+        '<p style="color: var(--amber-400); margin: 0; font-size: 13px;">⚠️ Please stay on this page until complete.</p>' +
+        '</div>' +
         '</div>';
 
     try {

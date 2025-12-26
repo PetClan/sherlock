@@ -418,7 +418,7 @@ async def restore_full_theme(
     print(f"🔄 [Rollback] {len(files_to_restore)} files to restore, {files_skipped} skipped")
     
     # Phase 2: Perform restorations in parallel batches
-    BATCH_SIZE = 2  # Shopify allows max 2 calls per second
+    BATCH_SIZE = 1  # One file at a time - safest for Shopify rate limits
     files_restored = 0
     errors = []
     
@@ -461,9 +461,9 @@ async def restore_full_theme(
                     "error": result.get("error", "Unknown error")
                 })
         
-        # Delay between batches to respect Shopify's 2 calls/second limit
+        # Delay to respect Shopify's 2 calls/second limit (0.5s = 2 per second)
         if i + BATCH_SIZE < len(files_to_restore):
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.5)
     
     print(f"✅ [Rollback] Complete: {files_restored} restored, {files_skipped} skipped, {len(errors)} errors")
 
