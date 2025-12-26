@@ -1670,28 +1670,97 @@ async function executeFullRestore(dateKey, dateLabel) {
         '<p style="color: var(--slate-500); font-size: 13px;">This may take a moment. Please do not close this window.</p>' +
         '</div>';
 
-    // Simulate restore process (2.5 seconds)
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    try {
+        // Make the real API call to restore theme files
+        const response = await fetch('/api/v1/rollback/restore-full/' + encodeURIComponent(state.shop), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                date: dateKey,
+                mode: 'direct_live'
+            })
+        });
 
-    // Show success state
-    const filesRestored = Math.floor(Math.random() * 50) + 220; // Random number between 220-270
+        const result = await response.json();
 
-    modalContent.innerHTML =
-        '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
-        '<div style="font-size: 64px; margin-bottom: 20px;">✅</div>' +
-        '<h3 style="color: var(--emerald-400); margin-bottom: 12px; font-size: 24px;">Theme Restored Successfully!</h3>' +
-        '<p style="color: var(--slate-300); margin-bottom: 24px;">' + filesRestored + ' files have been restored to their state on ' + escapeHtml(dateLabel || dateKey) + '</p>' +
-        '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">' +
-        '<p style="color: var(--slate-400); margin: 0; font-size: 14px;">✓ All existing theme files restored</p>' +
-        '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✓ Active theme updated</p>' +
-        '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✓ Restore point saved to history</p>' +
-        '</div>' +
-        '</div>' +
-        '<div class="modal-footer" style="justify-content: center;">' +
-        '<button class="btn btn-primary" onclick="closeRestoreConfirmModal(); loadRestorePointsFallback();">Done</button>' +
-        '</div>';
+        if (!response.ok) {
+            // Handle specific error cases
+            if (response.status === 429) {
+                throw new Error(result.detail || 'Daily restore limit reached. Please try again tomorrow.');
+            } else if (response.status === 503) {
+                throw new Error(result.detail || 'Theme restores are temporarily disabled. Please try again later.');
+            } else {
+                throw new Error(result.detail || 'Restore failed. Please try again.');
+            }
+        }
 
-    showNotification('✅ Theme restored successfully! ' + filesRestored + ' files restored.', 'success');
+        // Show success state with real data
+        const filesRestored = result.files_restored || 0;
+        const filesSkipped = result.files_skipped || 0;
+        const totalFiles = result.total_files || 0;
+        const errors = result.errors || [];
+
+        let successHtml =
+            '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
+            '<div style="font-size: 64px; margin-bottom: 20px;">✅</div>' +
+            '<h3 style="color: var(--emerald-400); margin-bottom: 12px; font-size: 24px;">Theme Restored Successfully!</h3>' +
+            '<p style="color: var(--slate-300); margin-bottom: 24px;">' + filesRestored + ' files have been restored to their state on ' + escapeHtml(dateLabel || dateKey) + '</p>' +
+            '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">' +
+            '<p style="color: var(--slate-400); margin: 0; font-size: 14px;">✔ ' + filesRestored + ' files restored</p>' +
+            '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✔ ' + filesSkipped + ' files unchanged (already current)</p>' +
+            '<p style="color: var(--slate-400); margin: 8px 0 0 0; font-size: 14px;">✔ Active theme updated</p>' +
+            '</div>';
+
+        // Show errors if any
+        if (errors.length > 0) {
+            successHtml +=
+                '<div style="background: var(--red-900); border: 1px solid var(--red-700); border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">' +
+                '<p style="color: var(--red-400); margin: 0 0 8px 0; font-size: 14px; font-weight: 600;">⚠️ ' + errors.length + ' file(s) could not be restored:</p>' +
+                errors.slice(0, 5).map(function (e) {
+                    return '<p style="color: var(--red-300); margin: 4px 0 0 0; font-size: 13px;">• ' + escapeHtml(e.file) + '</p>';
+                }).join('') +
+                (errors.length > 5 ? '<p style="color: var(--red-300); margin: 8px 0 0 0; font-size: 13px;">...and ' + (errors.length - 5) + ' more</p>' : '') +
+                '</div>';
+        }
+
+        // Show usage info if available
+        if (result.usage) {
+            successHtml +=
+                '<p style="color: var(--slate-500); font-size: 13px; margin-bottom: 16px;">' +
+                'Restores today: ' + result.usage.restores_used + ' | Remaining: ' + result.usage.restores_remaining +
+                '</p>';
+        }
+
+        successHtml +=
+            '</div>' +
+            '<div class="modal-footer" style="justify-content: center;">' +
+            '<button class="btn btn-primary" onclick="closeRestoreConfirmModal(); loadRestorePointsFallback();">Done</button>' +
+            '</div>';
+
+        modalContent.innerHTML = successHtml;
+        showNotification('✅ Theme restored successfully! ' + filesRestored + ' files restored.', 'success');
+
+    } catch (error) {
+        console.error('Restore error:', error);
+
+        // Show error state
+        modalContent.innerHTML =
+            '<div class="modal-body" style="text-align: center; padding: 48px 24px;">' +
+            '<div style="font-size: 64px; margin-bottom: 20px;">❌</div>' +
+            '<h3 style="color: var(--red-400); margin-bottom: 12px; font-size: 24px;">Restore Failed</h3>' +
+            '<p style="color: var(--slate-300); margin-bottom: 24px;">' + escapeHtml(error.message) + '</p>' +
+            '<div style="background: var(--navy-800); border-radius: 8px; padding: 16px; margin-bottom: 24px;">' +
+            '<p style="color: var(--slate-400); margin: 0; font-size: 14px;">Your theme has not been modified. You can try again or contact support if the issue persists.</p>' +
+            '</div>' +
+            '</div>' +
+            '<div class="modal-footer" style="justify-content: center;">' +
+            '<button class="btn btn-secondary" onclick="closeRestoreConfirmModal();">Close</button>' +
+            '</div>';
+
+        showNotification('❌ Restore failed: ' + error.message, 'error');
+    }
 }
 
 function toggleAdvancedRollback() {
