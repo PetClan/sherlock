@@ -72,6 +72,21 @@ async def admin_encyclopedia(secret_key: str):
     return HTMLResponse(content="<h1>Encyclopedia not found</h1>", status_code=500)
 
 
+@router.get("/{secret_key}/encyclopedia", response_class=HTMLResponse)
+async def admin_encyclopedia(secret_key: str):
+    """Serve encyclopedia HTML - protected by secret key"""
+    verify_secret_key(secret_key)
+    
+    templates_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "templates", "encyclopedia.html")
+    
+    if os.path.exists(templates_path):
+        with open(templates_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    
+    return HTMLResponse(content="<h1>Encyclopedia not found</h1>", status_code=500)
+
+
 @router.get("/{secret_key}/stats/overview")
 async def get_overview_stats(
     secret_key: str,
