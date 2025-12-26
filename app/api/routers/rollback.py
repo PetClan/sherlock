@@ -363,14 +363,13 @@ async def restore_full_theme(
     # Get all files with versions
     files = await rollback_service.get_files_with_versions(store.id, theme_id)
     
-    files_restored = 0
-    files_skipped = 0
-    errors = []
-
-    for file_info in files:
+    # Phase 1: Gather all files that need restoration (parallel DB lookups)
+    print(f"🔄 [Rollback] Preparing restore for {len(files)} files...")
+    
+    async def prepare_file(file_info):
+        """Prepare a single file for restoration - find target version"""
         file_path = file_info["file_path"]
         
-        # Get versions for this file from the target date
         versions = await rollback_service.get_file_versions(
             store_id=store.id,
             theme_id=theme_id,
@@ -384,7 +383,7 @@ async def restore_full_theme(
             version_date = v.created_at.replace(tzinfo=None)
             if date_start <= version_date <= date_end:
                 target_version = v
-                break  # Versions are ordered by date desc, so first match is the latest from that day
+                break
         
         if not target_version:
             # No version from that date, try to find the most recent version BEFORE that date
@@ -395,38 +394,80 @@ async def restore_full_theme(
                     break
         
         if not target_version:
-            files_skipped += 1
-            continue
+            return {"status": "skip", "file_path": file_path, "reason": "no_version"}
         
-        # Check if this version is already the current version (skip if so)
+        # Check if this version is already the current version
         if versions and versions[0].id == target_version.id:
-            files_skipped += 1
-            continue
+            return {"status": "skip", "file_path": file_path, "reason": "already_current"}
         
-        # Perform the rollback for this file
+        return {
+            "status": "restore",
+            "file_path": file_path,
+            "version_id": target_version.id,
+            "version": target_version
+        }
+    
+    # Parallel preparation of all files
+    import asyncio
+    preparation_results = await asyncio.gather(*[prepare_file(f) for f in files])
+    
+    # Separate files to restore from files to skip
+    files_to_restore = [r for r in preparation_results if r["status"] == "restore"]
+    files_skipped = len([r for r in preparation_results if r["status"] == "skip"])
+    
+    print(f"🔄 [Rollback] {len(files_to_restore)} files to restore, {files_skipped} skipped")
+    
+    # Phase 2: Perform restorations in parallel batches
+    BATCH_SIZE = 10  # Process 10 files at a time to respect Shopify rate limits
+    files_restored = 0
+    errors = []
+    
+    async def restore_file(file_data):
+        """Restore a single file"""
         try:
             result = await rollback_service.rollback_file(
                 store=store,
-                version_id=target_version.id,
+                version_id=file_data["version_id"],
                 mode=request.mode,
-                user_confirmed=True,  # Auto-confirm for full restore
+                user_confirmed=True,
                 performed_by="user_full_restore",
                 notes=f"Full restore to {request.date}",
                 target_theme_id=theme_id
             )
             
             if result.get("success"):
+                return {"status": "success", "file_path": file_data["file_path"]}
+            else:
+                return {"status": "error", "file_path": file_data["file_path"], "error": result.get("error", "Unknown error")}
+        except Exception as e:
+            return {"status": "error", "file_path": file_data["file_path"], "error": str(e)}
+    
+    # Process in batches
+    for i in range(0, len(files_to_restore), BATCH_SIZE):
+        batch = files_to_restore[i:i + BATCH_SIZE]
+        batch_num = (i // BATCH_SIZE) + 1
+        total_batches = (len(files_to_restore) + BATCH_SIZE - 1) // BATCH_SIZE
+        
+        print(f"🔄 [Rollback] Processing batch {batch_num}/{total_batches} ({len(batch)} files)...")
+        
+        # Run batch in parallel
+        batch_results = await asyncio.gather(*[restore_file(f) for f in batch])
+        
+        # Count results
+        for result in batch_results:
+            if result["status"] == "success":
                 files_restored += 1
             else:
                 errors.append({
-                    "file": file_path,
+                    "file": result["file_path"],
                     "error": result.get("error", "Unknown error")
                 })
-        except Exception as e:
-            errors.append({
-                "file": file_path,
-                "error": str(e)
-            })
+        
+        # Small delay between batches to avoid rate limiting
+        if i + BATCH_SIZE < len(files_to_restore):
+            await asyncio.sleep(0.5)
+    
+    print(f"✅ [Rollback] Complete: {files_restored} restored, {files_skipped} skipped, {len(errors)} errors")
 
     # Record restore usage only if files were actually restored
     if files_restored > 0:
