@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sherlock Encyclopedia - Admin Reference Guide</title>
+    <style>
+        :root {
+            --navy-900: #0f172a;
+            --navy-800: #1e293b;
+            --navy-700: #334155;
+            --navy-600: #475569;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --slate-200: #e2e8f0;
+            --white: #ffffff;
+            --emerald-400: #34d399;
+            --emerald-500: #10b981;
+            --amber-400: #fbbf24;
+            --red-400: #f87171;
+            --gold: #d4a843;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--navy-900);
+            color: var(--slate-300);
+            line-height: 1.6;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--navy-800);
+            border-right: 1px solid var(--navy-700);
+            overflow-y: auto;
+            padding: 24px 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid var(--navy-700);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-header h1 {
+            color: var(--white);
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            color: var(--gold);
+            font-size: 14px;
+        }
+
+        .nav-section {
+            padding: 8px 16px;
+        }
+
+        .nav-section-title {
+            color: var(--slate-400);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 8px;
+            margin-top: 8px;
+        }
+
+        .nav-link {
+            display: block;
+            color: var(--slate-300);
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: var(--navy-700);
+            color: var(--white);
+        }
+
+        .nav-link.active {
+            background: var(--gold);
+            color: var(--navy-900);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 40px 60px;
+            max-width: 1000px;
+        }
+
+        /* Search */
+        .search-container {
+            position: sticky;
+            top: 0;
+            background: var(--navy-900);
+            padding: 20px 0;
+            margin-bottom: 24px;
+            z-index: 50;
+            border-bottom: 1px solid var(--navy-700);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px 14px 48px;
+            font-size: 16px;
+            border: 2px solid var(--navy-700);
+            border-radius: 8px;
+            background: var(--navy-800);
+            color: var(--white);
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--gold);
+        }
+
+        .search-input::placeholder {
+            color: var(--slate-400);
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+        }
+
+        .search-results-info {
+            margin-top: 8px;
+            font-size: 14px;
+            color: var(--slate-400);
+        }
+
+        /* Sections */
+        .section {
+            background: var(--navy-800);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            scroll-margin-top: 100px;
+        }
+
+        .section h2 {
+            color: var(--gold);
+            font-size: 28px;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--navy-700);
+        }
+
+        .section h3 {
+            color: var(--white);
+            font-size: 20px;
+            margin: 28px 0 12px 0;
+        }
+
+        .section h4 {
+            color: var(--emerald-400);
+            font-size: 16px;
+            margin: 20px 0 8px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+        }
+
+        ul,
+        ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--navy-700);
+        }
+
+        th {
+            color: var(--white);
+            background: var(--navy-900);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--navy-700);
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--navy-900);
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid var(--navy-700);
+        }
+
+        code {
+            background: var(--navy-700);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        /* Callout boxes */
+        .callout {
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .callout-info {
+            background: rgba(52, 211, 153, 0.1);
+            border-color: var(--emerald-400);
+        }
+
+        .callout-info .callout-title {
+            color: var(--emerald-400);
+        }
+
+        .callout-warning {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: var(--amber-400);
+        }
+
+        .callout-warning .callout-title {
+            color: var(--amber-400);
+        }
+
+        .callout-danger {
+            background: rgba(248, 113, 113, 0.1);
+            border-color: var(--red-400);
+        }
+
+        .callout-danger .callout-title {
+            color: var(--red-400);
+        }
+
+        .callout-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        /* Flow diagrams */
+        .flow-diagram {
+            background: var(--navy-900);
+            border-radius: 8px;
+            padding: 20px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 16px 0;
+            line-height: 1.4;
+        }
+
+        /* Back to admin link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--slate-400);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 16px;
+            padding: 8px 0;
+        }
+
+        .back-link:hover {
+            color: var(--white);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            border-top: 1px solid var(--navy-700);
+            margin-top: 48px;
+            color: var(--slate-400);
+        }
+
+        /* Highlight for search */
+        .search-highlight {
+            background: var(--gold);
+            color: var(--navy-900);
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        .section.hidden {
+            display: none;
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .search-container {
+                display: none;
+            }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1>🔍 Sherlock</h1>
+            <p>Encyclopedia v1.0</p>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Core Features</div>
+            <a href="#rollback" class="nav-link">Theme Rollback System</a>
+            <a href="#snapshots" class="nav-link">Theme Snapshots</a>
+            <a href="#daily-scans" class="nav-link">Daily Automated Scans</a>
+            <a href="#css-detection" class="nav-link">CSS Conflict Detection</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Intelligence</div>
+            <a href="#app-learning" class="nav-link">App Signature Learning</a>
+            <a href="#reddit-google" class="nav-link">Reddit & Google Integration</a>
+            <a href="#conflicts-db" class="nav-link">Known Conflicts Database</a>
+            <a href="#orphan-code" class="nav-link">Orphan Code Detection</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Operations</div>
+            <a href="#rate-limits" class="nav-link">Shopify API Rate Limits</a>
+            <a href="#usage-limits" class="nav-link">Usage Limits & Pricing</a>
+            <a href="#safeguards" class="nav-link">Kill Switches & Safeguards</a>
+            <a href="#scaling" class="nav-link">Scaling Roadmap</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reference</div>
+            <a href="#data-retention" class="nav-link">Data Retention Policy</a>
+            <a href="#file-reference" class="nav-link">Key Files Reference</a>
+            <a href="#api-endpoints" class="nav-link">API Endpoints</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <a href="javascript:history.back()" class="back-link">← Back to Admin</a>
+
+        <!-- Search -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <span class="search-icon">🔎</span>
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="Search the encyclopedia... (Ctrl+K)">
+            </div>
+            <div class="search-results-info" id="searchResultsInfo"></div>
+        </div>
+
+        <!-- ==================== SECTION: Theme Rollback System ==================== -->
+        <div class="section" id="rollback">
+            <h2>🔄 Theme Rollback System</h2>
+
+            <h3>How Sherlock Rollback Works</h3>
+
+            <h4>1. Daily Snapshots (Background Process)</h4>
+            <p>Every day at 3 AM UTC, Sherlock automatically:</p>
+            <ul>
+                <li>Fetches all theme files from Shopify (GET requests)</li>
+                <li>Saves the file content to Sherlock's PostgreSQL database</li>
+                <li>Stores: file path, content, checksum (SHA-256), and timestamp</li>
+            </ul>
+
+            <h4>2. When Merchant Clicks "Restore to [Date]"</h4>
+            <p>Sherlock performs the following actions:</p>
+            <ul>
+                <li>Looks up the saved content for each file from the selected date</li>
+                <li>Sends PUT requests to Shopify's Asset API for each file</li>
+                <li>Processes files one at a time with 0.5s delay (respects rate limits)</li>
+                <li>Shopify <strong>overwrites</strong> the current file with the old content</li>
+            </ul>
+
+            <h4>3. The Result</h4>
+            <p>The merchant's <strong>live Shopify store</strong> is actually changed:</p>
+            <ul>
+                <li>Shopify Admin → Online Store → Themes → Edit Code shows the restored content</li>
+                <li>The storefront immediately displays the restored version</li>
+                <li>All 274 files (typical theme) are restored in ~4-5 minutes</li>
+            </ul>
+
+            <h3>Visual Flow</h3>
+            <div class="flow-diagram">Sherlock DB Shopify Store
+                ┌─────────────────┐ ┌─────────────────┐
+                │ Dec 8 snapshot │ │ Live theme │
+                │ base.css (v1) │ ──PUT──▶ │ base.css (now v1)│
+                │ header.liquid │ │ header.liquid │
+                │ ...274 files │ │ ...274 files │
+                └─────────────────┘ └─────────────────┘</div>
+
+            <h3>Important Notes</h3>
+            <table>
+                <tr>
+                    <th>Point</th>
+                    <th>Explanation</th>
+                </tr>
+                <tr>
+                    <td>It's a real restore</td>
+                    <td>Not a preview - the live store changes immediately</td>
+                </tr>
+                <tr>
+                    <td>Only theme files</td>
+                    <td>Products, orders, customers are NOT affected</td>
+                </tr>
+                <tr>
+                    <td>Cannot be undone</td>
+                    <td>That's why we show the warning modal before proceeding</td>
+                </tr>
+                <tr>
+                    <td>New files not deleted</td>
+                    <td>If an app added a new file after the restore date, it stays</td>
+                </tr>
+            </table>
+
+            <h3>Can Merchants Restore Multiple Times?</h3>
+            <p><strong>Yes!</strong> The merchant can:</p>
+            <ol>
+                <li>Go to the <strong>Rollback</strong> tab</li>
+                <li>Pick a different date (e.g., yesterday instead of last week)</li>
+                <li>Click <strong>Restore →</strong></li>
+                <li>Theme is now at the newly selected date's state</li>
+            </ol>
+
+            <table>
+                <tr>
+                    <th>Question</th>
+                    <th>Answer</th>
+                </tr>
+                <tr>
+                    <td>Can they restore multiple times?</td>
+                    <td>Yes, up to <strong>3 times per day</strong></td>
+                </tr>
+                <tr>
+                    <td>Does the previous restore matter?</td>
+                    <td>No - each restore overwrites current theme</td>
+                </tr>
+                <tr>
+                    <td>Restore to Dec 8, then Dec 15?</td>
+                    <td>Theme becomes Dec 15 version</td>
+                </tr>
+            </table>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">⚠️ Daily Restore Limit</div>
+                <p>The <strong>3 restores per day</strong> limit exists to prevent abuse, protect against runaway API
+                    usage, and encourage merchants to think before restoring. They can always come back tomorrow for
+                    more.</p>
+            </div>
+
+            <h3>Real-Time Progress (SSE)</h3>
+            <p>During restore, merchants see live progress via Server-Sent Events:</p>
+            <ul>
+                <li><strong>Phase 1: Analyzing</strong> - Comparing files to find what needs restoring</li>
+                <li><strong>Phase 2: Restoring</strong> - Shows each file as it's being restored</li>
+                <li>Progress bar with percentage and file count</li>
+                <li>Current file path displayed</li>
+            </ul>
+        </div>
+
+        <!-- ==================== SECTION: Theme Snapshots ==================== -->
+        <div class="section" id="snapshots">
+            <h2>📸 Theme Snapshots</h2>
+
+            <h3>Understanding Snapshot Statistics</h3>
+            <p>On the Rollback tab, merchants see: <code>274 files backed up · 2409 restore points available</code></p>
+
+            <h4>"Files backed up" (e.g., 274)</h4>
+            <ul>
+                <li>Total number of unique theme files Sherlock has captured</li>
+                <li>Includes: layouts, sections, snippets, assets (JS/CSS), templates, locales, config</li>
+                <li>Essentially every file in the merchant's theme</li>
+            </ul>
+
+            <h4>"Restore points available" (e.g., 2409)</h4>
+            <ul>
+                <li>Total number of file <strong>versions</strong> stored across all files</li>
+                <li>Each daily scan saves a version of each file</li>
+                <li>Example: 274 files × 9 days = ~2,466 restore points</li>
+            </ul>
+
+            <h3>How Checksums Work</h3>
+            <p>Each file version includes a SHA-256 checksum:</p>
+            <ul>
+                <li>Unique fingerprint of file content</li>
+                <li>Used to detect if file actually changed</li>
+                <li>Prevents storing duplicate content</li>
+            </ul>
+
+            <div class="callout callout-info">
+                <div class="callout-title">💡 How Restore Points Work</div>
+                <p>Each "restore point" is a saved version of a single file at a specific time. When restoring to a
+                    date, Sherlock finds the matching version for each file from that date.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: Daily Automated Scans ==================== -->
+        <div class="section" id="daily-scans">
+            <h2>⏰ Daily Automated Scans</h2>
+
+            <h3>How Daily Scans Work</h3>
+            <p>Sherlock uses <strong>APScheduler</strong> to run automated scans:</p>
+
+            <table>
+                <tr>
+                    <th>Setting</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Schedule</td>
+                    <td>3:00 AM UTC daily</td>
+                </tr>
+                <tr>
+                    <td>Batch size</td>
+                    <td>10 stores in parallel</td>
+                </tr>
+                <tr>
+                    <td>Delay between batches</td>
+                    <td>2 seconds</td>
+                </tr>
+            </table>
+
+            <h3>What Each Scan Does</h3>
+            <ol>
+                <li><strong>Theme Snapshot</strong> - Captures all theme files with checksums</li>
+                <li><strong>Script Tag Tracking</strong> - Records all external scripts injected by apps</li>
+                <li><strong>CSS Risk Detection</strong> - Scans for non-namespaced CSS conflicts</li>
+                <li><strong>Performance Measurement</strong> - Measures page load time and scores</li>
+                <li><strong>App Signature Learning</strong> - Correlates scripts with installed apps</li>
+            </ol>
+
+            <h3>Risk Level Calculation</h3>
+            <p>After each scan, Sherlock calculates an overall risk level:</p>
+
+            <table>
+                <tr>
+                    <th>Risk Level</th>
+                    <th>Conditions</th>
+                </tr>
+                <tr>
+                    <td style="color: #34d399;">Low</td>
+                    <td>Score &lt; 30 - Few or no changes</td>
+                </tr>
+                <tr>
+                    <td style="color: #fbbf24;">Medium</td>
+                    <td>Score 30-60 - Some concerning changes</td>
+                </tr>
+                <tr>
+                    <td style="color: #f87171;">High</td>
+                    <td>Score &gt; 60 - Significant changes detected</td>
+                </tr>
+            </table>
+
+            <h4>Risk Score Factors</h4>
+            <ul>
+                <li>+25 points: Many files changed (&gt;10)</li>
+                <li>+20 points: New scripts added</li>
+                <li>+30 points: High CSS conflict risk</li>
+                <li>+25 points: Poor performance score (&lt;40)</li>
+                <li>+20 points: Very slow page load (&gt;6s)</li>
+            </ul>
+
+            <div class="callout callout-info">
+                <div class="callout-title">💡 Why 3 AM UTC?</div>
+                <p>Most Shopify stores are in North America, where 3 AM UTC is late evening. Running scans during
+                    low-traffic hours minimizes any potential impact on store performance.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: CSS Conflict Detection ==================== -->
+        <div class="section" id="css-detection">
+            <h2>🎨 CSS Conflict Detection</h2>
+
+            <h3>The Problem: Non-Namespaced CSS</h3>
+            <p>Many Shopify apps inject CSS with generic class names that affect the entire theme:</p>
+
+            <div class="code-block">/* BAD - Affects ALL buttons on store */
+                .button { background: red; }
+
+                /* GOOD - Only affects the app's widget */
+                .my-app-widget .button { background: red; }</div>
+
+            <h3>What Sherlock Detects</h3>
+            <table>
+                <tr>
+                    <th>Pattern</th>
+                    <th>Risk</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td>Generic selectors</td>
+                    <td>High</td>
+                    <td><code>.button</code>, <code>.card</code>, <code>.title</code></td>
+                </tr>
+                <tr>
+                    <td>Body/HTML targeting</td>
+                    <td>High</td>
+                    <td><code>body { }</code>, <code>html { }</code></td>
+                </tr>
+                <tr>
+                    <td>!important overuse</td>
+                    <td>Medium</td>
+                    <td>Multiple <code>!important</code> declarations</td>
+                </tr>
+                <tr>
+                    <td>Star selector</td>
+                    <td>Medium</td>
+                    <td><code>* { margin: 0 }</code></td>
+                </tr>
+            </table>
+
+            <h3>Smart Detection (Avoiding False Positives)</h3>
+            <p>Sherlock only flags CSS issues in:</p>
+            <ul>
+                <li><strong>New files</strong> - Files added since last scan</li>
+                <li><strong>Changed files</strong> - Files modified since last scan</li>
+                <li><strong>App-owned files</strong> - Files that look like they came from apps</li>
+            </ul>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">⚠️ Why This Matters</div>
+                <p>Clean demo stores were showing 70+ "issues" because Sherlock was flagging normal theme patterns. Now
+                    it only flags potentially problematic CSS from apps.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: App Signature Learning ==================== -->
+        <div class="section" id="app-learning">
+            <h2>🧠 App Signature Learning</h2>
+
+            <h3>How Sherlock Gets Smarter</h3>
+            <p>Sherlock automatically learns to identify apps from their script patterns:</p>
+
+            <h4>The Learning Flow</h4>
+            <div class="flow-diagram">Store A installs Sherlock
+                ├── Installed apps: ["Klaviyo", "Loox", "SuperReviews"]
+                ├── Scripts found: ["cdn.klaviyo.com", "loox.io", "cdn.superreviews.app"]
+                └── Sherlock correlates & learns:
+                ├── cdn.klaviyo.com → Klaviyo (known)
+                ├── loox.io → Loox (known)
+                └── cdn.superreviews.app → SuperReviews (NEW - learned!)
+
+                Store B installs Sherlock
+                ├── Installed apps: ["PageFly", "SuperReviews"]
+                ├── Scripts found: ["cdn.pagefly.io", "cdn.superreviews.app"]
+                └── Sherlock recognizes:
+                └── cdn.superreviews.app → SuperReviews (confidence increases!)
+
+                Store C installs Sherlock
+                ├── Installed apps: ["Klaviyo"] (no SuperReviews!)
+                ├── Scripts found: ["cdn.klaviyo.com", "cdn.superreviews.app"]
+                └── Sherlock flags:
+                └── ⚠️ Orphan code from SuperReviews detected!</div>
+
+            <h3>Confidence Scoring</h3>
+            <table>
+                <tr>
+                    <th>Times Seen</th>
+                    <th>Confidence</th>
+                </tr>
+                <tr>
+                    <td>1 store</td>
+                    <td>50%</td>
+                </tr>
+                <tr>
+                    <td>5 stores</td>
+                    <td>80%</td>
+                </tr>
+                <tr>
+                    <td>20+ stores</td>
+                    <td>95% (confirmed)</td>
+                </tr>
+            </table>
+
+            <h3>Database Tables</h3>
+            <ul>
+                <li><code>app_signatures</code> - Learned patterns (domain → app name)</li>
+                <li><code>app_signature_sightings</code> - Where/when patterns were seen</li>
+            </ul>
+
+            <div class="callout callout-info">
+                <div class="callout-title">💡 The More Stores, The Smarter</div>
+                <p>Every store that uses Sherlock contributes to the learning database. This creates a network effect -
+                    Sherlock becomes more valuable as more merchants use it.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: Reddit & Google Integration ==================== -->
+        <div class="section" id="reddit-google">
+            <h2>🔍 Reddit & Google Integration</h2>
+
+            <h3>Data Sources</h3>
+            <table>
+                <tr>
+                    <th>Source</th>
+                    <th>Purpose</th>
+                    <th>API</th>
+                </tr>
+                <tr>
+                    <td>Reddit r/shopify</td>
+                    <td>Community discussions, complaints</td>
+                    <td>Reddit JSON API</td>
+                </tr>
+                <tr>
+                    <td>Google Custom Search</td>
+                    <td>Broader web search, reviews</td>
+                    <td>Google CSE API</td>
+                </tr>
+            </table>
+
+            <h3>Risk Score Calculation</h3>
+            <p>Each app gets a risk score (0-100) based on:</p>
+
+            <h4>Reddit Factors</h4>
+            <ul>
+                <li>+20 points: More than 20 posts found</li>
+                <li>+40 points: High severity issues mentioned</li>
+                <li>+30 points: Negative overall sentiment</li>
+                <li>+10 points: Recent complaints (last 30 days)</li>
+            </ul>
+
+            <h4>Google Factors</h4>
+            <ul>
+                <li>Sentiment analysis of search result snippets</li>
+                <li>Presence of keywords: "conflict", "broke", "slow", "problem"</li>
+                <li>Source credibility weighting</li>
+            </ul>
+
+            <h3>Investigate App Feature</h3>
+            <p>Merchants can search for any app before installing:</p>
+            <ol>
+                <li>Click "🔎 Investigate App" in header</li>
+                <li>Enter app name</li>
+                <li>See risk score, evidence, community feedback</li>
+            </ol>
+        </div>
+
+        <!-- ==================== SECTION: Known Conflicts Database ==================== -->
+        <div class="section" id="conflicts-db">
+            <h2>⚡ Known Conflicts Database</h2>
+
+            <h3>What It Contains</h3>
+            <p>Sherlock maintains a database of <strong>26+ documented conflict pairs</strong> based on:</p>
+            <ul>
+                <li>Shopify Community Forums</li>
+                <li>Reddit r/shopify discussions</li>
+                <li>Facebook Shopify groups</li>
+                <li>Support ticket patterns</li>
+            </ul>
+
+            <h3>Conflict Categories</h3>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Example Apps</th>
+                    <th>Why They Conflict</th>
+                </tr>
+                <tr>
+                    <td>Page Builders</td>
+                    <td>PageFly ↔ GemPages</td>
+                    <td>Both inject heavy scripts, modify theme code</td>
+                </tr>
+                <tr>
+                    <td>Review Apps</td>
+                    <td>Loox ↔ Judge.me</td>
+                    <td>Duplicate widgets, layout conflicts</td>
+                </tr>
+                <tr>
+                    <td>Popup Apps</td>
+                    <td>Privy ↔ Klaviyo</td>
+                    <td>Fight for screen space</td>
+                </tr>
+                <tr>
+                    <td>Subscription</td>
+                    <td>ReCharge ↔ Bold</td>
+                    <td>Break checkout completely</td>
+                </tr>
+                <tr>
+                    <td>Currency</td>
+                    <td>Currency Converter ↔ Geolocation</td>
+                    <td>Conflicting price displays</td>
+                </tr>
+            </table>
+
+            <h3>Severity Levels</h3>
+            <table>
+                <tr>
+                    <th>Severity</th>
+                    <th>Meaning</th>
+                    <th>Action</th>
+                </tr>
+                <tr>
+                    <td style="color: #f87171;">Critical</td>
+                    <td>Will break store functionality</td>
+                    <td>Remove one immediately</td>
+                </tr>
+                <tr>
+                    <td style="color: #fbbf24;">High</td>
+                    <td>Significant issues likely</td>
+                    <td>Choose one app</td>
+                </tr>
+                <tr>
+                    <td style="color: #94a3b8;">Medium</td>
+                    <td>May cause minor issues</td>
+                    <td>Monitor for problems</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ==================== SECTION: Orphan Code Detection ==================== -->
+        <div class="section" id="orphan-code">
+            <h2>🧹 Orphan Code Detection</h2>
+
+            <h3>What Is Orphan Code?</h3>
+            <p>Code left behind by uninstalled apps that:</p>
+            <ul>
+                <li>Slows down store performance</li>
+                <li>Can cause unexpected behavior</li>
+                <li>Takes up theme file space</li>
+                <li>May conflict with new apps</li>
+            </ul>
+
+            <h3>How Sherlock Detects It</h3>
+            <ol>
+                <li>Scans theme for known app patterns (script URLs, CSS classes)</li>
+                <li>Compares against currently installed apps</li>
+                <li>Flags patterns where app is NOT installed</li>
+            </ol>
+
+            <h3>Common Orphan Patterns</h3>
+            <div class="code-block">// Examples of orphan code patterns
+                "cdn.klaviyo.com" → App: Klaviyo
+                "pagefly.io" → App: PageFly
+                "loox.io" → App: Loox
+                "judge.me" → App: Judge.me</div>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">⚠️ Cleanup Required</div>
+                <p>Orphan code doesn't remove itself. Merchants need to manually remove leftover snippets, or use
+                    Sherlock's rollback to restore to a clean state.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: Shopify API Rate Limits ==================== -->
+        <div class="section" id="rate-limits">
+            <h2>⚡ Shopify API Rate Limits</h2>
+
+            <h3>The Leaky Bucket Algorithm</h3>
+            <p>Shopify uses a "leaky bucket" to manage API requests:</p>
+            <ul>
+                <li><strong>Bucket Size:</strong> 40 requests (standard plans)</li>
+                <li><strong>Leak Rate:</strong> 2 requests per second drain</li>
+                <li>Exceeding bucket = 429 error</li>
+            </ul>
+
+            <h3>Rate Limits by Plan</h3>
+            <table>
+                <tr>
+                    <th>Shopify Plan</th>
+                    <th>Bucket Size</th>
+                    <th>Leak Rate</th>
+                </tr>
+                <tr>
+                    <td>Standard</td>
+                    <td>40 requests</td>
+                    <td>2/second</td>
+                </tr>
+                <tr>
+                    <td>Advanced</td>
+                    <td>40 requests</td>
+                    <td>4/second</td>
+                </tr>
+                <tr>
+                    <td>Shopify Plus</td>
+                    <td>400 requests</td>
+                    <td>20/second</td>
+                </tr>
+            </table>
+
+            <h3>How Sherlock Respects Limits</h3>
+            <ul>
+                <li><strong>Batch size:</strong> 1 file at a time during restore</li>
+                <li><strong>Delay:</strong> 0.5 seconds between requests</li>
+                <li><strong>Result:</strong> 2 requests/second = matches drain rate</li>
+            </ul>
+
+            <div class="callout callout-danger">
+                <div class="callout-title">🚨 Critical: API Abuse = Delisting</div>
+                <p>If Sherlock causes Shopify API abuse, <strong>Shopify will delist the app</strong>. This is
+                    existential for the business. Rate limiting code must never be changed without careful
+                    consideration.</p>
+            </div>
+
+            <h3>Why Multiple Merchants Don't Conflict</h3>
+            <table>
+                <tr>
+                    <th>Concern</th>
+                    <th>Why It's OK</th>
+                </tr>
+                <tr>
+                    <td>Shopify Rate Limits</td>
+                    <td>Limits are per app+store. Store A doesn't affect Store B.</td>
+                </tr>
+                <tr>
+                    <td>Database Sessions</td>
+                    <td>Each request gets isolated db session</td>
+                </tr>
+                <tr>
+                    <td>SSE Connections</td>
+                    <td>Each browser opens separate connection</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ==================== SECTION: Usage Limits & Pricing ==================== -->
+        <div class="section" id="usage-limits">
+            <h2>💰 Usage Limits & Pricing</h2>
+
+            <h3>Daily Abuse Limits</h3>
+            <table>
+                <tr>
+                    <th>Action</th>
+                    <th>Daily Limit</th>
+                </tr>
+                <tr>
+                    <td>On-demand scans</td>
+                    <td>5 per day</td>
+                </tr>
+                <tr>
+                    <td>Theme restores</td>
+                    <td>3 per day</td>
+                </tr>
+            </table>
+
+            <h3>Pricing Tiers</h3>
+            <table>
+                <tr>
+                    <th>Tier</th>
+                    <th>Price</th>
+                    <th>Theme History</th>
+                    <th>Features</th>
+                </tr>
+                <tr>
+                    <td>Standard</td>
+                    <td>$29/mo</td>
+                    <td>7 days</td>
+                    <td>Daily scans, basic rollback</td>
+                </tr>
+                <tr>
+                    <td>Professional</td>
+                    <td>$69/mo</td>
+                    <td>30 days</td>
+                    <td>+ Priority support</td>
+                </tr>
+                <tr>
+                    <td>Enterprise</td>
+                    <td>$99/mo</td>
+                    <td>90 days</td>
+                    <td>+ Extended history</td>
+                </tr>
+                <tr>
+                    <td>Free Trial</td>
+                    <td>$0 (14 days)</td>
+                    <td>7 days</td>
+                    <td>Full features</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ==================== SECTION: Kill Switches & Safeguards ==================== -->
+        <div class="section" id="safeguards">
+            <h2>🛡️ Kill Switches & Safeguards</h2>
+
+            <h3>System Settings</h3>
+            <p>Critical controls stored in <code>system_settings</code> table:</p>
+
+            <table>
+                <tr>
+                    <th>Setting</th>
+                    <th>Purpose</th>
+                    <th>Default</th>
+                </tr>
+                <tr>
+                    <td><code>scanning_enabled</code></td>
+                    <td>Master kill switch - pause ALL scanning</td>
+                    <td>true</td>
+                </tr>
+                <tr>
+                    <td><code>restores_enabled</code></td>
+                    <td>Read-only mode - disable ALL restores</td>
+                    <td>true</td>
+                </tr>
+                <tr>
+                    <td><code>daily_scans_enabled</code></td>
+                    <td>Pause automated 3 AM scans</td>
+                    <td>true</td>
+                </tr>
+                <tr>
+                    <td><code>max_on_demand_scans_per_day</code></td>
+                    <td>Limit on-demand scans</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td><code>max_restores_per_day</code></td>
+                    <td>Limit theme restores</td>
+                    <td>3</td>
+                </tr>
+                <tr>
+                    <td><code>api_rate_limit_buffer</code></td>
+                    <td>Stop at X% of API limit</td>
+                    <td>20%</td>
+                </tr>
+            </table>
+
+            <h3>When to Use Kill Switches</h3>
+            <ul>
+                <li><strong>Emergency:</strong> Set <code>scanning_enabled=false</code> to stop everything</li>
+                <li><strong>Maintenance:</strong> Set <code>daily_scans_enabled=false</code> temporarily</li>
+                <li><strong>Bug found:</strong> Set <code>restores_enabled=false</code> to prevent damage</li>
+            </ul>
+
+            <div class="callout callout-warning">
+                <div class="callout-title">⚠️ Kill Switch Location</div>
+                <p>Admin Portal → System tab → System Settings section. Changes take effect immediately.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: Scaling Roadmap ==================== -->
+        <div class="section" id="scaling">
+            <h2>📈 Scaling Roadmap</h2>
+
+            <h3>Current Architecture (Phase 1)</h3>
+            <ul>
+                <li>Single Railway instance</li>
+                <li>PostgreSQL database</li>
+                <li>10 parallel scans</li>
+                <li>Supports: ~100 stores</li>
+            </ul>
+
+            <h3>Scaling Phases</h3>
+            <table>
+                <tr>
+                    <th>Phase</th>
+                    <th>Stores</th>
+                    <th>Changes Needed</th>
+                </tr>
+                <tr>
+                    <td>1 (Current)</td>
+                    <td>1-100</td>
+                    <td>10 parallel scans</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>100-500</td>
+                    <td>20 parallel + stagger throughout day</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>500-2,000</td>
+                    <td>Redis job queue + multiple workers</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>2,000-10,000</td>
+                    <td>Dedicated scan workers + read replicas</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>10,000-50,000</td>
+                    <td>Kubernetes + horizontal scaling</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>50,000-100,000</td>
+                    <td>Multi-region + distributed architecture</td>
+                </tr>
+            </table>
+
+            <h3>Scan Time Estimates</h3>
+            <table>
+                <tr>
+                    <th>Stores</th>
+                    <th>Sequential</th>
+                    <th>10 Parallel</th>
+                    <th>50 Parallel</th>
+                </tr>
+                <tr>
+                    <td>100</td>
+                    <td>1-2 hours</td>
+                    <td>6-12 min</td>
+                    <td>2-3 min</td>
+                </tr>
+                <tr>
+                    <td>1,000</td>
+                    <td>8-17 hours</td>
+                    <td>50-100 min</td>
+                    <td>10-20 min</td>
+                </tr>
+                <tr>
+                    <td>10,000</td>
+                    <td>3-7 days ❌</td>
+                    <td>8-17 hours</td>
+                    <td>100-200 min</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ==================== SECTION: Data Retention ==================== -->
+        <div class="section" id="data-retention">
+            <h2>🗄️ Data Retention Policy</h2>
+
+            <h3>Retention by Data Type</h3>
+            <table>
+                <tr>
+                    <th>Data Type</th>
+                    <th>Standard</th>
+                    <th>Professional</th>
+                    <th>Enterprise</th>
+                </tr>
+                <tr>
+                    <td>Theme snapshots</td>
+                    <td>7 days</td>
+                    <td>30 days</td>
+                    <td>90 days</td>
+                </tr>
+                <tr>
+                    <td>Performance data</td>
+                    <td colspan="3">Thin to weekly after 30 days</td>
+                </tr>
+                <tr>
+                    <td>Scan results</td>
+                    <td colspan="3">Archive after 90 days</td>
+                </tr>
+                <tr>
+                    <td>App signatures</td>
+                    <td colspan="3">Keep all (learning data)</td>
+                </tr>
+            </table>
+
+            <div class="callout callout-info">
+                <div class="callout-title">💡 Why Retention Matters</div>
+                <p>At 100,000 stores, data retention directly impacts database costs. Tiered retention allows affordable
+                    pricing while maintaining value for power users.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: Key Files Reference ==================== -->
+        <div class="section" id="file-reference">
+            <h2>📁 Key Files Reference</h2>
+
+            <h3>Core Application</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>main.py</code></td>
+                    <td>FastAPI app, APScheduler setup</td>
+                </tr>
+                <tr>
+                    <td><code>config.py</code></td>
+                    <td>Settings, environment variables</td>
+                </tr>
+                <tr>
+                    <td><code>database.py</code></td>
+                    <td>PostgreSQL connection</td>
+                </tr>
+                <tr>
+                    <td><code>models.py</code></td>
+                    <td>SQLAlchemy database models</td>
+                </tr>
+            </table>
+
+            <h3>Services</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>daily_scan_service.py</code></td>
+                    <td>Orchestrates daily scans</td>
+                </tr>
+                <tr>
+                    <td><code>theme_snapshot_service.py</code></td>
+                    <td>Theme file versioning</td>
+                </tr>
+                <tr>
+                    <td><code>rollback_service.py</code></td>
+                    <td>Theme file restoration</td>
+                </tr>
+                <tr>
+                    <td><code>css_risk_service.py</code></td>
+                    <td>CSS conflict detection</td>
+                </tr>
+                <tr>
+                    <td><code>app_signature_service.py</code></td>
+                    <td>App pattern learning</td>
+                </tr>
+                <tr>
+                    <td><code>system_settings_service.py</code></td>
+                    <td>Kill switches, limits</td>
+                </tr>
+                <tr>
+                    <td><code>usage_limit_service.py</code></td>
+                    <td>Per-store daily limits</td>
+                </tr>
+            </table>
+
+            <h3>API Routers</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>auth.py</code></td>
+                    <td>Shopify OAuth flow</td>
+                </tr>
+                <tr>
+                    <td><code>scan.py</code></td>
+                    <td>Scan endpoints</td>
+                </tr>
+                <tr>
+                    <td><code>rollback.py</code></td>
+                    <td>Restore endpoints</td>
+                </tr>
+                <tr>
+                    <td><code>admin.py</code></td>
+                    <td>Admin portal API</td>
+                </tr>
+            </table>
+
+            <h3>Frontend</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>dashboard.html</code></td>
+                    <td>Merchant dashboard</td>
+                </tr>
+                <tr>
+                    <td><code>admin.html</code></td>
+                    <td>Admin portal</td>
+                </tr>
+                <tr>
+                    <td><code>app.js</code></td>
+                    <td>Dashboard JavaScript</td>
+                </tr>
+                <tr>
+                    <td><code>style.css</code></td>
+                    <td>Main stylesheet</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ==================== SECTION: API Endpoints ==================== -->
+        <div class="section" id="api-endpoints">
+            <h2>🔌 API Endpoints</h2>
+
+            <h3>Authentication</h3>
+            <table>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/auth/shopify</code></td>
+                    <td>GET</td>
+                    <td>Start OAuth flow</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/auth/shopify/callback</code></td>
+                    <td>GET</td>
+                    <td>OAuth callback</td>
+                </tr>
+            </table>
+
+            <h3>Scanning</h3>
+            <table>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/scan/start</code></td>
+                    <td>POST</td>
+                    <td>Start on-demand scan</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/monitoring/scan/{shop}</code></td>
+                    <td>POST</td>
+                    <td>Trigger daily scan</td>
+                </tr>
+            </table>
+
+            <h3>Rollback</h3>
+            <table>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/rollback/dates/{shop}</code></td>
+                    <td>GET</td>
+                    <td>Get available restore dates</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/rollback/restore-full-stream/{shop}</code></td>
+                    <td>GET</td>
+                    <td>SSE restore with progress</td>
+                </tr>
+            </table>
+
+            <h3>Admin</h3>
+            <table>
+                <tr>
+                    <th>Endpoint</th>
+                    <th>Method</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/admin/{key}/dashboard</code></td>
+                    <td>GET</td>
+                    <td>Admin dashboard data</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/admin/{key}/stores</code></td>
+                    <td>GET</td>
+                    <td>List all stores</td>
+                </tr>
+                <tr>
+                    <td><code>/api/v1/admin/{key}/settings</code></td>
+                    <td>GET/POST</td>
+                    <td>System settings</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🔍 Sherlock Encyclopedia v1.0</p>
+            <p>Last Updated: December 26, 2025</p>
+            <p style="margin-top: 8px; font-size: 13px;">Built in Scotland by Codename: Clan</p>
+        </div>
+    </main>
+
+    <!-- Search JavaScript -->
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchResultsInfo = document.getElementById('searchResultsInfo');
+        const sections = document.querySelectorAll('.section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        // Store original content
+        const originalContent = new Map();
+        sections.forEach(section => {
+            originalContent.set(section.id, section.innerHTML);
+        });
+
+        function performSearch(query) {
+            query = query.trim().toLowerCase();
+
+            if (query.length === 0) {
+                // Reset - show all
+                sections.forEach(section => {
+                    section.classList.remove('hidden');
+                    section.innerHTML = originalContent.get(section.id);
+                });
+                searchResultsInfo.textContent = '';
+                return;
+            }
+
+            let matchCount = 0;
+            let sectionCount = 0;
+
+            sections.forEach(section => {
+                section.innerHTML = originalContent.get(section.id);
+                const text = section.textContent.toLowerCase();
+
+                if (text.includes(query)) {
+                    section.classList.remove('hidden');
+                    sectionCount++;
+
+                    // Count matches
+                    const matches = text.match(new RegExp(escapeRegex(query), 'gi'));
+                    if (matches) matchCount += matches.length;
+
+                    // Highlight matches
+                    highlightMatches(section, new RegExp(`(${escapeRegex(query)})`, 'gi'));
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+
+            searchResultsInfo.textContent = sectionCount > 0
+                ? `Found ${matchCount} matches in ${sectionCount} section${sectionCount !== 1 ? 's' : ''}`
+                : 'No results found';
+        }
+
+        function highlightMatches(element, regex) {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+            const textNodes = [];
+            while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+            textNodes.forEach(node => {
+                const text = node.nodeValue;
+                if (regex.test(text)) {
+                    const span = document.createElement('span');
+                    span.innerHTML = text.replace(regex, '<span class="search-highlight">$1</span>');
+                    node.parentNode.replaceChild(span, node);
+                }
+            });
+        }
+
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', e => performSearch(e.target.value));
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.value = '';
+                performSearch('');
+            }
+        });
+
+        // Active nav link on scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const top = section.offsetTop - 150;
+                if (window.scrollY >= top) current = section.id;
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
