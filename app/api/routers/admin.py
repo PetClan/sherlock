@@ -235,6 +235,7 @@ async def get_recent_activity(
     secret_key: str,
     password: str = Query(...),
     limit: int = Query(default=20),
+    offset: int = Query(default=0),
     db: AsyncSession = Depends(get_db)
 ):
     """Get recent activity feed"""
@@ -294,7 +295,7 @@ async def get_recent_activity(
         # Sort by timestamp
         activities.sort(key=lambda x: x["timestamp"], reverse=True)
         
-        return {"activities": activities[:limit]}
+        return {"activities": activities[offset:offset + limit]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

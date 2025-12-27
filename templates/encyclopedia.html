@@ -423,7 +423,7 @@
             <h3>How Sherlock Rollback Works</h3>
 
             <h4>1. Daily Snapshots (Background Process)</h4>
-            <p>Every day at 3 AM UTC, Sherlock automatically:</p>
+            <p>Every day during 1-6 AM local time, Sherlock automatically:</p>
             <ul>
                 <li>Fetches all theme files from Shopify (GET requests)</li>
                 <li>Saves the file content to Sherlock's PostgreSQL database</li>
@@ -1102,7 +1102,7 @@
                 </tr>
                 <tr>
                     <td><code>daily_scans_enabled</code></td>
-                    <td>Pause automated 3 AM scans</td>
+                    <td>Pause automated daily scans</td>
                     <td>true</td>
                 </tr>
                 <tr>

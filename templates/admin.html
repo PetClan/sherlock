@@ -815,13 +815,18 @@
             <div id="tab-activity" class="tab-content">
                 <div class="admin-section">
                     <div class="section-header">
-                        <h2 class="section-title">📋 This Week's Activity</h2>
+                        <h2 class="section-title">📋 Recent Activity</h2>
                     </div>
                     <div class="section-body">
                         <div id="full-activity-loading" class="loading-spinner">
                             <div class="spinner"></div>
                         </div>
-                        <ul class="activity-list" id="full-activity-list" style="display: none;"></ul>
+                        <ul class="activity-list" id="full-activity-list"
+                            style="display: none; max-height: 600px; overflow-y: auto;"></ul>
+                        <button id="load-more-activity" onclick="loadMoreActivity()"
+                            style="display: none; margin-top: 16px; width: 100%; padding: 12px; background: var(--navy-700); color: var(--slate-300); border: 1px solid var(--navy-600); border-radius: 8px; cursor: pointer;">
+                            Load More Activity
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1676,33 +1681,65 @@
             }
         }
 
-        async function loadFullActivity() {
-            try {
-                const data = await apiCall('/activity?limit=50');
-                const list = document.getElementById('full-activity-list');
-                list.innerHTML = '';
+        let activityOffset = 0;
 
-                if (data.activities.length === 0) {
-                    list.innerHTML = '<li class="activity-item" style="color: var(--slate-400);">No activity this week</li>';
-                } else {
-                    data.activities.forEach(activity => {
-                        const item = document.createElement('li');
-                        item.className = 'activity-item';
-                        item.innerHTML = `
+            async function loadFullActivity() {
+                activityOffset = 0;
+                try {
+                    const data = await apiCall('/activity?limit=10');
+                    const list = document.getElementById('full-activity-list');
+                    list.innerHTML = '';
+
+                    if (data.activities.length === 0) {
+                        list.innerHTML = '<li class="activity-item" style="color: var(--slate-400);">No recent activity</li>';
+                        document.getElementById('load-more-activity').style.display = 'none';
+                    } else {
+                        data.activities.forEach(activity => {
+                            const item = document.createElement('li');
+                            item.className = 'activity-item';
+                            item.innerHTML = `
                             <span class="activity-icon">${activity.icon}</span>
                             <span class="activity-message">${activity.message}</span>
                             <span class="activity-time">${formatTimeAgo(activity.timestamp)}</span>
                         `;
-                        list.appendChild(item);
-                    });
-                }
+                            list.appendChild(item);
+                        });
+                        activityOffset = data.activities.length;
+                        document.getElementById('load-more-activity').style.display = data.activities.length >= 10 ? 'block' : 'none';
+                    }
 
-                document.getElementById('full-activity-loading').style.display = 'none';
-                list.style.display = 'block';
-            } catch (error) {
-                console.error('Failed to load full activity:', error);
+                    document.getElementById('full-activity-loading').style.display = 'none';
+                    list.style.display = 'block';
+                } catch (error) {
+                    console.error('Failed to load full activity:', error);
+                }
             }
-        }
+
+            async function loadMoreActivity() {
+                try {
+                    const data = await apiCall(`/activity?limit=10&offset=${activityOffset}`);
+                    const list = document.getElementById('full-activity-list');
+
+                    if (data.activities.length === 0) {
+                        document.getElementById('load-more-activity').style.display = 'none';
+                    } else {
+                        data.activities.forEach(activity => {
+                            const item = document.createElement('li');
+                            item.className = 'activity-item';
+                            item.innerHTML = `
+                            <span class="activity-icon">${activity.icon}</span>
+                            <span class="activity-message">${activity.message}</span>
+                            <span class="activity-time">${formatTimeAgo(activity.timestamp)}</span>
+                        `;
+                            list.appendChild(item);
+                        });
+                        activityOffset += data.activities.length;
+                        document.getElementById('load-more-activity').style.display = data.activities.length >= 10 ? 'block' : 'none';
+                    }
+                } catch (error) {
+                    console.error('Failed to load more activity:', error);
+                }
+            }
 
         async function loadStores() {
             try {
