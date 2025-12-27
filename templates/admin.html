@@ -991,12 +991,43 @@
                             <span class="stat-card-label">Daily Scan</span>
                             <span class="stat-card-icon">🕐</span>
                         </div>
-                        <div class="stat-card-value" style="font-size: 24px;">3:00 AM</div>
-                        <div class="stat-card-sub">UTC daily</div>
+                        <div class="stat-card-value" style="font-size: 20px;">1-6 AM</div>
+                        <div class="stat-card-sub">Local time per store</div>
                     </div>
-                </div>
-
-                <!-- Pricing Tiers -->
+                    </div>
+                    
+                    <!-- Failed Scans -->
+                    <div class="admin-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🚨 Failed Scans</h2>
+                            <button onclick="loadFailedScans()" class="refresh-btn" title="Refresh">🔄</button>
+                        </div>
+                        <div class="section-body">
+                            <div id="failed-scans-loading" class="loading-spinner">
+                                <div class="spinner"></div>
+                                <span>Loading failed scans...</span>
+                            </div>
+                            <div id="failed-scans-empty"
+                                style="display: none; text-align: center; padding: 20px; color: var(--emerald-400);">
+                                ✅ No failed scans! All stores are healthy.
+                            </div>
+                            <table class="admin-table" id="failed-scans-table" style="display: none;">
+                                <thead>
+                                    <tr>
+                                        <th>Store</th>
+                                        <th>Timezone</th>
+                                        <th>Status</th>
+                                        <th>Error</th>
+                                        <th>Failures</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="failed-scans-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Pricing Tiers -->
                 <div class="admin-section">
                     <div class="section-header">
                         <h2 class="section-title">💰 Pricing Tiers (Planned)</h2>
@@ -1887,34 +1918,136 @@
         }
 
         async function loadSystem() {
-            try {
-                const data = await apiCall('/stats/overview');
-                const activeStores = data.active_stores || 0;
+                try {
+                    const data = await apiCall('/stats/overview');
+                    const activeStores = data.active_stores || 0;
 
-                document.getElementById('system-active-stores').textContent = activeStores;
+                    document.getElementById('system-active-stores').textContent = activeStores;
 
-                // Calculate estimated scan time (60 seconds per store, 10 parallel)
-                const batchSize = 10;
-                const secondsPerStore = 60;
-                const batches = Math.ceil(activeStores / batchSize);
-                const totalSeconds = batches * secondsPerStore;
-                const minutes = Math.ceil(totalSeconds / 60);
+                    // Calculate estimated scan time (60 seconds per store, 10 parallel)
+                    const batchSize = 10;
+                    const secondsPerStore = 60;
+                    const batches = Math.ceil(activeStores / batchSize);
+                    const totalSeconds = batches * secondsPerStore;
+                    const minutes = Math.ceil(totalSeconds / 60);
 
-                document.getElementById('system-scan-time').textContent =
-                    activeStores === 0 ? '-' : `~${minutes} min`;
+                    document.getElementById('system-scan-time').textContent =
+                        activeStores === 0 ? '-' : `~${minutes} min`;
 
-                // Update scaling badges based on store count
-                updateScalingBadges(activeStores);
+                    // Update scaling badges based on store count
+                    updateScalingBadges(activeStores);
 
-                // Load kill switch settings
-                await loadSystemSettings();
+                    // Load kill switch settings
+                    await loadSystemSettings();
 
-            } catch (error) {
-                console.error('Failed to load system stats:', error);
+                    // Load failed scans
+                    await loadFailedScans();
+
+                } catch (error) {
+                    console.error('Failed to load system stats:', error);
+                }
             }
-        }
 
-        function updateScalingBadges(storeCount) {
+            async function loadFailedScans() {
+                const loading = document.getElementById('failed-scans-loading');
+                const empty = document.getElementById('failed-scans-empty');
+                const table = document.getElementById('failed-scans-table');
+                const tbody = document.getElementById('failed-scans-body');
+
+                loading.style.display = 'flex';
+                empty.style.display = 'none';
+                table.style.display = 'none';
+
+                try {
+                    const data = await apiCall('/failed-scans');
+
+                    loading.style.display = 'none';
+
+                    if (!data.stores || data.stores.length === 0) {
+                        empty.style.display = 'block';
+                        return;
+                    }
+
+                    table.style.display = 'table';
+                    tbody.innerHTML = data.stores.map(store => {
+                        const statusBadge = {
+                            'failed': '<span class="badge badge-danger">Failed</span>',
+                            'timeout': '<span class="badge badge-warning">Timeout</span>',
+                            'skipped': '<span class="badge badge-info">Skipped</span>'
+                        }[store.last_scan_status] || '<span class="badge badge-info">Pending</span>';
+
+                        const errorText = store.last_scan_error
+                            ? store.last_scan_error.substring(0, 50) + (store.last_scan_error.length > 50 ? '...' : '')
+                            : '-';
+
+                        return `
+                        <tr>
+                            <td>
+                                <strong>${store.shop_name || store.shop}</strong>
+                                <br><small style="color: var(--slate-400);">${store.shop}</small>
+                            </td>
+                            <td>${store.timezone || 'UTC'}<br><small>Slot ${store.scan_slot || 0}</small></td>
+                            <td>${statusBadge}</td>
+                            <td title="${store.last_scan_error || ''}">${errorText}</td>
+                            <td>${store.scan_failure_count || 0}${store.needs_extended_scan ? ' ⚠️' : ''}</td>
+                            <td>
+                                <button onclick="retryScan('${store.id}', false)" class="btn-small" title="Retry (10 min timeout)">🔄</button>
+                                <button onclick="retryScan('${store.id}', true)" class="btn-small" title="Extended retry (30 min timeout)">🔄+</button>
+                                <button onclick="resetScanStatus('${store.id}')" class="btn-small" title="Reset status">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                    }).join('');
+
+                } catch (error) {
+                    loading.style.display = 'none';
+                    console.error('Failed to load failed scans:', error);
+                }
+            }
+
+            async function retryScan(storeId, extended) {
+                if (!confirm(`Retry scan for this store${extended ? ' with extended 30-min timeout' : ''}?`)) return;
+
+                try {
+                    const response = await fetch(
+                        `/api/v1/admin/${secretKey}/retry-scan/${storeId}?password=${encodeURIComponent(adminPassword)}&extended=${extended}`,
+                        { method: 'POST' }
+                    );
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert(`✅ Scan completed: ${data.risk_level} risk`);
+                    } else {
+                        alert(`❌ ${data.detail || 'Scan failed'}`);
+                    }
+                    loadFailedScans();
+                } catch (error) {
+                    alert(`❌ Error: ${error.message}`);
+                }
+            }
+
+            async function resetScanStatus(storeId) {
+                if (!confirm('Reset scan status for this store? This clears error flags.')) return;
+
+                try {
+                    const response = await fetch(
+                        `/api/v1/admin/${secretKey}/reset-scan-status/${storeId}?password=${encodeURIComponent(adminPassword)}`,
+                        { method: 'POST' }
+                    );
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert('✅ Scan status reset');
+                    } else {
+                        alert(`❌ ${data.detail || 'Reset failed'}`);
+                    }
+                    loadFailedScans();
+                } catch (error) {
+                    alert(`❌ Error: ${error.message}`);
+                }
+            }
+
+            function updateScalingBadges(storeCount) {
             // Reset all badges
             document.getElementById('scale-phase1').textContent = 'Next';
             document.getElementById('scale-phase1').className = 'badge badge-info';
