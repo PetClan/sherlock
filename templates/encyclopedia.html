@@ -1078,7 +1078,44 @@
                     <td>20%</td>
                 </tr>
             </table>
-
+            
+            <h3>Settings Architecture</h3>
+            <p>System settings follow a <strong>database-first</strong> hierarchy:</p>
+            
+            <div class="code-block">Admin Portal
+                ↓ (saves to)
+                Database (system_settings table) ← MASTER
+                ↓ (reads from)
+                Code (system_settings_service.py)
+                ↓ (fallback only if DB row missing)
+                Code Defaults</div>
+            
+            <table>
+                <tr>
+                    <th>Scenario</th>
+                    <th>What Happens</th>
+                </tr>
+                <tr>
+                    <td>Admin changes value to 5</td>
+                    <td>Saved to database → Code reads 5</td>
+                </tr>
+                <tr>
+                    <td>Database has value 3</td>
+                    <td>Code reads 3 (ignores code default)</td>
+                </tr>
+                <tr>
+                    <td>Database row missing</td>
+                    <td>Code uses fallback default from <code>system_settings_service.py</code></td>
+                </tr>
+            </table>
+            
+            <div class="callout callout-info">
+                <div class="callout-title">💡 Key Point</div>
+                <p>The <strong>database is always the master</strong>. Code defaults only matter on first startup (to initialize the
+                    database) or if a row gets deleted (safety fallback). To change a limit, use the Admin Portal - no code changes
+                    needed.</p>
+            </div>
+            
             <h3>When to Use Kill Switches</h3>
             <ul>
                 <li><strong>Emergency:</strong> Set <code>scanning_enabled=false</code> to stop everything</li>
