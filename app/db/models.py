@@ -27,7 +27,8 @@ class Store(Base):
     access_token = Column(String(255), nullable=True)  # Encrypted in production
     shop_name = Column(String(255), nullable=True)
     email = Column(String(255), nullable=True)
-    plan_name = Column(String(100), nullable=True)
+    plan_name = Column(String(100), nullable=True)  # Shopify's plan (basic, shopify, advanced)
+    sherlock_plan = Column(String(20), default="standard")  # standard ($29, 7 days, email) or professional ($69, 30 days, priority)
     timezone = Column(String(100), nullable=True, default="UTC")  # Store's IANA timezone e.g. "America/New_York"
     
     # Scan scheduling (1-6 AM local, 20 slots of 15 mins each)

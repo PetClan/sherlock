@@ -207,6 +207,42 @@ async def run_scheduled_daily_scans():
         print(f"❌ [Scheduler] Scheduler error: {e}")
 
 
+async def run_data_retention():
+    """
+    Run data retention cleanup for all stores
+    Deletes old theme snapshots based on plan tier
+    """
+    from app.db.database import async_session
+    from app.services.data_retention_service import DataRetentionService
+    from app.services.system_settings_service import SystemSettingsService
+    
+    print("🗑️ [Retention] Starting data retention cleanup...")
+    
+    try:
+        async with async_session() as db:
+            # Check if system is enabled
+            settings_service = SystemSettingsService(db)
+            if not await settings_service.is_scanning_enabled():
+                print("⛔ [Retention] ABORTED - System is disabled")
+                return
+            
+            retention_service = DataRetentionService(db)
+            summary = await retention_service.prune_all_stores()
+            await db.commit()
+            
+            print(f"✅ [Retention] Cleanup complete:")
+            print(f"   Stores processed: {summary['stores_processed']}")
+            print(f"   Theme files deleted: {summary['total_theme_files_deleted']}")
+            print(f"   Scans deleted: {summary['total_scans_deleted']}")
+            print(f"   Script snapshots deleted: {summary['total_script_snapshots_deleted']}")
+            
+            if summary['errors']:
+                print(f"   ⚠️ Errors: {len(summary['errors'])}")
+                
+    except Exception as e:
+        print(f"❌ [Retention] Cleanup failed: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -243,6 +279,7 @@ async def lifespan(app: FastAPI):
     # Start the scheduler for daily scans
     # Runs every 15 minutes, scans stores where local time is 1-6 AM
     from apscheduler.triggers.interval import IntervalTrigger
+    from apscheduler.triggers.cron import CronTrigger
     
     scheduler.add_job(
         run_scheduled_daily_scans,
@@ -251,8 +288,19 @@ async def lifespan(app: FastAPI):
         name="Daily store scans (timezone-aware)",
         replace_existing=True
     )
+    
+    # Data retention cleanup - runs daily at 4 AM UTC
+    scheduler.add_job(
+        run_data_retention,
+        CronTrigger(hour=4, minute=0),
+        id="data_retention",
+        name="Data retention cleanup",
+        replace_existing=True
+    )
+    
     scheduler.start()
     print("⏰ Scheduler started - Scans every 15 min (1-6 AM local time per store)")
+    print("🗑️ Data retention scheduled - Daily at 4 AM UTC")
     
     yield
     
