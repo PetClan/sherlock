@@ -1084,9 +1084,8 @@
                             <thead>
                                 <tr>
                                     <th>Data Type</th>
-                                    <th>Standard ($29)</th>
+                                    <th>Trial / Standard ($29)</th>
                                     <th>Professional ($69)</th>
-                                    <th>Enterprise ($99)</th>
                                     <th>Implementation</th>
                                 </tr>
                             </thead>
@@ -1095,26 +1094,30 @@
                                     <td><strong>Theme file snapshots</strong></td>
                                     <td>7 days</td>
                                     <td>30 days</td>
-                                    <td>90 days</td>
-                                    <td><span class="badge badge-warning">TODO</span></td>
+                                    <td><span class="badge badge-success">Active</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Performance snapshots</strong></td>
-                                    <td colspan="3">Daily for 30 days → Weekly thereafter</td>
-                                    <td><span class="badge badge-warning">TODO</span></td>
+                                    <td><strong>Daily scan results</strong></td>
+                                    <td>7 days</td>
+                                    <td>30 days</td>
+                                    <td><span class="badge badge-success">Active</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Scan results</strong></td>
-                                    <td colspan="3">30 days visible → Archive after 90 days</td>
-                                    <td><span class="badge badge-warning">TODO</span></td>
+                                    <td><strong>Script tag snapshots</strong></td>
+                                    <td>7 days</td>
+                                    <td>30 days</td>
+                                    <td><span class="badge badge-success">Active</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>App signature learning</strong></td>
-                                    <td colspan="3">Keep forever (community knowledge)</td>
+                                    <td colspan="2">Keep forever (community knowledge)</td>
                                     <td><span class="badge badge-success">Active</span></td>
                                 </tr>
                             </tbody>
                         </table>
+                        <p style="margin-top: 12px; color: var(--slate-400); font-size: 14px;">
+                            🗑️ Cleanup runs daily at 4 AM UTC via DataRetentionService
+                        </p>
                     </div>
                 </div>
 
@@ -1138,22 +1141,25 @@
                                     <td><strong>On-demand scans per day</strong></td>
                                     <td>5</td>
                                     <td>Prevent API abuse</td>
-                                    <td><span class="badge badge-warning">TODO</span></td>
+                                    <td><span class="badge badge-success">Active</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Restores per day</strong></td>
                                     <td>3</td>
                                     <td>Prevent accidental damage</td>
-                                    <td><span class="badge badge-warning">TODO</span></td>
+                                    <td><span class="badge badge-success">Active</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Theme snapshots stored</strong></td>
-                                    <td>7-90 days (by tier)</td>
+                                    <td><strong>Data retention by plan</strong></td>
+                                    <td>7-30 days</td>
                                     <td>Storage cost control</td>
-                                    <td><span class="badge badge-warning">TODO</span></td>
+                                    <td><span class="badge badge-success">Active</span></td>
                                 </tr>
                             </tbody>
                         </table>
+                        <p style="margin-top: 12px; color: var(--slate-400); font-size: 14px;">
+                            📊 Tracked via StoreDailyUsage table and usage_limit_service.py
+                        </p>
                     </div>
                 </div>
 
