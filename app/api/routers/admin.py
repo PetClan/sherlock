@@ -10,6 +10,7 @@ from sqlalchemy import select, func, desc, and_
 from datetime import datetime, timedelta
 from typing import Optional
 import os
+import asyncio
 
 from app.db.database import get_db
 from app.db.models import Store, ReportedApp, Diagnosis, DailyScan, InstalledApp, AppSignature, AppSignatureSighting
@@ -825,4 +826,182 @@ async def refresh_store_data(
             "updated": updated,
             "errors": errors if errors else None
         }
-    }    
+    }
+
+
+@router.get("/{secret_key}/failed-scans")
+async def get_failed_scans(
+    secret_key: str,
+    password: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get stores with failed, timeout, or pending retry scans
+    """
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        # Get stores with scan issues
+        result = await db.execute(
+            select(Store).where(
+                Store.is_active == True,
+                (Store.last_scan_status.in_(["failed", "timeout", "skipped"])) |
+                (Store.needs_extended_scan == True) |
+                (Store.scan_failure_count > 0)
+            ).order_by(Store.scan_failure_count.desc())
+        )
+        stores = result.scalars().all()
+        
+        failed_scans = []
+        for store in stores:
+            failed_scans.append({
+                "id": store.id,
+                "shop": store.shopify_domain,
+                "shop_name": store.shop_name,
+                "timezone": store.timezone,
+                "scan_slot": store.scan_slot,
+                "last_scan_status": store.last_scan_status,
+                "last_scan_error": store.last_scan_error,
+                "scan_failure_count": store.scan_failure_count or 0,
+                "needs_extended_scan": store.needs_extended_scan or False,
+                "last_scan_started_at": store.last_scan_started_at.isoformat() if store.last_scan_started_at else None,
+                "last_scan_completed_at": store.last_scan_completed_at.isoformat() if store.last_scan_completed_at else None,
+                "scan_in_progress": store.scan_in_progress or False
+            })
+        
+        return {
+            "success": True,
+            "total": len(failed_scans),
+            "stores": failed_scans
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{secret_key}/retry-scan/{store_id}")
+async def retry_store_scan(
+    secret_key: str,
+    store_id: str,
+    password: str = Query(...),
+    extended: bool = Query(default=False, description="Use extended timeout (30 min)"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Manually retry a scan for a specific store
+    """
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    from app.services.daily_scan_service import DailyScanService
+    
+    try:
+        result = await db.execute(
+            select(Store).where(Store.id == store_id)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        if store.scan_in_progress:
+            raise HTTPException(status_code=409, detail="Scan already in progress")
+        
+        # Mark as in progress
+        store.scan_in_progress = True
+        store.last_scan_started_at = datetime.utcnow()
+        await db.commit()
+        
+        timeout_minutes = 30 if extended else 10
+        
+        try:
+            scan_service = DailyScanService(db)
+            scan = await asyncio.wait_for(
+                scan_service.run_daily_scan(store),
+                timeout=timeout_minutes * 60
+            )
+            await db.commit()
+            
+            # Update success status
+            store.scan_in_progress = False
+            store.last_scan_completed_at = datetime.utcnow()
+            store.last_scan_status = "success"
+            store.last_scan_error = None
+            store.scan_failure_count = 0
+            store.needs_extended_scan = False
+            await db.commit()
+            
+            return {
+                "success": True,
+                "shop": store.shopify_domain,
+                "risk_level": scan.risk_level,
+                "message": f"Scan completed successfully"
+            }
+            
+        except asyncio.TimeoutError:
+            store.scan_in_progress = False
+            store.last_scan_completed_at = datetime.utcnow()
+            store.last_scan_status = "timeout"
+            store.last_scan_error = f"Manual retry exceeded {timeout_minutes} minute timeout"
+            store.scan_failure_count = (store.scan_failure_count or 0) + 1
+            await db.commit()
+            
+            raise HTTPException(
+                status_code=408,
+                detail=f"Scan timed out after {timeout_minutes} minutes"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Reset scan status on error
+        try:
+            store.scan_in_progress = False
+            store.last_scan_status = "failed"
+            store.last_scan_error = str(e)[:500]
+            store.scan_failure_count = (store.scan_failure_count or 0) + 1
+            await db.commit()
+        except:
+            pass
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{secret_key}/reset-scan-status/{store_id}")
+async def reset_scan_status(
+    secret_key: str,
+    store_id: str,
+    password: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Reset scan status flags for a stuck store
+    """
+    verify_secret_key(secret_key)
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    try:
+        result = await db.execute(
+            select(Store).where(Store.id == store_id)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        store.scan_in_progress = False
+        store.last_scan_status = None
+        store.last_scan_error = None
+        store.scan_failure_count = 0
+        store.needs_extended_scan = False
+        await db.commit()
+        
+        return {
+            "success": True,
+            "shop": store.shopify_domain,
+            "message": "Scan status reset successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
