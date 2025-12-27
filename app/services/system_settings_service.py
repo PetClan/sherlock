@@ -153,4 +153,4 @@ class SystemSettingsService:
     
     async def get_max_restores(self) -> int:
         """Get max restores per store per day"""
-        return await self.get_setting_int("max_restores_per_day", default=10)
+        return await self.get_setting_int("max_restores_per_day", default=3)
