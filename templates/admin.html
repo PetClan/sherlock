@@ -1177,60 +1177,55 @@
                                     <th>Status</th>
                                     <th>Infrastructure</th>
                                     <th>Est. Cost</th>
-                                    <th>Scan Time</th>
+                                    <th>Per 15-min Slot</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td><strong>Phase 1</strong></td>
-                                    <td>1-70</td>
+                                    <td>1-500</td>
                                     <td><span class="badge badge-success" id="scale-phase1">Current</span></td>
-                                    <td>Railway + APScheduler (10 parallel)</td>
+                                    <td>Railway + APScheduler (10 parallel, timezone-aware)</td>
                                     <td>~$20/mo</td>
-                                    <td>~7 min</td>
+                                    <td>~25 stores</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Phase 2</strong></td>
-                                    <td>70-500</td>
+                                    <td>500-2,000</td>
                                     <td><span class="badge badge-info" id="scale-phase2">Next</span></td>
-                                    <td>Increase to 50 parallel</td>
+                                    <td>Increase to 20 parallel</td>
                                     <td>~$30/mo</td>
-                                    <td>~10 min</td>
+                                    <td>~100 stores</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Phase 3</strong></td>
-                                    <td>500-2,000</td>
+                                    <td>2,000-10,000</td>
                                     <td><span class="badge badge-info" id="scale-phase3">Future</span></td>
                                     <td>Redis queue + 3 workers</td>
                                     <td>~$80/mo</td>
-                                    <td>~20 min</td>
+                                    <td>~500 stores</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Phase 4</strong></td>
-                                    <td>2,000-10,000</td>
+                                    <td>10,000-50,000</td>
                                     <td><span class="badge badge-info" id="scale-phase4">Future</span></td>
                                     <td>Redis + 10 workers + DB scaling</td>
                                     <td>~$200/mo</td>
-                                    <td>~30 min</td>
+                                    <td>~2,500 stores</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Phase 5</strong></td>
-                                    <td>10,000-50,000</td>
-                                    <td><span class="badge badge-info" id="scale-phase5">Future</span></td>
-                                    <td>Dedicated DB + 25 workers + CDN</td>
-                                    <td>~$500/mo</td>
-                                    <td>~45 min</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Phase 6</strong></td>
                                     <td>50,000-100,000</td>
-                                    <td><span class="badge badge-info" id="scale-phase6">Future</span></td>
-                                    <td>AWS/GCP + auto-scaling + sharded DB</td>
-                                    <td>~$1,500/mo</td>
-                                    <td>~60 min</td>
+                                    <td><span class="badge badge-info" id="scale-phase5">Future</span></td>
+                                    <td>Dedicated DB + 25 workers</td>
+                                    <td>~$500/mo</td>
+                                    <td>~5,000 stores</td>
                                 </tr>
                             </tbody>
                         </table>
+                        <p style="margin-top: 12px; color: var(--slate-400); font-size: 14px;">
+                            ⏰ Scans distributed across 1-6 AM local time (20 slots × 24 timezones = 480 windows daily)
+                        </p>
                     </div>
                 </div>
 
@@ -2089,7 +2084,7 @@
             // Reset all badges
             document.getElementById('scale-phase1').textContent = 'Next';
             document.getElementById('scale-phase1').className = 'badge badge-info';
-            document.getElementById('scale-phase2').textContent = 'Next';
+            document.getElementById('scale-phase2').textContent = 'Future';
             document.getElementById('scale-phase2').className = 'badge badge-info';
             document.getElementById('scale-phase3').textContent = 'Future';
             document.getElementById('scale-phase3').className = 'badge badge-info';
@@ -2097,28 +2092,23 @@
             document.getElementById('scale-phase4').className = 'badge badge-info';
             document.getElementById('scale-phase5').textContent = 'Future';
             document.getElementById('scale-phase5').className = 'badge badge-info';
-            document.getElementById('scale-phase6').textContent = 'Future';
-            document.getElementById('scale-phase6').className = 'badge badge-info';
 
-            // Set current phase
-            if (storeCount < 70) {
+            // Set current phase based on store count
+            if (storeCount < 500) {
                 document.getElementById('scale-phase1').textContent = 'Current';
                 document.getElementById('scale-phase1').className = 'badge badge-success';
-            } else if (storeCount < 500) {
+            } else if (storeCount < 2000) {
                 document.getElementById('scale-phase2').textContent = 'Current';
                 document.getElementById('scale-phase2').className = 'badge badge-warning';
-            } else if (storeCount < 2000) {
+            } else if (storeCount < 10000) {
                 document.getElementById('scale-phase3').textContent = 'Current';
                 document.getElementById('scale-phase3').className = 'badge badge-warning';
-            } else if (storeCount < 10000) {
+            } else if (storeCount < 50000) {
                 document.getElementById('scale-phase4').textContent = 'Current';
                 document.getElementById('scale-phase4').className = 'badge badge-warning';
-            } else if (storeCount < 50000) {
-                document.getElementById('scale-phase5').textContent = 'Current';
-                document.getElementById('scale-phase5').className = 'badge badge-warning';
             } else {
-                document.getElementById('scale-phase6').textContent = 'Current';
-                document.getElementById('scale-phase6').className = 'badge badge-danger';
+                document.getElementById('scale-phase5').textContent = 'Current';
+                document.getElementById('scale-phase5').className = 'badge badge-danger';
             }
         }
 
