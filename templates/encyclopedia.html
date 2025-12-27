@@ -565,8 +565,8 @@
         <div class="section" id="daily-scans">
             <h2>⏰ Daily Automated Scans</h2>
 
-            <h3>How Daily Scans Work</h3>
-            <p>Sherlock uses <strong>APScheduler</strong> to run automated scans:</p>
+            <h3>Timezone-Aware Scheduling</h3>
+            <p>Sherlock scans each store during <strong>1-6 AM local time</strong>, spreading load across timezones:</p>
 
             <table>
                 <tr>
@@ -574,18 +574,35 @@
                     <th>Value</th>
                 </tr>
                 <tr>
-                    <td>Schedule</td>
-                    <td>3:00 AM UTC daily</td>
+                    <td>Scan Window</td>
+                    <td>1:00 AM - 6:00 AM (store's local time)</td>
                 </tr>
                 <tr>
-                    <td>Batch size</td>
+                    <td>Scheduler Interval</td>
+                    <td>Every 15 minutes</td>
+                </tr>
+                <tr>
+                    <td>Scan Slots</td>
+                    <td>20 slots (5 hours × 4 per hour)</td>
+                </tr>
+                <tr>
+                    <td>Batch Size</td>
                     <td>10 stores in parallel</td>
                 </tr>
                 <tr>
-                    <td>Delay between batches</td>
-                    <td>2 seconds</td>
+                    <td>Timeout per Store</td>
+                    <td>10 minutes (30 min for extended retry)</td>
                 </tr>
             </table>
+
+            <h3>How Slot Assignment Works</h3>
+            <p>Each store is assigned a <code>scan_slot</code> (0-19) on install via hash of store ID. This ensures even
+                distribution:</p>
+            <div class="code-block">Slot 0 = 1:00 AM local
+                Slot 1 = 1:15 AM local
+                Slot 2 = 1:30 AM local
+                ...
+                Slot 19 = 5:45 AM local</div>
 
             <h3>What Each Scan Does</h3>
             <ol>
@@ -595,6 +612,31 @@
                 <li><strong>Performance Measurement</strong> - Measures page load time and scores</li>
                 <li><strong>App Signature Learning</strong> - Correlates scripts with installed apps</li>
             </ol>
+
+            <h3>Failed Scan Tracking</h3>
+            <p>Sherlock tracks scan failures with auto-escalation:</p>
+            <table>
+                <tr>
+                    <th>Field</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>last_scan_status</code></td>
+                    <td>success, failed, timeout, skipped</td>
+                </tr>
+                <tr>
+                    <td><code>last_scan_error</code></td>
+                    <td>Error message for debugging</td>
+                </tr>
+                <tr>
+                    <td><code>scan_failure_count</code></td>
+                    <td>Consecutive failures</td>
+                </tr>
+                <tr>
+                    <td><code>needs_extended_scan</code></td>
+                    <td>Flag for retry queue (after 2+ failures)</td>
+                </tr>
+            </table>
 
             <h3>Risk Level Calculation</h3>
             <p>After each scan, Sherlock calculates an overall risk level:</p>
@@ -628,9 +670,10 @@
             </ul>
 
             <div class="callout callout-info">
-                <div class="callout-title">💡 Why 3 AM UTC?</div>
-                <p>Most Shopify stores are in North America, where 3 AM UTC is late evening. Running scans during
-                    low-traffic hours minimizes any potential impact on store performance.</p>
+                <div class="callout-title">💡 Why 1-6 AM Local Time?</div>
+                <p>Scanning during each store's quiet hours minimizes impact on performance. Timezone-aware scheduling
+                    also
+                    distributes API load across 24 hours instead of one global spike.</p>
             </div>
         </div>
 
@@ -1005,33 +1048,33 @@
                     <th>Tier</th>
                     <th>Price</th>
                     <th>Theme History</th>
-                    <th>Features</th>
-                </tr>
-                <tr>
-                    <td>Standard</td>
-                    <td>$29/mo</td>
-                    <td>7 days</td>
-                    <td>Daily scans, basic rollback</td>
-                </tr>
-                <tr>
-                    <td>Professional</td>
-                    <td>$69/mo</td>
-                    <td>30 days</td>
-                    <td>+ Priority support</td>
-                </tr>
-                <tr>
-                    <td>Enterprise</td>
-                    <td>$99/mo</td>
-                    <td>90 days</td>
-                    <td>+ Extended history</td>
+                    <th>Support</th>
                 </tr>
                 <tr>
                     <td>Free Trial</td>
                     <td>$0 (14 days)</td>
                     <td>7 days</td>
-                    <td>Full features</td>
+                    <td>Email</td>
+                </tr>
+                <tr>
+                    <td>Standard</td>
+                    <td>$29/mo</td>
+                    <td>7 days</td>
+                    <td>Email</td>
+                </tr>
+                <tr>
+                    <td>Professional</td>
+                    <td>$69/mo</td>
+                    <td>30 days</td>
+                    <td>Priority</td>
                 </tr>
             </table>
+
+            <h3>Plan Field</h3>
+            <p>Each store has a <code>sherlock_plan</code> field:</p>
+            <div class="code-block">trial → 14-day free trial, 7-day retention
+                standard → $29/mo, 7-day retention
+                professional → $69/mo, 30-day retention</div>
         </div>
 
         <!-- ==================== SECTION: Kill Switches & Safeguards ==================== -->
@@ -1078,10 +1121,10 @@
                     <td>20%</td>
                 </tr>
             </table>
-            
+
             <h3>Settings Architecture</h3>
             <p>System settings follow a <strong>database-first</strong> hierarchy:</p>
-            
+
             <div class="code-block">Admin Portal
                 ↓ (saves to)
                 Database (system_settings table) ← MASTER
@@ -1089,7 +1132,7 @@
                 Code (system_settings_service.py)
                 ↓ (fallback only if DB row missing)
                 Code Defaults</div>
-            
+
             <table>
                 <tr>
                     <th>Scenario</th>
@@ -1108,14 +1151,16 @@
                     <td>Code uses fallback default from <code>system_settings_service.py</code></td>
                 </tr>
             </table>
-            
+
             <div class="callout callout-info">
                 <div class="callout-title">💡 Key Point</div>
-                <p>The <strong>database is always the master</strong>. Code defaults only matter on first startup (to initialize the
-                    database) or if a row gets deleted (safety fallback). To change a limit, use the Admin Portal - no code changes
+                <p>The <strong>database is always the master</strong>. Code defaults only matter on first startup (to
+                    initialize the
+                    database) or if a row gets deleted (safety fallback). To change a limit, use the Admin Portal - no
+                    code changes
                     needed.</p>
             </div>
-            
+
             <h3>When to Use Kill Switches</h3>
             <ul>
                 <li><strong>Emergency:</strong> Set <code>scanning_enabled=false</code> to stop everything</li>
@@ -1213,38 +1258,64 @@
         <div class="section" id="data-retention">
             <h2>🗄️ Data Retention Policy</h2>
 
-            <h3>Retention by Data Type</h3>
+            <h3>Retention by Plan</h3>
             <table>
                 <tr>
                     <th>Data Type</th>
-                    <th>Standard</th>
+                    <th>Trial / Standard</th>
                     <th>Professional</th>
-                    <th>Enterprise</th>
                 </tr>
                 <tr>
-                    <td>Theme snapshots</td>
+                    <td>Theme file versions</td>
                     <td>7 days</td>
                     <td>30 days</td>
-                    <td>90 days</td>
                 </tr>
                 <tr>
-                    <td>Performance data</td>
-                    <td colspan="3">Thin to weekly after 30 days</td>
+                    <td>Daily scan results</td>
+                    <td>7 days</td>
+                    <td>30 days</td>
                 </tr>
                 <tr>
-                    <td>Scan results</td>
-                    <td colspan="3">Archive after 90 days</td>
+                    <td>Script tag snapshots</td>
+                    <td>7 days</td>
+                    <td>30 days</td>
                 </tr>
                 <tr>
                     <td>App signatures</td>
-                    <td colspan="3">Keep all (learning data)</td>
+                    <td colspan="2">Keep all (learning data)</td>
+                </tr>
+            </table>
+
+            <h3>Automated Cleanup</h3>
+            <p>The <code>DataRetentionService</code> runs daily at <strong>4 AM UTC</strong>:</p>
+            <div class="code-block">1. Loop through all active stores
+                2. Get store's plan (trial, standard, professional)
+                3. Calculate cutoff date based on retention days
+                4. Delete ThemeFileVersions older than cutoff
+                5. Delete DailyScans older than cutoff
+                6. Delete ScriptTagSnapshots older than cutoff</div>
+
+            <h3>Key Files</h3>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>data_retention_service.py</code></td>
+                    <td>Retention logic and cleanup</td>
+                </tr>
+                <tr>
+                    <td><code>main.py</code></td>
+                    <td>Scheduler job (4 AM UTC)</td>
                 </tr>
             </table>
 
             <div class="callout callout-info">
                 <div class="callout-title">💡 Why Retention Matters</div>
                 <p>At 100,000 stores, data retention directly impacts database costs. Tiered retention allows affordable
-                    pricing while maintaining value for power users.</p>
+                    pricing
+                    while maintaining value for power users who need longer rollback windows.</p>
             </div>
         </div>
 
