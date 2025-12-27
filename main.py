@@ -35,79 +35,176 @@ scheduler = AsyncIOScheduler()
 
 async def run_scheduled_daily_scans():
     """
-    Run daily scans for all active stores
-    This is triggered automatically by the scheduler
-    Runs in parallel batches for scalability
+    Run daily scans for stores where local time is 1-6 AM
+    Triggered every 15 minutes, filters by timezone and scan_slot
     """
     from app.db.database import async_session
     from app.services.daily_scan_service import DailyScanService
     from app.services.system_settings_service import SystemSettingsService
+    from zoneinfo import ZoneInfo
     
-    PARALLEL_BATCH_SIZE = 10  # Number of stores to scan simultaneously
+    PARALLEL_BATCH_SIZE = 10
+    SCAN_TIMEOUT_MINUTES = 10
+    SCAN_WINDOW_START = 1  # 1 AM local
+    SCAN_WINDOW_END = 6    # 6 AM local
     
-    print("🕐 [Scheduler] Starting scheduled daily scans...")
+    now_utc = datetime.utcnow()
+    current_minute = now_utc.minute
+    
+    # Calculate which slot should run (0-19 based on 15-min intervals in 5-hour window)
+    # Slot 0 = :00, Slot 1 = :15, Slot 2 = :30, Slot 3 = :45
+    current_slot_in_hour = current_minute // 15  # 0, 1, 2, or 3
+    
+    print(f"🕐 [Scheduler] Running scan check at {now_utc.strftime('%H:%M')} UTC (slot {current_slot_in_hour})")
     
     try:
-        # Check kill switches FIRST
         async with async_session() as db:
             settings_service = SystemSettingsService(db)
             
-            # Check master kill switch
+            # Check kill switches
             if not await settings_service.is_scanning_enabled():
-                print("⛔ [Scheduler] ABORTED - Scanning is disabled (kill switch active)")
+                print("⛔ [Scheduler] ABORTED - Scanning disabled")
                 return
             
-            # Check daily scans specific switch
             if not await settings_service.is_daily_scans_enabled():
-                print("⛔ [Scheduler] ABORTED - Daily scans are disabled")
+                print("⛔ [Scheduler] ABORTED - Daily scans disabled")
                 return
             
-            # Get all active stores
+            # Find stores where local time is 1-6 AM and it's their scan slot
+            # Also exclude stores already being scanned
             result = await db.execute(
-                select(Store).where(Store.is_active == True)
+                select(Store).where(
+                    Store.is_active == True,
+                    Store.access_token.isnot(None),
+                    Store.scan_in_progress == False
+                )
             )
-            stores = result.scalars().all()
+            all_stores = result.scalars().all()
         
-        print(f"📋 [Scheduler] Found {len(stores)} active stores to scan (batch size: {PARALLEL_BATCH_SIZE})")
+        # Filter stores by timezone (local time must be 1-6 AM)
+        stores_to_scan = []
+        
+        for store in all_stores:
+            try:
+                # Get store's local time
+                tz = ZoneInfo(store.timezone or "UTC")
+                local_time = datetime.now(tz)
+                local_hour = local_time.hour
+                
+                # Check if within 1-6 AM window
+                if SCAN_WINDOW_START <= local_hour < SCAN_WINDOW_END:
+                    # Calculate which slot this store belongs to
+                    # Hours 1-5 = 5 hours, each hour has 4 slots = 20 slots total
+                    hour_offset = local_hour - SCAN_WINDOW_START  # 0-4
+                    store_slot = (hour_offset * 4) + current_slot_in_hour
+                    
+                    # Check if it's this store's slot
+                    if store.scan_slot == store_slot:
+                        stores_to_scan.append(store)
+            except Exception as e:
+                # Invalid timezone, default to scanning
+                print(f"⚠️ [Scheduler] Invalid timezone for {store.shopify_domain}: {e}")
+        
+        if not stores_to_scan:
+            print(f"😴 [Scheduler] No stores due for scanning this slot")
+            return
+        
+        print(f"📋 [Scheduler] Found {len(stores_to_scan)} stores to scan")
         
         # Process in parallel batches
         successful = 0
         failed = 0
         
-        for i in range(0, len(stores), PARALLEL_BATCH_SIZE):
-            batch = stores[i:i + PARALLEL_BATCH_SIZE]
+        for i in range(0, len(stores_to_scan), PARALLEL_BATCH_SIZE):
+            batch = stores_to_scan[i:i + PARALLEL_BATCH_SIZE]
             batch_num = (i // PARALLEL_BATCH_SIZE) + 1
-            total_batches = (len(stores) + PARALLEL_BATCH_SIZE - 1) // PARALLEL_BATCH_SIZE
+            total_batches = (len(stores_to_scan) + PARALLEL_BATCH_SIZE - 1) // PARALLEL_BATCH_SIZE
             
-            print(f"🔄 [Scheduler] Processing batch {batch_num}/{total_batches} ({len(batch)} stores)...")
+            print(f"🔄 [Scheduler] Batch {batch_num}/{total_batches} ({len(batch)} stores)...")
             
-            # Create scan tasks for this batch
-            async def scan_store(store):
+            async def scan_store_with_status(store):
+                store_id = store.id
+                store_domain = store.shopify_domain
+                
                 try:
                     async with async_session() as store_db:
-                        scan_service = DailyScanService(store_db)
-                        scan = await scan_service.run_daily_scan(store)
+                        # Mark scan as in progress
+                        result = await store_db.execute(
+                            select(Store).where(Store.id == store_id)
+                        )
+                        db_store = result.scalar_one()
+                        db_store.scan_in_progress = True
+                        db_store.last_scan_started_at = datetime.utcnow()
                         await store_db.commit()
-                        print(f"✅ [Scheduler] {store.shopify_domain}: {scan.risk_level} risk")
-                        return True
+                        
+                        # Run scan with timeout
+                        try:
+                            scan_service = DailyScanService(store_db)
+                            scan = await asyncio.wait_for(
+                                scan_service.run_daily_scan(db_store),
+                                timeout=SCAN_TIMEOUT_MINUTES * 60
+                            )
+                            await store_db.commit()
+                            
+                            # Update success status
+                            db_store.scan_in_progress = False
+                            db_store.last_scan_completed_at = datetime.utcnow()
+                            db_store.last_scan_status = "success"
+                            db_store.last_scan_error = None
+                            db_store.scan_failure_count = 0
+                            db_store.needs_extended_scan = False
+                            await store_db.commit()
+                            
+                            print(f"✅ [Scheduler] {store_domain}: {scan.risk_level} risk")
+                            return True
+                            
+                        except asyncio.TimeoutError:
+                            db_store.scan_in_progress = False
+                            db_store.last_scan_completed_at = datetime.utcnow()
+                            db_store.last_scan_status = "timeout"
+                            db_store.last_scan_error = f"Scan exceeded {SCAN_TIMEOUT_MINUTES} minute timeout"
+                            db_store.scan_failure_count = (db_store.scan_failure_count or 0) + 1
+                            if db_store.scan_failure_count >= 2:
+                                db_store.needs_extended_scan = True
+                            await store_db.commit()
+                            
+                            print(f"⏱️ [Scheduler] {store_domain}: TIMEOUT")
+                            return False
+                            
                 except Exception as e:
-                    print(f"❌ [Scheduler] {store.shopify_domain}: {e}")
+                    # Update failure status
+                    try:
+                        async with async_session() as err_db:
+                            result = await err_db.execute(
+                                select(Store).where(Store.id == store_id)
+                            )
+                            db_store = result.scalar_one()
+                            db_store.scan_in_progress = False
+                            db_store.last_scan_completed_at = datetime.utcnow()
+                            db_store.last_scan_status = "failed"
+                            db_store.last_scan_error = str(e)[:500]
+                            db_store.scan_failure_count = (db_store.scan_failure_count or 0) + 1
+                            if db_store.scan_failure_count >= 2:
+                                db_store.needs_extended_scan = True
+                            await err_db.commit()
+                    except:
+                        pass
+                    
+                    print(f"❌ [Scheduler] {store_domain}: {e}")
                     return False
             
-            # Run batch in parallel
-            results = await asyncio.gather(*[scan_store(store) for store in batch])
+            results = await asyncio.gather(*[scan_store_with_status(store) for store in batch])
             
             successful += sum(1 for r in results if r)
             failed += sum(1 for r in results if not r)
             
-            # Small delay between batches
-            if i + PARALLEL_BATCH_SIZE < len(stores):
+            if i + PARALLEL_BATCH_SIZE < len(stores_to_scan):
                 await asyncio.sleep(5)
         
-        print(f"🏁 [Scheduler] Daily scans complete: {successful} successful, {failed} failed")
+        print(f"🏁 [Scheduler] Scan batch complete: {successful} success, {failed} failed")
         
     except Exception as e:
-        print(f"❌ [Scheduler] Daily scan job failed: {e}")
+        print(f"❌ [Scheduler] Scheduler error: {e}")
 
 
 @asynccontextmanager
@@ -144,16 +241,18 @@ async def lifespan(app: FastAPI):
         print(f"⚠️  System settings initialization warning: {e}")
     
     # Start the scheduler for daily scans
-    # Runs at 3:00 AM UTC every day
+    # Runs every 15 minutes, scans stores where local time is 1-6 AM
+    from apscheduler.triggers.interval import IntervalTrigger
+    
     scheduler.add_job(
         run_scheduled_daily_scans,
-        CronTrigger(hour=3, minute=0),
+        IntervalTrigger(minutes=15),
         id="daily_scans",
-        name="Daily store scans",
+        name="Daily store scans (timezone-aware)",
         replace_existing=True
     )
     scheduler.start()
-    print("⏰ Scheduler started - Daily scans at 3:00 AM UTC")
+    print("⏰ Scheduler started - Scans every 15 min (1-6 AM local time per store)")
     
     yield
     

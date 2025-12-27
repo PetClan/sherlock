@@ -189,6 +189,11 @@ class ShopifyAuthService:
         
         await self.db.flush()
         
+        # Assign scan_slot if not set (hash of store ID % 20 for 1-6 AM distribution)
+        if store.scan_slot is None:
+            store.scan_slot = hash(store.id) % 20
+            await self.db.flush()
+        
         # Fetch shop info from Shopify
         await self._fetch_and_update_shop_info(store)
         
