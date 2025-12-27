@@ -1572,10 +1572,11 @@
         }
 
         async function apiCall(endpoint) {
-            const response = await fetch(`/api/v1/admin/${secretKey}${endpoint}?password=${encodeURIComponent(adminPassword)}`);
-            if (!response.ok) throw new Error('API Error');
-            return response.json();
-        }
+                const separator = endpoint.includes('?') ? '&' : '?';
+                const response = await fetch(`/api/v1/admin/${secretKey}${endpoint}${separator}password=${encodeURIComponent(adminPassword)}`);
+                if (!response.ok) throw new Error('API Error');
+                return response.json();
+            }
 
         async function loadDashboard() {
             loadOverviewStats();
