@@ -4,6 +4,10 @@ import sys
 
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,9 +20,13 @@ from app.db.models import *  # Import all models
 config = context.config
 
 # Get database URL from environment
+d# Get database URL from environment
 database_url = os.getenv("DATABASE_URL", "")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
+# Alembic needs sync driver, not async
+if "+asyncpg" in database_url:
+    database_url = database_url.replace("+asyncpg", "")
 
 config.set_main_option("sqlalchemy.url", database_url)
 

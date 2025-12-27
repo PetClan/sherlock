@@ -29,6 +29,19 @@ class Store(Base):
     email = Column(String(255), nullable=True)
     plan_name = Column(String(100), nullable=True)
     timezone = Column(String(100), nullable=True, default="UTC")  # Store's IANA timezone e.g. "America/New_York"
+    
+    # Scan scheduling (1-6 AM local, 20 slots of 15 mins each)
+    scan_slot = Column(Integer, default=0)  # 0-19, assigned on install via hash
+    
+    # Scan status tracking
+    scan_in_progress = Column(Boolean, default=False)
+    last_scan_started_at = Column(DateTime(timezone=True), nullable=True)
+    last_scan_completed_at = Column(DateTime(timezone=True), nullable=True)
+    last_scan_status = Column(String(20), nullable=True)  # success, failed, timeout, skipped
+    last_scan_error = Column(Text, nullable=True)  # Error message/reason
+    scan_failure_count = Column(Integer, default=0)  # Consecutive failures
+    needs_extended_scan = Column(Boolean, default=False)  # Flag for retry queue
+    
     is_active = Column(Boolean, default=True)
     installed_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
