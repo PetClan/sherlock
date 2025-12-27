@@ -12,6 +12,7 @@ from app.db.models import Store, ThemeFileVersion, DailyScan, ScriptTagSnapshot
 
 # Retention days per plan
 PLAN_RETENTION_DAYS = {
+    "trial": 7,
     "standard": 7,
     "professional": 30,
 }

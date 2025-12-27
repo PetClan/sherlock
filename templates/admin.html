@@ -994,43 +994,43 @@
                         <div class="stat-card-value" style="font-size: 20px;">1-6 AM</div>
                         <div class="stat-card-sub">Local time per store</div>
                     </div>
-                    </div>
-                    
-                    <!-- Failed Scans -->
-                    <div class="admin-section">
-                        <div class="section-header">
-                            <h2 class="section-title">🚨 Failed Scans</h2>
-                            <button onclick="loadFailedScans()" class="refresh-btn" title="Refresh">🔄</button>
-                        </div>
-                        <div class="section-body">
-                            <div id="failed-scans-loading" class="loading-spinner">
-                                <div class="spinner"></div>
-                                <span>Loading failed scans...</span>
-                            </div>
-                            <div id="failed-scans-empty"
-                                style="display: none; text-align: center; padding: 20px; color: var(--emerald-400);">
-                                ✅ No failed scans! All stores are healthy.
-                            </div>
-                            <table class="admin-table" id="failed-scans-table" style="display: none;">
-                                <thead>
-                                    <tr>
-                                        <th>Store</th>
-                                        <th>Timezone</th>
-                                        <th>Status</th>
-                                        <th>Error</th>
-                                        <th>Failures</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="failed-scans-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Pricing Tiers -->
+                </div>
+
+                <!-- Failed Scans -->
                 <div class="admin-section">
                     <div class="section-header">
-                        <h2 class="section-title">💰 Pricing Tiers (Planned)</h2>
+                        <h2 class="section-title">🚨 Failed Scans</h2>
+                        <button onclick="loadFailedScans()" class="refresh-btn" title="Refresh">🔄</button>
+                    </div>
+                    <div class="section-body">
+                        <div id="failed-scans-loading" class="loading-spinner">
+                            <div class="spinner"></div>
+                            <span>Loading failed scans...</span>
+                        </div>
+                        <div id="failed-scans-empty"
+                            style="display: none; text-align: center; padding: 20px; color: var(--emerald-400);">
+                            ✅ No failed scans! All stores are healthy.
+                        </div>
+                        <table class="admin-table" id="failed-scans-table" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Store</th>
+                                    <th>Timezone</th>
+                                    <th>Status</th>
+                                    <th>Error</th>
+                                    <th>Failures</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="failed-scans-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pricing Tiers -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h2 class="section-title">💰 Pricing Tiers</h2>
                     </div>
                     <div class="section-body">
                         <table class="admin-table">
@@ -1039,48 +1039,33 @@
                                     <th>Tier</th>
                                     <th>Price</th>
                                     <th>Theme History</th>
-                                    <th>Scan Frequency</th>
-                                    <th>Priority</th>
+                                    <th>Support</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
+                                    <td><strong>Free Trial</strong></td>
+                                    <td>$0 (14 days)</td>
+                                    <td>7 days</td>
+                                    <td>Email</td>
+                                </tr>
+                                <tr>
                                     <td><strong>Standard</strong></td>
                                     <td>$29/mo</td>
                                     <td>7 days</td>
-                                    <td>Daily</td>
-                                    <td><span class="badge badge-success">High</span></td>
+                                    <td>Email</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Professional</strong></td>
                                     <td>$69/mo</td>
                                     <td>30 days</td>
-                                    <td>Daily</td>
-                                    <td><span class="badge badge-success">High</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Enterprise</strong></td>
-                                    <td>$99/mo</td>
-                                    <td>90 days</td>
-                                    <td>Daily</td>
-                                    <td><span class="badge badge-success">High</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Free Trial</strong></td>
-                                    <td>$0 (14 days)</td>
-                                    <td>7 days</td>
-                                    <td>Daily</td>
-                                    <td><span class="badge badge-warning">Medium</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Inactive</strong></td>
-                                    <td>-</td>
-                                    <td>7 days</td>
-                                    <td>Weekly</td>
-                                    <td><span class="badge badge-info">Low</span></td>
+                                    <td>Priority</td>
                                 </tr>
                             </tbody>
                         </table>
+                        <p style="margin-top: 12px; color: var(--slate-400); font-size: 14px;">
+                            🗑️ Data retention runs daily at 4 AM UTC - old snapshots auto-deleted based on plan.
+                        </p>
                     </div>
                 </div>
 
@@ -1309,11 +1294,12 @@
                     </div>
                 </div>
 
-                
+
 
                 <!-- Strategic Note -->
                 <div class="admin-section" style="border: 2px solid var(--gold-500);">
-                    <div class="section-header" style="background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);">
+                    <div class="section-header"
+                        style="background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);">
                         <h2 class="section-title" style="color: var(--white);">💡 Strategic Insight</h2>
                     </div>
                     <div class="section-body">
@@ -1333,7 +1319,7 @@
                         </p>
                     </div>
                 </div>
-                
+
                 <!-- Kill Switches - CRITICAL CONTROLS -->
                 <div id="kill-switches-section" class="admin-section"
                     style="border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.05);">
@@ -1345,13 +1331,14 @@
                         <p style="color: var(--slate-400); margin-bottom: 20px;">
                             Emergency controls to instantly disable functionality. Use with caution.
                         </p>
-                
+
                         <div class="kill-switches-grid"
                             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
                             <!-- Master Kill Switch -->
                             <div class="kill-switch-card"
                                 style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <strong style="color: var(--slate-200);">⛔ Master Kill Switch</strong>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="toggle-scanning-enabled"
@@ -1359,14 +1346,16 @@
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
-                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL scanning (daily +
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL scanning
+                                    (daily +
                                     on-demand)</p>
                             </div>
-                
+
                             <!-- Daily Scans Switch -->
                             <div class="kill-switch-card"
                                 style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <strong style="color: var(--slate-200);">🕐 Daily Scans</strong>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="toggle-daily-scans-enabled"
@@ -1374,14 +1363,16 @@
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
-                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables automated 3 AM UTC daily scans
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables automated 3 AM
+                                    UTC daily scans
                                 </p>
                             </div>
-                
+
                             <!-- Restores Switch -->
                             <div class="kill-switch-card"
                                 style="background: var(--navy-800); border-radius: 8px; padding: 16px; border: 1px solid var(--navy-600);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <strong style="color: var(--slate-200);">📝 Read-Only Mode</strong>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="toggle-restores-enabled"
@@ -1389,17 +1380,20 @@
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
-                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL theme restores/rollbacks
+                                <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Disables ALL theme
+                                    restores/rollbacks
                                 </p>
                             </div>
                         </div>
-                
+
                         <!-- Rate Limits -->
                         <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--navy-600);">
                             <h3 style="color: var(--slate-200); margin-bottom: 16px;">📊 Rate Limits</h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
                                 <div style="background: var(--navy-800); border-radius: 8px; padding: 12px;">
-                                    <label style="color: var(--slate-400); font-size: 12px;">Max On-Demand Scans/Day</label>
+                                    <label style="color: var(--slate-400); font-size: 12px;">Max On-Demand
+                                        Scans/Day</label>
                                     <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
                                         <input type="number" id="input-max-scans" value="5" min="1" max="50"
                                             style="width: 60px; padding: 4px 8px; background: var(--navy-700); border: 1px solid var(--navy-500); border-radius: 4px; color: var(--slate-200);">
@@ -1432,8 +1426,8 @@
                         </div>
                     </div>
                 </div>
-                </div>
-                <!-- Weekly Report Tab -->
+            </div>
+            <!-- Weekly Report Tab -->
             <div id="tab-weekly" class="tab-content">
                 <div id="weekly-report-loading" class="loading-spinner">
                     <div class="spinner"></div>
@@ -1487,18 +1481,18 @@
                             <ul class="activity-list" id="feedback-list"></ul>
                         </div>
                     </div>
-                    </div>
-                    </div>
-                    </main>
-                    </div>
-                    
-                    <script>
-                        // Open Encyclopedia in new tab
-                        function openEncyclopedia() {
-                            window.open('/api/v1/admin/' + secretKey + '/encyclopedia', '_blank');
-                        }
+                </div>
+            </div>
+        </main>
+    </div>
 
-                        // Get secret key from URL
+    <script>
+        // Open Encyclopedia in new tab
+        function openEncyclopedia() {
+            window.open('/api/v1/admin/' + secretKey + '/encyclopedia', '_blank');
+        }
+
+        // Get secret key from URL
         const pathParts = window.location.pathname.split('/');
         const secretKey = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
 
@@ -1918,69 +1912,69 @@
         }
 
         async function loadSystem() {
-                try {
-                    const data = await apiCall('/stats/overview');
-                    const activeStores = data.active_stores || 0;
+            try {
+                const data = await apiCall('/stats/overview');
+                const activeStores = data.active_stores || 0;
 
-                    document.getElementById('system-active-stores').textContent = activeStores;
+                document.getElementById('system-active-stores').textContent = activeStores;
 
-                    // Calculate estimated scan time (60 seconds per store, 10 parallel)
-                    const batchSize = 10;
-                    const secondsPerStore = 60;
-                    const batches = Math.ceil(activeStores / batchSize);
-                    const totalSeconds = batches * secondsPerStore;
-                    const minutes = Math.ceil(totalSeconds / 60);
+                // Calculate estimated scan time (60 seconds per store, 10 parallel)
+                const batchSize = 10;
+                const secondsPerStore = 60;
+                const batches = Math.ceil(activeStores / batchSize);
+                const totalSeconds = batches * secondsPerStore;
+                const minutes = Math.ceil(totalSeconds / 60);
 
-                    document.getElementById('system-scan-time').textContent =
-                        activeStores === 0 ? '-' : `~${minutes} min`;
+                document.getElementById('system-scan-time').textContent =
+                    activeStores === 0 ? '-' : `~${minutes} min`;
 
-                    // Update scaling badges based on store count
-                    updateScalingBadges(activeStores);
+                // Update scaling badges based on store count
+                updateScalingBadges(activeStores);
 
-                    // Load kill switch settings
-                    await loadSystemSettings();
+                // Load kill switch settings
+                await loadSystemSettings();
 
-                    // Load failed scans
-                    await loadFailedScans();
+                // Load failed scans
+                await loadFailedScans();
 
-                } catch (error) {
-                    console.error('Failed to load system stats:', error);
-                }
+            } catch (error) {
+                console.error('Failed to load system stats:', error);
             }
+        }
 
-            async function loadFailedScans() {
-                const loading = document.getElementById('failed-scans-loading');
-                const empty = document.getElementById('failed-scans-empty');
-                const table = document.getElementById('failed-scans-table');
-                const tbody = document.getElementById('failed-scans-body');
+        async function loadFailedScans() {
+            const loading = document.getElementById('failed-scans-loading');
+            const empty = document.getElementById('failed-scans-empty');
+            const table = document.getElementById('failed-scans-table');
+            const tbody = document.getElementById('failed-scans-body');
 
-                loading.style.display = 'flex';
-                empty.style.display = 'none';
-                table.style.display = 'none';
+            loading.style.display = 'flex';
+            empty.style.display = 'none';
+            table.style.display = 'none';
 
-                try {
-                    const data = await apiCall('/failed-scans');
+            try {
+                const data = await apiCall('/failed-scans');
 
-                    loading.style.display = 'none';
+                loading.style.display = 'none';
 
-                    if (!data.stores || data.stores.length === 0) {
-                        empty.style.display = 'block';
-                        return;
-                    }
+                if (!data.stores || data.stores.length === 0) {
+                    empty.style.display = 'block';
+                    return;
+                }
 
-                    table.style.display = 'table';
-                    tbody.innerHTML = data.stores.map(store => {
-                        const statusBadge = {
-                            'failed': '<span class="badge badge-danger">Failed</span>',
-                            'timeout': '<span class="badge badge-warning">Timeout</span>',
-                            'skipped': '<span class="badge badge-info">Skipped</span>'
-                        }[store.last_scan_status] || '<span class="badge badge-info">Pending</span>';
+                table.style.display = 'table';
+                tbody.innerHTML = data.stores.map(store => {
+                    const statusBadge = {
+                        'failed': '<span class="badge badge-danger">Failed</span>',
+                        'timeout': '<span class="badge badge-warning">Timeout</span>',
+                        'skipped': '<span class="badge badge-info">Skipped</span>'
+                    }[store.last_scan_status] || '<span class="badge badge-info">Pending</span>';
 
-                        const errorText = store.last_scan_error
-                            ? store.last_scan_error.substring(0, 50) + (store.last_scan_error.length > 50 ? '...' : '')
-                            : '-';
+                    const errorText = store.last_scan_error
+                        ? store.last_scan_error.substring(0, 50) + (store.last_scan_error.length > 50 ? '...' : '')
+                        : '-';
 
-                        return `
+                    return `
                         <tr>
                             <td>
                                 <strong>${store.shop_name || store.shop}</strong>
@@ -1997,57 +1991,57 @@
                             </td>
                         </tr>
                     `;
-                    }).join('');
+                }).join('');
 
-                } catch (error) {
-                    loading.style.display = 'none';
-                    console.error('Failed to load failed scans:', error);
-                }
+            } catch (error) {
+                loading.style.display = 'none';
+                console.error('Failed to load failed scans:', error);
             }
+        }
 
-            async function retryScan(storeId, extended) {
-                if (!confirm(`Retry scan for this store${extended ? ' with extended 30-min timeout' : ''}?`)) return;
+        async function retryScan(storeId, extended) {
+            if (!confirm(`Retry scan for this store${extended ? ' with extended 30-min timeout' : ''}?`)) return;
 
-                try {
-                    const response = await fetch(
-                        `/api/v1/admin/${secretKey}/retry-scan/${storeId}?password=${encodeURIComponent(adminPassword)}&extended=${extended}`,
-                        { method: 'POST' }
-                    );
-                    const data = await response.json();
+            try {
+                const response = await fetch(
+                    `/api/v1/admin/${secretKey}/retry-scan/${storeId}?password=${encodeURIComponent(adminPassword)}&extended=${extended}`,
+                    { method: 'POST' }
+                );
+                const data = await response.json();
 
-                    if (data.success) {
-                        alert(`✅ Scan completed: ${data.risk_level} risk`);
-                    } else {
-                        alert(`❌ ${data.detail || 'Scan failed'}`);
-                    }
-                    loadFailedScans();
-                } catch (error) {
-                    alert(`❌ Error: ${error.message}`);
+                if (data.success) {
+                    alert(`✅ Scan completed: ${data.risk_level} risk`);
+                } else {
+                    alert(`❌ ${data.detail || 'Scan failed'}`);
                 }
+                loadFailedScans();
+            } catch (error) {
+                alert(`❌ Error: ${error.message}`);
             }
+        }
 
-            async function resetScanStatus(storeId) {
-                if (!confirm('Reset scan status for this store? This clears error flags.')) return;
+        async function resetScanStatus(storeId) {
+            if (!confirm('Reset scan status for this store? This clears error flags.')) return;
 
-                try {
-                    const response = await fetch(
-                        `/api/v1/admin/${secretKey}/reset-scan-status/${storeId}?password=${encodeURIComponent(adminPassword)}`,
-                        { method: 'POST' }
-                    );
-                    const data = await response.json();
+            try {
+                const response = await fetch(
+                    `/api/v1/admin/${secretKey}/reset-scan-status/${storeId}?password=${encodeURIComponent(adminPassword)}`,
+                    { method: 'POST' }
+                );
+                const data = await response.json();
 
-                    if (data.success) {
-                        alert('✅ Scan status reset');
-                    } else {
-                        alert(`❌ ${data.detail || 'Reset failed'}`);
-                    }
-                    loadFailedScans();
-                } catch (error) {
-                    alert(`❌ Error: ${error.message}`);
+                if (data.success) {
+                    alert('✅ Scan status reset');
+                } else {
+                    alert(`❌ ${data.detail || 'Reset failed'}`);
                 }
+                loadFailedScans();
+            } catch (error) {
+                alert(`❌ Error: ${error.message}`);
             }
+        }
 
-            function updateScalingBadges(storeCount) {
+        function updateScalingBadges(storeCount) {
             // Reset all badges
             document.getElementById('scale-phase1').textContent = 'Next';
             document.getElementById('scale-phase1').className = 'badge badge-info';
