@@ -952,6 +952,7 @@ function renderInstalledApps(data) {
                 <thead>
                     <tr>
                         <th>App Name</th>
+                        <th>Category</th>
                         <th>First Detected</th>
                         <th>Risk Score</th>
                         <th>Last Scanned</th>
