@@ -986,7 +986,7 @@ function renderInstalledApps(data) {
                 <td>${installDate}</td>
                 <td><span class="badge badge-${riskClass}">${riskScore}</span></td>
                 <td>${lastScanned}</td>
-                <td><button class="btn btn-secondary btn-sm" onclick='openAppDetailsModal(${JSON.stringify(app).replace(/'/g, "&#39;")})'>View</button></td>
+                <td><button class="btn btn-sm ${app.risk_score >= 40 ? 'btn-danger' : app.risk_score >= 16 ? 'btn-warning' : 'btn-secondary'}" onclick='openAppDetailsModal(${JSON.stringify(app).replace(/'/g, "&#39;")})'>${app.risk_score >= 40 ? '⚠️ Fix Issue' : app.risk_score >= 16 ? '👁️ Review Impact' : 'See Details'}</button></td>
             </tr>
         `;
 
