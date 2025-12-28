@@ -978,10 +978,12 @@ function renderInstalledApps(data) {
             <tr style="${app.is_suspect ? 'background: rgba(255,107,107,0.1);' : ''}">
                 <td>
                     ${appStoreUrl
-                ? `<a href="${appStoreUrl}" target="_blank" style="color: var(--cyan); text-decoration: none;"><strong>${app.app_name}</strong> ↗</a>`
+                ? `<a href="${appStoreUrl}" target="_blank" style="color: #00d4ff; text-decoration: none;"><strong>${app.app_name}</strong> ↗</a>`
                 : `<strong>${app.app_name}</strong>`
             }
                     ${app.is_suspect ? '<span class="badge badge-danger" style="margin-left: 8px;">Suspect</span>' : ''}
+                    ${app.injects_scripts ? '<span class="badge" style="margin-left: 6px; background: rgba(147,51,234,0.3); color: #a78bfa; cursor: pointer;" onclick="showBadgeExplainer(\'scripts\')">📜 Scripts</span>' : ''}
+                    ${app.injects_theme_code ? '<span class="badge" style="margin-left: 6px; background: rgba(59,130,246,0.3); color: #60a5fa; cursor: pointer;" onclick="showBadgeExplainer(\'theme-code\')">🧩 Theme Code</span>' : ''}
                 </td>
                 <td>${installDate}</td>
                 <td><span class="badge badge-${riskClass}">${riskScore}</span></td>
@@ -1606,6 +1608,24 @@ function showExplainer(type) {
 
 function hideExplainer() {
     document.getElementById('explainer-box').style.display = 'none';
+}
+
+function showBadgeExplainer(type) {
+    const explainers = {
+        'scripts': {
+            title: '📜 Injects Scripts',
+            text: 'This app adds JavaScript code to your storefront. Scripts can affect page load speed and sometimes conflict with other apps. Most apps need scripts to function, but too many can slow down your store.'
+        },
+        'theme-code': {
+            title: '🧩 Injects Theme Code',
+            text: 'This app modifies your theme files directly. Theme code changes can cause visual issues or conflicts if multiple apps edit the same files. If you uninstall this app, leftover code may remain in your theme.'
+        }
+    };
+
+    const explainer = explainers[type];
+    if (explainer) {
+        alert(explainer.title + '\n\n' + explainer.text);
+    }
 }
 
 function investigateCurrentApp() {
