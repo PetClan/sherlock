@@ -881,6 +881,8 @@ function renderInstalledApps(data) {
     const highRiskApps = data.apps ? data.apps.filter(a => a.risk_score >= 40).length : 0;
     const totalRiskScore = data.apps ? data.apps.reduce((sum, a) => sum + (a.risk_score || 0), 0) : 0;
     const avgRisk = data.total > 0 ? Math.round(totalRiskScore / data.total) : 0;
+    const appsWithScripts = data.apps ? data.apps.filter(a => a.injects_scripts).length : 0;
+    const appsWithThemeCode = data.apps ? data.apps.filter(a => a.injects_theme_code).length : 0;
 
     // Performance impact based on total risk
     let performanceImpact = 'Low';
@@ -892,6 +894,19 @@ function renderInstalledApps(data) {
         performanceImpact = 'Medium';
         performanceColor = 'var(--gold)';
     }
+
+    // Build insight sentence
+    let insights = [];
+    insights.push(`Sherlock scanned ${data.total} app${data.total !== 1 ? 's' : ''}`);
+    if (data.suspect_count === 0) {
+        insights.push('No conflicts detected');
+    } else {
+        insights.push(`${data.suspect_count} potential conflict${data.suspect_count !== 1 ? 's' : ''} found`);
+    }
+    if (appsWithScripts > 0) {
+        insights.push(`${appsWithScripts} app${appsWithScripts !== 1 ? 's' : ''} inject${appsWithScripts === 1 ? 's' : ''} storefront scripts`);
+    }
+    const insightText = insights.join('. ') + '.';
 
     let html = `
         <div class="apps-summary" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
@@ -922,9 +937,14 @@ function renderInstalledApps(data) {
         
         <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 16px; padding: 10px 16px; background: rgba(0,0,0,0.15); border: 1px solid #00d4ff; border-radius: 8px; font-size: 13px;">
             <span style="color: #00d4ff; font-weight: bold;">Risk Legend:</span>
-            <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--green); border-radius: 50%; margin-right: 6px;"></span>0–15 Safe</span>
-            <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin-right: 6px;"></span>16–39 Watch</span>
-            <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--coral); border-radius: 50%; margin-right: 6px;"></span>40+ High Risk</span>
+            <span style="background: var(--green); color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">0–15 Safe</span>
+            <span style="background: var(--gold); color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">16–39 Watch</span>
+            <span style="background: var(--coral); color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">40+ High Risk</span>
+        </div>
+
+        <div style="background: rgba(0,212,255,0.1); border-left: 3px solid #00d4ff; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
+            <span style="color: #00d4ff; margin-right: 8px;">🔍</span>
+            <span style="color: var(--slate-300);">${insightText}</span>
         </div>
         
         <div class="apps-table">
