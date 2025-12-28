@@ -720,7 +720,7 @@ async def debug_script_tags(shop: str):
         except Exception as e:
             return {"shop": shop, "error": str(e)}
         
-# ==================== Apps Endpoints ====================
+# ==================== Apps Endpoint =====================
 
 @app.get("/api/v1/apps/{shop}")
 async def get_installed_apps(shop: str, db: AsyncSession = Depends(get_db)):
