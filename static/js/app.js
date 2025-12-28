@@ -920,8 +920,8 @@ function renderInstalledApps(data) {
         </div>
         ` : ''}
         
-        <div style="display: flex; gap: 16px; margin-bottom: 16px; padding: 10px 16px; background: rgba(0,0,0,0.15); border-radius: 8px; font-size: 13px;">
-            <span style="color: var(--slate-400);">Risk Legend:</span>
+        <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 16px; padding: 10px 16px; background: rgba(0,0,0,0.15); border: 1px solid var(--cyan); border-radius: 8px; font-size: 13px;">
+            <span style="color: var(--cyan); font-weight: bold;">Risk Legend:</span>
             <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--green); border-radius: 50%; margin-right: 6px;"></span>0–15 Safe</span>
             <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin-right: 6px;"></span>16–39 Watch</span>
             <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--coral); border-radius: 50%; margin-right: 6px;"></span>40+ High Risk</span>
