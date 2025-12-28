@@ -866,15 +866,40 @@ function renderInstalledApps(data) {
         return;
     }
 
+    // Calculate metrics
+    const appsWithRisk = data.apps ? data.apps.filter(a => a.risk_score > 0).length : 0;
+    const highRiskApps = data.apps ? data.apps.filter(a => a.risk_score >= 40).length : 0;
+    const totalRiskScore = data.apps ? data.apps.reduce((sum, a) => sum + (a.risk_score || 0), 0) : 0;
+    const avgRisk = data.total > 0 ? Math.round(totalRiskScore / data.total) : 0;
+
+    // Performance impact based on total risk
+    let performanceImpact = 'Low';
+    let performanceColor = 'var(--green)';
+    if (totalRiskScore > 100 || highRiskApps >= 2) {
+        performanceImpact = 'High';
+        performanceColor = 'var(--coral)';
+    } else if (totalRiskScore > 50 || highRiskApps >= 1) {
+        performanceImpact = 'Medium';
+        performanceColor = 'var(--gold)';
+    }
+
     let html = `
-        <div class="apps-summary" style="display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-            <div class="summary-stat">
-                <span style="font-size: 24px; font-weight: bold; color: var(--cyan);">${data.total}</span>
-                <span style="color: var(--slate-400); font-size: 14px; display: block;">Total Apps</span>
+        <div class="apps-summary" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
+            <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 28px; font-weight: bold; color: var(--cyan);">${data.total}</span>
+                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Total Apps</span>
             </div>
-            <div class="summary-stat">
-                <span style="font-size: 24px; font-weight: bold; color: ${data.suspect_count > 0 ? 'var(--coral)' : 'var(--green)'};">${data.suspect_count}</span>
-                <span style="color: var(--slate-400); font-size: 14px; display: block;">Suspect Apps</span>
+            <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 28px; font-weight: bold; color: ${appsWithRisk > 0 ? 'var(--gold)' : 'var(--green)'};">${appsWithRisk}</span>
+                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Apps With Risk</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 28px; font-weight: bold; color: ${data.suspect_count > 0 ? 'var(--coral)' : 'var(--green)'};">${data.suspect_count}</span>
+                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Potential Conflicts</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
+                <span style="font-size: 28px; font-weight: bold; color: ${performanceColor};">${performanceImpact}</span>
+                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Performance Impact</span>
             </div>
         </div>
         <div class="apps-table">
