@@ -985,6 +985,7 @@ function renderInstalledApps(data) {
                     ${app.injects_scripts ? '<span class="badge" style="margin-left: 6px; background: rgba(147,51,234,0.3); color: #a78bfa; cursor: pointer;" onclick="showBadgeExplainer(\'scripts\')">📜 Scripts</span>' : ''}
                     ${app.injects_theme_code ? '<span class="badge" style="margin-left: 6px; background: rgba(59,130,246,0.3); color: #60a5fa; cursor: pointer;" onclick="showBadgeExplainer(\'theme-code\')">🧩 Theme Code</span>' : ''}
                 </td>
+                <td><span style="cursor: pointer; color: #94a3b8;" onclick="showCategoryExplainer('${app.category || 'Unknown'}')">${app.category || 'Unknown'} ℹ️</span></td>
                 <td>${installDate}</td>
                 <td><span class="badge badge-${riskClass}">${riskScore}</span></td>
                 <td>${lastScanned}</td>
@@ -1652,6 +1653,192 @@ function showBadgeExplainer(type) {
 
 function closeBadgeExplainer() {
     document.getElementById('badge-explainer-modal').classList.add('hidden');
+}
+
+function showCategoryExplainer(category) {
+    const categories = {
+        'Reviews': {
+            title: '⭐ Reviews',
+            risk: 'Low-Medium',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Lets customers leave reviews on your products.</p>
+                <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #10b981;">Low-Medium Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Usually safe. Adds some code to show stars and reviews on product pages.</p>
+                </div>
+            `
+        },
+        'Shipping': {
+            title: '📦 Shipping',
+            risk: 'Low',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Shows shipping info like free shipping bars or delivery dates.</p>
+                <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #10b981;">Low Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Minimal impact. Usually just adds a small banner to your store.</p>
+                </div>
+            `
+        },
+        'Marketing': {
+            title: '📧 Marketing',
+            risk: 'Medium',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Helps you send emails, show popups, or collect subscribers.</p>
+                <div style="background: rgba(245,158,11,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #f59e0b;">Medium Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Can add multiple popups or scripts. Too many marketing apps can slow your store.</p>
+                </div>
+            `
+        },
+        'Analytics': {
+            title: '📊 Analytics',
+            risk: 'Low',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Tracks visitor behavior and store performance.</p>
+                <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #10b981;">Low Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Runs quietly in the background. Rarely causes visual issues.</p>
+                </div>
+            `
+        },
+        'Checkout': {
+            title: '💳 Checkout',
+            risk: 'High',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Changes how customers pay or complete their order.</p>
+                <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #ff6b6b;">High Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">The checkout is critical for sales. Problems here directly lose you money.</p>
+                </div>
+            `
+        },
+        'Page Builder': {
+            title: '🏗️ Page Builder',
+            risk: 'High',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Lets you customize pages without coding.</p>
+                <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #ff6b6b;">High Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Makes deep changes to your theme. If something goes wrong, your whole store can look broken.</p>
+                </div>
+            `
+        },
+        'SEO': {
+            title: '🔍 SEO',
+            risk: 'Low',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Helps your store appear in Google search results.</p>
+                <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #10b981;">Low Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Usually just adds invisible code for search engines.</p>
+                </div>
+            `
+        },
+        'Discounts': {
+            title: '🏷️ Discounts',
+            risk: 'Medium',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Creates sales, promotions, or automatic discounts.</p>
+                <div style="background: rgba(245,158,11,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #f59e0b;">Medium Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Can conflict with other discount apps. Multiple discount apps often cause issues.</p>
+                </div>
+            `
+        },
+        'Upsell': {
+            title: '🛒 Upsell',
+            risk: 'Medium',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Suggests extra products at checkout or on product pages.</p>
+                <div style="background: rgba(245,158,11,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #f59e0b;">Medium Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Adds elements to your pages. Too many upsell apps can clutter your store.</p>
+                </div>
+            `
+        },
+        'Customer Service': {
+            title: '💬 Customer Service',
+            risk: 'Low',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Adds live chat or help desk features.</p>
+                <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #10b981;">Low Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Usually just adds a chat bubble. Rarely causes problems.</p>
+                </div>
+            `
+        },
+        'Social Proof': {
+            title: '👥 Social Proof',
+            risk: 'Medium',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Shows "John just bought..." notifications or visitor counts.</p>
+                <div style="background: rgba(245,158,11,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #f59e0b;">Medium Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Multiple social proof apps can create annoying popups and slow your store.</p>
+                </div>
+            `
+        },
+        'Trust Badges': {
+            title: '🛡️ Trust Badges',
+            risk: 'Low',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Displays security seals or payment icons.</p>
+                <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #10b981;">Low Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Simple images. Very unlikely to cause issues.</p>
+                </div>
+            `
+        },
+        'Subscriptions': {
+            title: '🔄 Subscriptions',
+            risk: 'High',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Lets customers subscribe to regular deliveries.</p>
+                <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #ff6b6b;">High Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Deeply integrated with checkout and payments. Complex apps that need careful setup.</p>
+                </div>
+            `
+        },
+        'Translation': {
+            title: '🌐 Translation',
+            risk: 'Medium',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Translates your store into multiple languages.</p>
+                <div style="background: rgba(245,158,11,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #f59e0b;">Medium Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Changes text across your entire store. Can slow things down.</p>
+                </div>
+            `
+        },
+        'Admin Only': {
+            title: '⚙️ Admin Only',
+            risk: 'Very Low',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Works behind the scenes (inventory, reports, etc.).</p>
+                <div style="background: rgba(16,185,129,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #10b981;">Very Low Risk</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Doesn't touch your storefront. Customers never see it.</p>
+                </div>
+            `
+        },
+        'Unknown': {
+            title: '❓ Unknown',
+            risk: 'Medium',
+            html: `
+                <p style="color: #94a3b8; margin-bottom: 16px;">Sherlock hasn't classified this app yet.</p>
+                <div style="background: rgba(245,158,11,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #f59e0b;">Medium Risk (Default)</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Sherlock is monitoring this app. No problems detected so far.</p>
+                </div>
+            `
+        }
+    };
+
+    const cat = categories[category] || categories['Unknown'];
+    document.getElementById('badge-explainer-title').textContent = cat.title;
+    document.getElementById('badge-explainer-body').innerHTML = cat.html;
+    document.getElementById('badge-explainer-modal').classList.remove('hidden');
 }
 
 function investigateCurrentApp() {

@@ -896,6 +896,8 @@ async def get_installed_apps(shop: str, db: AsyncSession = Depends(get_db)):
                     "is_suspect": a.is_suspect,
                     "risk_score": a.risk_score,
                     "risk_reasons": a.risk_reasons,
+                    "category": a.category or "Unknown",
+                    "category_reason": a.category_reason or "Sherlock is monitoring this app. No problems detected so far.",
                     "injects_scripts": a.injects_scripts,
                     "injects_theme_code": a.injects_theme_code,
                     "script_count": a.script_count,

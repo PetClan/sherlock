@@ -13,38 +13,65 @@ from app.db.models import Store, InstalledApp
 
 
 # Known problematic apps (frequently mentioned in Shopify communities as causing issues)
-KNOWN_PROBLEMATIC_APPS = {
-    "pagefly": {"risk": 40, "reason": "Heavy page builder - known to cause conflicts with themes"},
-    "gempages": {"risk": 35, "reason": "Page builder - can slow down store and conflict with themes"},
-    "shogun": {"risk": 35, "reason": "Page builder - requires careful theme integration"},
-    "loox": {"risk": 20, "reason": "Review app - injects scripts on product pages"},
-    "judge.me": {"risk": 15, "reason": "Review app - generally stable but adds scripts"},
-    "klaviyo": {"risk": 15, "reason": "Email marketing - adds tracking scripts"},
-    "privy": {"risk": 25, "reason": "Popup app - can conflict with other popups"},
-    "justuno": {"risk": 25, "reason": "Popup/promotion app - heavy script injection"},
-    "bold": {"risk": 20, "reason": "Bold apps often modify checkout and product pages"},
-    "recharge": {"risk": 30, "reason": "Subscription app - deeply integrates with checkout"},
-    "zipify": {"risk": 25, "reason": "Upsell app - modifies cart and checkout flow"},
-    "reconvert": {"risk": 25, "reason": "Thank you page builder - post-purchase modifications"},
-    "vitals": {"risk": 30, "reason": "All-in-one app - many features can cause conflicts"},
-    "omnisend": {"risk": 15, "reason": "Email/SMS marketing - adds tracking scripts"},
-    "smile": {"risk": 20, "reason": "Loyalty app - adds widgets and scripts"},
-    "yotpo": {"risk": 20, "reason": "Reviews/loyalty - multiple script injections"},
-    "stamped": {"risk": 15, "reason": "Reviews app - generally lightweight"},
-    "aftership": {"risk": 10, "reason": "Tracking app - minimal frontend impact"},
-    "oberlo": {"risk": 15, "reason": "Dropshipping - can slow product syncs"},
-    "dsers": {"risk": 15, "reason": "Dropshipping - similar to Oberlo"},
-    "currency converter": {"risk": 35, "reason": "Currency apps often cause checkout issues"},
-    "geolocation": {"risk": 30, "reason": "Redirect apps can cause loading delays"},
-    "langify": {"risk": 25, "reason": "Translation app - modifies all page content"},
-    "weglot": {"risk": 25, "reason": "Translation app - intercepts page rendering"},
-    "tidio": {"risk": 20, "reason": "Chat widget - adds external scripts"},
-    "gorgias": {"risk": 15, "reason": "Help desk - chat widget integration"},
-    "instafeed": {"risk": 20, "reason": "Instagram feed - external API calls"},
-    "facebook channel": {"risk": 15, "reason": "Meta integration - pixel and catalog sync"},
-    "google channel": {"risk": 15, "reason": "Google integration - tracking and feed sync"},
+KNOWN_APPS_REGISTRY = {
+    # Page Builders - HIGH RISK
+    "pagefly": {"risk": 40, "category": "Page Builder", "reason": "Makes deep changes to your theme. If something goes wrong, your whole store can look broken."},
+    "gempages": {"risk": 35, "category": "Page Builder", "reason": "Makes deep changes to your theme. If something goes wrong, your whole store can look broken."},
+    "shogun": {"risk": 35, "category": "Page Builder", "reason": "Makes deep changes to your theme. If something goes wrong, your whole store can look broken."},
+    
+    # Reviews - LOW-MEDIUM RISK
+    "loox": {"risk": 20, "category": "Reviews", "reason": "Usually safe. Adds some code to show stars and reviews on product pages."},
+    "judge.me": {"risk": 15, "category": "Reviews", "reason": "Usually safe. Adds some code to show stars and reviews on product pages."},
+    "yotpo": {"risk": 20, "category": "Reviews", "reason": "Usually safe. Adds some code to show stars and reviews on product pages."},
+    "stamped": {"risk": 15, "category": "Reviews", "reason": "Usually safe. Adds some code to show stars and reviews on product pages."},
+    
+    # Marketing - MEDIUM RISK
+    "klaviyo": {"risk": 15, "category": "Marketing", "reason": "Can add multiple scripts. Too many marketing apps can slow your store."},
+    "omnisend": {"risk": 15, "category": "Marketing", "reason": "Can add multiple scripts. Too many marketing apps can slow your store."},
+    "privy": {"risk": 25, "category": "Marketing", "reason": "Adds popups. Can conflict with other popup apps."},
+    "justuno": {"risk": 25, "category": "Marketing", "reason": "Adds popups. Can conflict with other popup apps."},
+    
+    # Shipping - LOW RISK
+    "aftership": {"risk": 10, "category": "Shipping", "reason": "Minimal impact. Usually just adds tracking info."},
+    "hextom": {"risk": 10, "category": "Shipping", "reason": "Minimal impact. Usually just adds a small banner to your store."},
+    
+    # Subscriptions - HIGH RISK
+    "recharge": {"risk": 30, "category": "Subscriptions", "reason": "Deeply integrated with checkout and payments. Complex apps that need careful setup."},
+    "bold subscriptions": {"risk": 30, "category": "Subscriptions", "reason": "Deeply integrated with checkout and payments. Complex apps that need careful setup."},
+    
+    # Upsell - MEDIUM RISK
+    "zipify": {"risk": 25, "category": "Upsell", "reason": "Adds elements to your pages. Too many upsell apps can clutter your store."},
+    "reconvert": {"risk": 25, "category": "Upsell", "reason": "Adds elements to your pages. Too many upsell apps can clutter your store."},
+    
+    # Checkout - HIGH RISK
+    "bold": {"risk": 20, "category": "Checkout", "reason": "The checkout is critical for sales. Problems here directly lose you money."},
+    
+    # Customer Service - LOW RISK
+    "tidio": {"risk": 20, "category": "Customer Service", "reason": "Usually just adds a chat bubble. Rarely causes problems."},
+    "gorgias": {"risk": 15, "category": "Customer Service", "reason": "Usually just adds a chat bubble. Rarely causes problems."},
+    
+    # Analytics - LOW RISK
+    "facebook channel": {"risk": 15, "category": "Analytics", "reason": "Runs quietly in the background. Rarely causes visual issues."},
+    "google channel": {"risk": 15, "category": "Analytics", "reason": "Runs quietly in the background. Rarely causes visual issues."},
+    
+    # Social Proof - MEDIUM RISK
+    "instafeed": {"risk": 20, "category": "Social Proof", "reason": "Multiple social proof apps can create annoying popups and slow your store."},
+    "smile": {"risk": 20, "category": "Social Proof", "reason": "Adds widgets and loyalty features to your store."},
+    
+    # Translation - MEDIUM RISK  
+    "langify": {"risk": 25, "category": "Translation", "reason": "Changes text across your entire store. Can slow things down."},
+    "weglot": {"risk": 25, "category": "Translation", "reason": "Changes text across your entire store. Can slow things down."},
+    
+    # Other
+    "currency converter": {"risk": 35, "category": "Checkout", "reason": "Changes prices everywhere. Can cause checkout confusion."},
+    "geolocation": {"risk": 30, "category": "Marketing", "reason": "Redirects visitors. Can cause loading delays."},
+    "vitals": {"risk": 30, "category": "Marketing", "reason": "All-in-one app with many features. More features = more chances for conflicts."},
+    "oberlo": {"risk": 15, "category": "Admin Only", "reason": "Works behind the scenes for dropshipping. Customers never see it."},
+    "dsers": {"risk": 15, "category": "Admin Only", "reason": "Works behind the scenes for dropshipping. Customers never see it."},
 }
 
+# Keep old name for backwards compatibility
+KNOWN_PROBLEMATIC_APPS = KNOWN_APPS_REGISTRY
 # App categories that commonly cause specific issues
 HIGH_RISK_CATEGORIES = [
     "page builder",
@@ -292,7 +319,6 @@ class AppScannerService:
             return domain.title()
         except:
             return "Unknown"
-    
     async def calculate_risk_score(self, app_name: str, installed_on: Optional[datetime] = None) -> Dict[str, Any]:
         """
         Calculate risk score for an app based on:
@@ -302,22 +328,55 @@ class AppScannerService:
         """
         risk_score = 0.0
         risk_reasons = []
+        category = "Unknown"
+        category_reason = "Sherlock is monitoring this app. No problems detected so far."
         
         app_name_lower = app_name.lower()
         
-        # Check known problematic apps
-        for known_app, info in KNOWN_PROBLEMATIC_APPS.items():
+        # Check known apps registry for category and risk
+        for known_app, info in KNOWN_APPS_REGISTRY.items():
             if known_app in app_name_lower:
                 risk_score += info["risk"]
                 risk_reasons.append(info["reason"])
+                category = info.get("category", "Unknown")
+                category_reason = info["reason"]
                 break
         
-        # Check high-risk categories
-        for category in HIGH_RISK_CATEGORIES:
-            if category in app_name_lower:
-                risk_score += 15
-                risk_reasons.append(f"App appears to be a {category} - commonly causes conflicts")
-                break
+        # Check high-risk categories in app name (fallback classification)
+        if category == "Unknown":
+            category_keywords = {
+                "review": ("Reviews", "Usually safe. Adds some code to show stars and reviews on product pages."),
+                "shipping": ("Shipping", "Minimal impact. Usually just adds a small banner to your store."),
+                "marketing": ("Marketing", "Can add multiple scripts. Too many marketing apps can slow your store."),
+                "email": ("Marketing", "Can add multiple scripts. Too many marketing apps can slow your store."),
+                "sms": ("Marketing", "Can add multiple scripts. Too many marketing apps can slow your store."),
+                "popup": ("Marketing", "Adds popups. Can conflict with other popup apps."),
+                "analytics": ("Analytics", "Runs quietly in the background. Rarely causes visual issues."),
+                "checkout": ("Checkout", "The checkout is critical for sales. Problems here directly lose you money."),
+                "page builder": ("Page Builder", "Makes deep changes to your theme. If something goes wrong, your whole store can look broken."),
+                "landing": ("Page Builder", "Makes deep changes to your theme. If something goes wrong, your whole store can look broken."),
+                "seo": ("SEO", "Usually just adds invisible code for search engines."),
+                "discount": ("Discounts", "Can conflict with other discount apps. Multiple discount apps often cause issues."),
+                "upsell": ("Upsell", "Adds elements to your pages. Too many upsell apps can clutter your store."),
+                "cross-sell": ("Upsell", "Adds elements to your pages. Too many upsell apps can clutter your store."),
+                "chat": ("Customer Service", "Usually just adds a chat bubble. Rarely causes problems."),
+                "help desk": ("Customer Service", "Usually just adds a chat bubble. Rarely causes problems."),
+                "subscription": ("Subscriptions", "Deeply integrated with checkout and payments. Complex apps that need careful setup."),
+                "trust": ("Trust Badges", "Simple images. Very unlikely to cause issues."),
+                "badge": ("Trust Badges", "Simple images. Very unlikely to cause issues."),
+                "instagram": ("Social Proof", "Multiple social proof apps can create annoying popups and slow your store."),
+                "social": ("Social Proof", "Multiple social proof apps can create annoying popups and slow your store."),
+                "translation": ("Translation", "Changes text across your entire store. Can slow things down."),
+                "currency": ("Checkout", "Changes prices everywhere. Can cause checkout confusion."),
+            }
+            
+            for keyword, (cat, reason) in category_keywords.items():
+                if keyword in app_name_lower:
+                    category = cat
+                    category_reason = reason
+                    risk_score += 15
+                    risk_reasons.append(f"Detected as {cat} app")
+                    break
         
         # Recently installed apps are more likely to be the cause
         if installed_on:
@@ -341,8 +400,11 @@ class AppScannerService:
         return {
             "risk_score": risk_score,
             "risk_reasons": risk_reasons,
-            "is_suspect": risk_score >= 40
+            "is_suspect": risk_score >= 40,
+            "category": category,
+            "category_reason": category_reason
         }
+    
     
     async def scan_store_apps(self, store: Store) -> Dict[str, Any]:
         """
@@ -391,6 +453,8 @@ class AppScannerService:
                 app.is_suspect = risk_data["is_suspect"]
                 app.injects_scripts = app_data.get("source") == "script_tag"
                 app.injects_theme_code = app_data.get("source") == "app_block"
+                app.category = risk_data["category"]
+                app.category_reason = risk_data["category_reason"]
                 app.last_scanned = datetime.utcnow()
             else:
                 app = InstalledApp(
@@ -403,6 +467,8 @@ class AppScannerService:
                     is_suspect=risk_data["is_suspect"],
                     injects_scripts=app_data.get("source") == "script_tag",
                     injects_theme_code=app_data.get("source") == "app_block",
+                    category=risk_data["category"],
+                    category_reason=risk_data["category_reason"],
                     last_scanned=datetime.utcnow()
                 )
                 self.db.add(app)
