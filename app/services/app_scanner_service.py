@@ -99,9 +99,10 @@ class AppScannerService:
         theme_apps = await self._fetch_theme_app_extensions(store)
         for app in theme_apps:
             apps.append({
-                "source": "theme_extension",
-                "app_name": app.get("name", "Unknown"),
-                "app_id": app.get("id"),
+                "source": "app_block",
+                "app_name": app.get("app_name", "Unknown"),
+                "app_handle": app.get("app_handle"),
+                "disabled": app.get("disabled", False),
             })
         
         return apps
