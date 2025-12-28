@@ -421,10 +421,27 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="closeCapabilityModal()">Got it!</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Report App Modal -->
+            </div>
+            </div>
+            
+            <!-- App Details Modal -->
+            <div id="app-details-modal" class="modal hidden">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h2 id="app-details-title">App Details</h2>
+                        <button class="modal-close" onclick="closeAppDetailsModal()">&times;</button>
+                    </div>
+                    <div class="modal-body" id="app-details-body">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeAppDetailsModal()">Close</button>
+                        <button class="btn btn-primary" onclick="investigateCurrentApp()">🔍 Investigate App</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Report App Modal -->
     <div id="report-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -504,10 +521,28 @@ Judge.me"></textarea>
                     🚨 Report
                 </button>
             </div>
-        </div>
-
-    </div>
-    <!-- Rating Widget -->
+            </div>
+            
+            </div>
+            
+            <!-- App Details Modal -->
+            <div id="app-details-modal" class="modal hidden">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h2 id="app-details-title">App Details</h2>
+                        <button class="modal-close" onclick="closeAppDetailsModal()">&times;</button>
+                    </div>
+                    <div class="modal-body" id="app-details-body">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeAppDetailsModal()">Close</button>
+                        <button class="btn btn-primary" onclick="investigateCurrentApp()">🔍 Investigate App</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rating Widget -->
     <div id="rating-widget" class="rating-widget hidden">
         <div class="rating-widget-inner">
             <button class="rating-close" onclick="dismissRating()">&times;</button>

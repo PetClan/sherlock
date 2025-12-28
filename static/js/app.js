@@ -916,11 +916,11 @@ function renderInstalledApps(data) {
                 <td>${installDate}</td>
                 <td><span class="badge badge-${riskClass}">${riskScore}</span></td>
                 <td>${lastScanned}</td>
-                <td>${details.length > 0 ? details.join(', ') : '—'}</td>
+                <td><button class="btn btn-secondary btn-sm" onclick='openAppDetailsModal(${JSON.stringify(app).replace(/'/g, "&#39;")})'>View</button></td>
             </tr>
         `;
 
-        if (app.risk_reasons && app.risk_reasons.length > 0) {
+        if (false && app.risk_reasons && app.risk_reasons.length > 0) {
             html += `
                 <tr style="background: rgba(0,0,0,0.1);">
                     <td colspan="5" style="padding: 10px 20px; font-size: 13px; color: var(--slate-400);">
@@ -1414,6 +1414,96 @@ function closeReportModal() {
     document.getElementById('report-modal').classList.add('hidden');
     document.getElementById('report-results').classList.add('hidden');
     document.getElementById('report-results').innerHTML = '';
+}
+
+// App Details Modal
+let currentAppDetails = null;
+
+function openAppDetailsModal(app) {
+    currentAppDetails = app;
+    document.getElementById('app-details-title').textContent = app.app_name || 'App Details';
+
+    const installDate = app.installed_on ? new Date(app.installed_on).toLocaleDateString() : 'Unknown';
+    const lastScanned = app.last_scanned ? new Date(app.last_scanned).toLocaleString() : 'Never';
+    const riskClass = app.risk_score >= 70 ? 'danger' : app.risk_score >= 40 ? 'warning' : 'success';
+
+    let html = `
+        <div class="app-details-section">
+            <h4 style="color: var(--cyan); margin-bottom: 12px;">📊 Overview</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                    <div style="color: var(--slate-400); font-size: 12px;">Installed</div>
+                    <div style="font-weight: bold;">${installDate}</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                    <div style="color: var(--slate-400); font-size: 12px;">Risk Score</div>
+                    <div><span class="badge badge-${riskClass}" style="font-size: 14px;">${app.risk_score !== null ? app.risk_score : '—'}</span></div>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                    <div style="color: var(--slate-400); font-size: 12px;">Last Scanned</div>
+                    <div style="font-weight: bold; font-size: 12px;">${lastScanned}</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                    <div style="color: var(--slate-400); font-size: 12px;">Status</div>
+                    <div style="font-weight: bold;">${app.is_suspect ? '<span style="color: var(--coral);">⚠️ Suspect</span>' : '<span style="color: var(--green);">✅ OK</span>'}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Risk Reasons
+    if (app.risk_reasons && app.risk_reasons.length > 0) {
+        html += `
+            <div class="app-details-section">
+                <h4 style="color: var(--coral); margin-bottom: 12px;">⚠️ Risk Factors</h4>
+                <ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">
+                    ${app.risk_reasons.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    // App characteristics
+    let characteristics = [];
+    if (app.injects_scripts) characteristics.push('📜 Injects JavaScript');
+    if (app.injects_theme_code) characteristics.push('🎨 Modifies Theme Code');
+    if (app.disabled) characteristics.push('🔇 Currently Disabled');
+
+    if (characteristics.length > 0) {
+        html += `
+            <div class="app-details-section" style="margin-top: 16px;">
+                <h4 style="color: var(--cyan); margin-bottom: 12px;">🔧 Characteristics</h4>
+                <div style="color: var(--slate-300);">${characteristics.join(' • ')}</div>
+            </div>
+        `;
+    }
+
+    // App Store link
+    if (app.app_name) {
+        const searchUrl = 'https://apps.shopify.com/search?q=' + encodeURIComponent(app.app_name);
+        html += `
+            <div class="app-details-section" style="margin-top: 16px;">
+                <h4 style="color: var(--cyan); margin-bottom: 12px;">🔗 Links</h4>
+                <a href="${searchUrl}" target="_blank" style="color: var(--cyan);">View on Shopify App Store ↗</a>
+            </div>
+        `;
+    }
+
+    document.getElementById('app-details-body').innerHTML = html;
+    document.getElementById('app-details-modal').classList.remove('hidden');
+}
+
+function closeAppDetailsModal() {
+    document.getElementById('app-details-modal').classList.add('hidden');
+    currentAppDetails = null;
+}
+
+function investigateCurrentApp() {
+    if (currentAppDetails && currentAppDetails.app_name) {
+        closeAppDetailsModal();
+        document.getElementById('investigate-app-name').value = currentAppDetails.app_name;
+        openInvestigateModal();
+    }
 }
 
 async function submitAppReport() {
