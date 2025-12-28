@@ -902,7 +902,7 @@ function renderInstalledApps(data) {
         if (app.injects_theme_code) details.push('🎨 Theme Code');
         if (app.script_count > 0) details.push(app.script_count + ' script(s)');
 
-        const appStoreUrl = app.app_handle ? `https://apps.shopify.com/${app.app_handle}` : null;
+        const appStoreUrl = app.app_name ? `https://apps.shopify.com/search?q=${encodeURIComponent(app.app_name)}` : null;
 
         html += `
             <tr style="${app.is_suspect ? 'background: rgba(255,107,107,0.1);' : ''}">
