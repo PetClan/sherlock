@@ -935,11 +935,11 @@ function renderInstalledApps(data) {
         </div>
         ` : ''}
         
-        <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 16px; padding: 10px 16px; background: rgba(0,0,0,0.15); border: 1px solid #00d4ff; border-radius: 8px; font-size: 13px;">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; padding: 10px 16px; background: rgba(0,0,0,0.15); border: 1px solid #00d4ff; border-radius: 8px; font-size: 13px;">
             <span style="color: #00d4ff; font-weight: bold;">Risk Legend:</span>
-            <span style="background: #10b981; color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">0–15 Safe</span>
-            <span style="background: #f59e0b; color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">16–39 Watch</span>
-            <span style="background: #ff6b6b; color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">40+ High Risk</span>
+            <span style="background: rgba(16,185,129,0.3); color: #10b981; padding: 4px 10px; border-radius: 12px; font-weight: bold;">0–15 Safe</span>
+            <span style="background: rgba(245,158,11,0.3); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-weight: bold;">16–39 Watch</span>
+            <span style="background: rgba(255,107,107,0.3); color: #ff6b6b; padding: 4px 10px; border-radius: 12px; font-weight: bold;">40+ High Risk</span>
         </div>
 
         <div style="background: rgba(0,212,255,0.1); border-left: 3px solid #00d4ff; padding: 12px 16px; margin-bottom: 16px; border-radius: 0 8px 8px 0;">
