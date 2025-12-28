@@ -720,6 +720,93 @@ async def debug_script_tags(shop: str):
         except Exception as e:
             return {"shop": shop, "error": str(e)}
         
+@app.get("/api/v1/scan/debug/app-blocks")
+async def debug_app_blocks(shop: str):
+    """Debug endpoint to check app blocks in theme settings"""
+    import httpx
+    import json
+    from app.db.database import async_session
+    
+    async with async_session() as db:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar()
+        
+        if not store:
+            return {"error": "Store not found"}
+        
+        if not store.access_token:
+            return {"error": "No access token for store"}
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                # First get the main theme
+                themes_response = await client.get(
+                    f"https://{store.shopify_domain}/admin/api/2024-01/themes.json",
+                    headers={
+                        "X-Shopify-Access-Token": store.access_token,
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                
+                if themes_response.status_code != 200:
+                    return {"error": f"Failed to fetch themes: {themes_response.status_code}"}
+                
+                themes = themes_response.json().get("themes", [])
+                main_theme = next((t for t in themes if t.get("role") == "main"), None)
+                
+                if not main_theme:
+                    return {"error": "No main theme found"}
+                
+                theme_id = main_theme["id"]
+                
+                # Fetch settings_data.json
+                settings_response = await client.get(
+                    f"https://{store.shopify_domain}/admin/api/2024-01/themes/{theme_id}/assets.json",
+                    params={"asset[key]": "config/settings_data.json"},
+                    headers={
+                        "X-Shopify-Access-Token": store.access_token,
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                
+                if settings_response.status_code != 200:
+                    return {"error": f"Failed to fetch settings: {settings_response.status_code}"}
+                
+                asset = settings_response.json().get("asset", {})
+                settings_content = asset.get("value", "{}")
+                
+                try:
+                    settings_data = json.loads(settings_content)
+                except:
+                    return {"error": "Failed to parse settings JSON"}
+                
+                # Look for app blocks in current settings
+                current = settings_data.get("current", {})
+                blocks = current.get("blocks", {})
+                
+                # Find app-related blocks
+                app_blocks = {}
+                for block_id, block_data in blocks.items():
+                    block_type = block_data.get("type", "")
+                    if "app" in block_type.lower() or block_type.startswith("shopify://apps/"):
+                        app_blocks[block_id] = block_data
+                
+                return {
+                    "shop": shop,
+                    "theme_id": theme_id,
+                    "theme_name": main_theme.get("name"),
+                    "total_blocks": len(blocks),
+                    "app_blocks_found": len(app_blocks),
+                    "app_blocks": app_blocks
+                }
+                
+        except Exception as e:
+            return {"shop": shop, "error": str(e)}
+        
 # ==================== Apps Endpoint =====================
 
 @app.get("/api/v1/apps/{shop}")
