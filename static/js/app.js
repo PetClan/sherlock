@@ -733,6 +733,9 @@ function switchTab(tabName, el) {
     if (tabName === 'rollback') {
         loadRestorePoints();
     }
+    if (tabName === 'apps') {
+        loadInstalledApps();
+    }
 }
 
 // ==================== CONFLICTS TAB ====================
@@ -837,6 +840,100 @@ function renderOrphanCode(data) {
 }
 
 // ==================== TIMELINE TAB ====================
+async function loadInstalledApps() {
+    const container = document.getElementById('apps-content');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading apps...</p></div>';
+
+    try {
+        const result = await api('/apps/' + state.shop);
+        renderInstalledApps(result);
+    } catch (error) {
+        container.innerHTML = '<div class="error-state"><p>Failed to load apps: ' + error.message + '</p></div>';
+    }
+}
+
+function renderInstalledApps(data) {
+    const container = document.getElementById('apps-content');
+
+    if (!data.apps || data.apps.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">✅</div>
+                <h3>No Apps Detected</h3>
+                <p>Sherlock hasn't detected any third-party apps injecting scripts or theme code yet. Run a full scan to detect apps.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div class="apps-summary" style="display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+            <div class="summary-stat">
+                <span style="font-size: 24px; font-weight: bold; color: var(--cyan);">${data.total}</span>
+                <span style="color: var(--slate-400); font-size: 14px; display: block;">Total Apps</span>
+            </div>
+            <div class="summary-stat">
+                <span style="font-size: 24px; font-weight: bold; color: ${data.suspect_count > 0 ? 'var(--coral)' : 'var(--green)'};">${data.suspect_count}</span>
+                <span style="color: var(--slate-400); font-size: 14px; display: block;">Suspect Apps</span>
+            </div>
+        </div>
+        <div class="apps-table">
+            <table class="admin-table" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>App Name</th>
+                        <th>Installed</th>
+                        <th>Risk Score</th>
+                        <th>Last Scanned</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    for (const app of data.apps) {
+        const installDate = app.installed_on ? new Date(app.installed_on).toLocaleDateString() : 'Unknown';
+        const lastScanned = app.last_scanned ? new Date(app.last_scanned).toLocaleString() : 'Never';
+        const riskClass = app.risk_score >= 70 ? 'danger' : app.risk_score >= 40 ? 'warning' : 'success';
+        const riskScore = app.risk_score !== null ? app.risk_score : '—';
+
+        let details = [];
+        if (app.injects_scripts) details.push('📜 Scripts');
+        if (app.injects_theme_code) details.push('🎨 Theme Code');
+        if (app.script_count > 0) details.push(app.script_count + ' script(s)');
+
+        html += `
+            <tr style="${app.is_suspect ? 'background: rgba(255,107,107,0.1);' : ''}">
+                <td>
+                    <strong>${app.app_name}</strong>
+                    ${app.is_suspect ? '<span class="badge badge-danger" style="margin-left: 8px;">Suspect</span>' : ''}
+                </td>
+                <td>${installDate}</td>
+                <td><span class="badge badge-${riskClass}">${riskScore}</span></td>
+                <td>${lastScanned}</td>
+                <td>${details.length > 0 ? details.join(', ') : '—'}</td>
+            </tr>
+        `;
+
+        if (app.risk_reasons && app.risk_reasons.length > 0) {
+            html += `
+                <tr style="background: rgba(0,0,0,0.1);">
+                    <td colspan="5" style="padding: 10px 20px; font-size: 13px; color: var(--slate-400);">
+                        ⚠️ ${app.risk_reasons.join(' • ')}
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
 
 async function loadTimeline() {
     const container = document.getElementById('timeline-content');

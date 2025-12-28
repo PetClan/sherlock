@@ -59,6 +59,7 @@
         <div class="tabs-container">
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('dashboard', this)">🏠 Dashboard</button>
+                <button class="tab" onclick="switchTab('apps', this)">📦 Apps</button>
                 <button class="tab" onclick="switchTab('conflicts', this)">⚡ Conflicts</button>
                 <button class="tab" onclick="switchTab('orphan', this)">🧹 Orphan Code</button>
                 <button class="tab" onclick="switchTab('timeline', this)">📈 Timeline</button>
@@ -189,6 +190,24 @@
                     <div class="loading">
                         <div class="spinner"></div>
                         <p>Analyzing installed apps...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Apps Tab -->
+        <div id="tab-apps" class="tab-content hidden"></div>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📦 Installed Apps</h3>
+                    <button class="btn btn-primary btn-sm" onclick="loadInstalledApps()">
+                        Refresh Apps
+                    </button>
+                </div>
+                <div id="apps-content">
+                    <div class="empty-state">
+                        <div class="empty-icon">📦</div>
+                        <h3>Loading Apps...</h3>
+                        <p>Fetching your installed apps list.</p>
                     </div>
                 </div>
             </div>
