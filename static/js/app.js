@@ -1614,18 +1614,44 @@ function showBadgeExplainer(type) {
     const explainers = {
         'scripts': {
             title: '📜 Injects Scripts',
-            text: 'This app adds JavaScript code to your storefront. Scripts can affect page load speed and sometimes conflict with other apps. Most apps need scripts to function, but too many can slow down your store.'
+            html: `
+                <div style="color: #10b981; font-size: 16px; margin-bottom: 12px;">✅ This is normal!</div>
+                <p style="color: #94a3b8; margin-bottom: 16px;">Most apps add scripts to power their features.</p>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #00d4ff;">No action needed</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Unless your store feels slow, everything is fine.</p>
+                </div>
+                <div style="border-left: 3px solid #00d4ff; padding-left: 12px; color: #94a3b8; font-size: 14px;">
+                    💡 <strong>Tip:</strong> If you notice slowness, check the Timeline tab to see when scripts were added.
+                </div>
+            `
         },
         'theme-code': {
-            title: '🧩 Injects Theme Code',
-            text: 'This app modifies your theme files directly. Theme code changes can cause visual issues or conflicts if multiple apps edit the same files. If you uninstall this app, leftover code may remain in your theme.'
+            title: '🧩 Theme Code',
+            html: `
+                <div style="color: #10b981; font-size: 16px; margin-bottom: 12px;">✅ This is normal!</div>
+                <p style="color: #94a3b8; margin-bottom: 16px;">This app adds features directly to your theme.</p>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong style="color: #00d4ff;">No action needed</strong>
+                    <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Sherlock is tracking any changes for you.</p>
+                </div>
+                <div style="border-left: 3px solid #00d4ff; padding-left: 12px; color: #94a3b8; font-size: 14px;">
+                    💡 <strong>Tip:</strong> If you uninstall this app later, use Sherlock's Rollback feature to clean up any leftover code.
+                </div>
+            `
         }
     };
 
     const explainer = explainers[type];
     if (explainer) {
-        alert(explainer.title + '\n\n' + explainer.text);
+        document.getElementById('badge-explainer-title').textContent = explainer.title;
+        document.getElementById('badge-explainer-body').innerHTML = explainer.html;
+        document.getElementById('badge-explainer-modal').classList.remove('hidden');
     }
+}
+
+function closeBadgeExplainer() {
+    document.getElementById('badge-explainer-modal').classList.add('hidden');
 }
 
 function investigateCurrentApp() {
