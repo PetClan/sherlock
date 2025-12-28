@@ -1636,7 +1636,7 @@ function showBadgeExplainer(type) {
                     <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Sherlock is tracking any changes for you.</p>
                 </div>
                 <div style="border-left: 3px solid #00d4ff; padding-left: 12px; color: #94a3b8; font-size: 14px;">
-                    💡 <strong>Tip:</strong> If you uninstall this app later, use Sherlock's Rollback feature to clean up any leftover code.
+                    💡 <strong>Tip:</strong> If you uninstall this app later, use Orphan Code to identify any leftover code that may need manual cleanup.
                 </div>
             `
         }
