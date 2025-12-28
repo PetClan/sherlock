@@ -81,6 +81,10 @@ class InstalledApp(Base):
     risk_score = Column(Float, default=0.0)  # 0-100 risk score
     risk_reasons = Column(JSON, nullable=True)  # List of reasons for risk score
     
+    # Classification
+    category = Column(String(50), default="Unknown")  # Reviews, Shipping, Marketing, etc.
+    category_reason = Column(String(255), nullable=True)  # Why this category was assigned
+    
     # Detection info
     injects_scripts = Column(Boolean, default=False)
     injects_theme_code = Column(Boolean, default=False)
