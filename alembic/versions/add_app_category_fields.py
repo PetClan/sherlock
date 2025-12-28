@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers
 revision = 'add_app_category'
-down_revision = None
+down_revision = '9b40d94abb56'
 branch_labels = None
 depends_on = None
 
