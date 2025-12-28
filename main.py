@@ -683,7 +683,42 @@ async def get_diagnosis_report(diagnosis_id: str, db: AsyncSession = Depends(get
         print(f"❌ [Sherlock] Get report error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get diagnosis report")
 
-
+@app.get("/api/v1/scan/debug/script-tags")
+async def debug_script_tags(shop: str):
+    """Debug endpoint to check what script tags Shopify returns"""
+    import httpx
+    
+    async with async_session() as db:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar()
+        
+        if not store:
+            return {"error": "Store not found"}
+        
+        if not store.access_token:
+            return {"error": "No access token for store"}
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"https://{store.shopify_domain}/admin/api/2024-01/script_tags.json",
+                    headers={
+                        "X-Shopify-Access-Token": store.access_token,
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                
+                return {
+                    "shop": shop,
+                    "status_code": response.status_code,
+                    "response": response.json() if response.status_code == 200 else response.text
+                }
+        except Exception as e:
+            return {"shop": shop, "error": str(e)}
+        
 # ==================== Apps Endpoints ====================
 
 @app.get("/api/v1/apps/{shop}")
