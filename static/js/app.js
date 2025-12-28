@@ -902,10 +902,15 @@ function renderInstalledApps(data) {
         if (app.injects_theme_code) details.push('🎨 Theme Code');
         if (app.script_count > 0) details.push(app.script_count + ' script(s)');
 
+        const appStoreUrl = app.app_handle ? `https://apps.shopify.com/${app.app_handle}` : null;
+
         html += `
             <tr style="${app.is_suspect ? 'background: rgba(255,107,107,0.1);' : ''}">
                 <td>
-                    <strong>${app.app_name}</strong>
+                    ${appStoreUrl
+                ? `<a href="${appStoreUrl}" target="_blank" style="color: var(--cyan); text-decoration: none;"><strong>${app.app_name}</strong> ↗</a>`
+                : `<strong>${app.app_name}</strong>`
+            }
                     ${app.is_suspect ? '<span class="badge badge-danger" style="margin-left: 8px;">Suspect</span>' : ''}
                 </td>
                 <td>${installDate}</td>
