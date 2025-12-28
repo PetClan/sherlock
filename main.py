@@ -836,6 +836,33 @@ async def clear_unknown_apps(shop: str):
             "success": True,
             "deleted_count": delete_result.rowcount
         }
+    
+@app.get("/api/v1/apps/clear-all/{shop}")
+async def clear_all_apps(shop: str):
+    """Clear all apps for a store to allow fresh detection"""
+    from app.db.database import async_session
+    from app.db.models import InstalledApp
+    from sqlalchemy import delete
+    
+    async with async_session() as db:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar()
+        
+        if not store:
+            return {"error": "Store not found"}
+        
+        # Delete all apps for this store
+        delete_result = await db.execute(
+            delete(InstalledApp).where(InstalledApp.store_id == store.id)
+        )
+        await db.commit()
+        
+        return {
+            "success": True,
+            "deleted_count": delete_result.rowcount
+        }
         
 # ==================== Apps Endpoint =====================
 
@@ -864,6 +891,8 @@ async def get_installed_apps(shop: str, db: AsyncSession = Depends(get_db)):
                     "app_name": a.app_name,
                     "app_handle": a.app_handle,
                     "installed_on": a.installed_on.isoformat() if a.installed_on else None,
+                    "first_seen": a.first_seen.isoformat() if a.first_seen else None,
+                    "update_detected_at": a.update_detected_at.isoformat() if a.update_detected_at else None,
                     "is_suspect": a.is_suspect,
                     "risk_score": a.risk_score,
                     "risk_reasons": a.risk_reasons,

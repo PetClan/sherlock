@@ -1423,7 +1423,8 @@ function openAppDetailsModal(app) {
     currentAppDetails = app;
     document.getElementById('app-details-title').textContent = app.app_name || 'App Details';
 
-    const installDate = app.installed_on ? new Date(app.installed_on).toLocaleDateString() : 'Unknown';
+    const firstSeen = app.first_seen ? new Date(app.first_seen).toLocaleDateString() : (app.installed_on ? new Date(app.installed_on).toLocaleDateString() : 'Unknown');
+    const lastUpdated = app.update_detected_at ? new Date(app.update_detected_at).toLocaleString() : 'No updates detected';
     const lastScanned = app.last_scanned ? new Date(app.last_scanned).toLocaleString() : 'Never';
     const riskClass = app.risk_score >= 70 ? 'danger' : app.risk_score >= 40 ? 'warning' : 'success';
 
@@ -1432,21 +1433,28 @@ function openAppDetailsModal(app) {
             <h4 style="color: var(--cyan); margin-bottom: 12px;">📊 Overview</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
                 <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                    <div style="color: var(--slate-400); font-size: 12px;">Installed</div>
-                    <div style="font-weight: bold;">${installDate}</div>
+                    <div style="color: var(--slate-400); font-size: 12px; cursor: pointer; text-decoration: underline dotted;" onclick="showExplainer('first-detected')">First Detected ℹ️</div>
+                    <div style="font-weight: bold;">${firstSeen}</div>
                 </div>
                 <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                    <div style="color: var(--slate-400); font-size: 12px;">Risk Score</div>
+                    <div style="color: var(--slate-400); font-size: 12px; cursor: pointer; text-decoration: underline dotted;" onclick="showExplainer('risk-score')">Risk Score ℹ️</div>
                     <div><span class="badge badge-${riskClass}" style="font-size: 14px;">${app.risk_score !== null ? app.risk_score : '—'}</span></div>
                 </div>
                 <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                    <div style="color: var(--slate-400); font-size: 12px;">Last Scanned</div>
-                    <div style="font-weight: bold; font-size: 12px;">${lastScanned}</div>
+                    <div style="color: var(--slate-400); font-size: 12px; cursor: pointer; text-decoration: underline dotted;" onclick="showExplainer('last-code-update')">Last Code Update ℹ️</div>
+                    <div style="font-weight: bold; font-size: 12px;">${lastUpdated}</div>
                 </div>
                 <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                    <div style="color: var(--slate-400); font-size: 12px;">Status</div>
+                    <div style="color: var(--slate-400); font-size: 12px; cursor: pointer; text-decoration: underline dotted;" onclick="showExplainer('status')">Status ℹ️</div>
                     <div style="font-weight: bold;">${app.is_suspect ? '<span style="color: var(--coral);">⚠️ Suspect</span>' : '<span style="color: var(--green);">✅ OK</span>'}</div>
                 </div>
+            </div>
+            <div id="explainer-box" style="display: none; background: var(--navy-800); border: 1px solid var(--cyan); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong id="explainer-title" style="color: var(--cyan);"></strong>
+                    <span style="cursor: pointer; color: var(--slate-400);" onclick="hideExplainer()">✕</span>
+                </div>
+                <p id="explainer-text" style="margin: 8px 0 0 0; color: var(--slate-300); font-size: 14px;"></p>
             </div>
         </div>
     `;
@@ -1496,6 +1504,38 @@ function openAppDetailsModal(app) {
 function closeAppDetailsModal() {
     document.getElementById('app-details-modal').classList.add('hidden');
     currentAppDetails = null;
+}
+
+function showExplainer(type) {
+    const explainers = {
+        'first-detected': {
+            title: 'First Detected',
+            text: 'This is when Sherlock first noticed this app on your store. If we couldn\'t find the original install date, we use the date we first detected it.'
+        },
+        'risk-score': {
+            title: 'Risk Score',
+            text: 'A score from 0-100 based on how likely this app is to cause issues. Higher scores mean more risk. This is calculated from known problem apps, how recently it was installed, and the type of app it is.'
+        },
+        'last-code-update': {
+            title: 'Last Code Update',
+            text: 'The last time this app changed code in your theme. If your store suddenly has issues, check if any apps updated their code around that time - they might be the cause!'
+        },
+        'status': {
+            title: 'Status',
+            text: 'OK means the app looks fine. Suspect means Sherlock thinks this app might be causing problems based on its risk score and behaviour.'
+        }
+    };
+
+    const explainer = explainers[type];
+    if (explainer) {
+        document.getElementById('explainer-title').textContent = explainer.title;
+        document.getElementById('explainer-text').textContent = explainer.text;
+        document.getElementById('explainer-box').style.display = 'block';
+    }
+}
+
+function hideExplainer() {
+    document.getElementById('explainer-box').style.display = 'none';
 }
 
 function investigateCurrentApp() {

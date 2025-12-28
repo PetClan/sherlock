@@ -396,7 +396,7 @@ class AppScannerService:
                     store_id=store.id,
                     app_name=app_name,
                     app_handle=app_name_lower.replace(" ", "-"),
-                    installed_on=installed_on,
+                    installed_on=installed_on or datetime.utcnow(),  # Use current time if not available (first seen)
                     risk_score=risk_data["risk_score"],
                     risk_reasons=risk_data["risk_reasons"],
                     is_suspect=risk_data["is_suspect"],
