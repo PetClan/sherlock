@@ -912,6 +912,21 @@ function renderInstalledApps(data) {
                 <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Performance Impact</span>
             </div>
         </div>
+        
+        ${highRiskApps > 0 ? `
+        <div style="background: rgba(255,107,107,0.15); border: 1px solid var(--coral); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 20px;">⚠️</span>
+            <span style="color: var(--coral);">${highRiskApps} app${highRiskApps > 1 ? 's' : ''} may impact performance or theme stability. Review the high-risk apps below.</span>
+        </div>
+        ` : ''}
+        
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; padding: 10px 16px; background: rgba(0,0,0,0.15); border-radius: 8px; font-size: 13px;">
+            <span style="color: var(--slate-400);">Risk Legend:</span>
+            <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--green); border-radius: 50%; margin-right: 6px;"></span>0–15 Safe</span>
+            <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--gold); border-radius: 50%; margin-right: 6px;"></span>16–39 Watch</span>
+            <span><span style="display: inline-block; width: 12px; height: 12px; background: var(--coral); border-radius: 50%; margin-right: 6px;"></span>40+ High Risk</span>
+        </div>
+        
         <div class="apps-table">
             <table class="admin-table" style="width: 100%;">
                 <thead>
