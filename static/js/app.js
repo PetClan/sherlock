@@ -846,7 +846,17 @@ async function loadInstalledApps() {
 
     try {
         const result = await api('/apps/' + state.shop);
-        renderInstalledApps(result);
+
+        // If no apps found, trigger a scan automatically
+        if (!result.apps || result.apps.length === 0) {
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Scanning for apps...</p></div>';
+            await startScan();
+            // Reload after scan
+            const newResult = await api('/apps/' + state.shop);
+            renderInstalledApps(newResult);
+        } else {
+            renderInstalledApps(result);
+        }
     } catch (error) {
         container.innerHTML = '<div class="error-state"><p>Failed to load apps: ' + error.message + '</p></div>';
     }
