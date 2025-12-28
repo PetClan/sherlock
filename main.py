@@ -807,6 +807,36 @@ async def debug_app_blocks(shop: str):
         except Exception as e:
             return {"shop": shop, "error": str(e)}
         
+@app.get("/api/v1/apps/clear-unknown/{shop}")
+async def clear_unknown_apps(shop: str):
+    """Clear apps with Unknown name from database"""
+    from app.db.database import async_session
+    from app.db.models import InstalledApp
+    from sqlalchemy import delete
+    
+    async with async_session() as db:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar()
+        
+        if not store:
+            return {"error": "Store not found"}
+        
+        # Delete apps with "Unknown" name
+        delete_result = await db.execute(
+            delete(InstalledApp).where(
+                InstalledApp.store_id == store.id,
+                InstalledApp.app_name == "Unknown"
+            )
+        )
+        await db.commit()
+        
+        return {
+            "success": True,
+            "deleted_count": delete_result.rowcount
+        }
+        
 # ==================== Apps Endpoint =====================
 
 @app.get("/api/v1/apps/{shop}")
