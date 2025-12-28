@@ -687,6 +687,7 @@ async def get_diagnosis_report(diagnosis_id: str, db: AsyncSession = Depends(get
 async def debug_script_tags(shop: str):
     """Debug endpoint to check what script tags Shopify returns"""
     import httpx
+    from app.db.database import async_session
     
     async with async_session() as db:
         result = await db.execute(
