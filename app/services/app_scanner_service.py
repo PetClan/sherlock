@@ -390,6 +390,7 @@ class AppScannerService:
                 app.risk_reasons = risk_data["risk_reasons"]
                 app.is_suspect = risk_data["is_suspect"]
                 app.injects_scripts = app_data.get("source") == "script_tag"
+                app.injects_theme_code = app_data.get("source") == "app_block"
                 app.last_scanned = datetime.utcnow()
             else:
                 app = InstalledApp(
@@ -401,6 +402,7 @@ class AppScannerService:
                     risk_reasons=risk_data["risk_reasons"],
                     is_suspect=risk_data["is_suspect"],
                     injects_scripts=app_data.get("source") == "script_tag",
+                    injects_theme_code=app_data.get("source") == "app_block",
                     last_scanned=datetime.utcnow()
                 )
                 self.db.add(app)
