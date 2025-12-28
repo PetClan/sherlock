@@ -130,10 +130,119 @@ class AppScannerService:
             return []
     
     async def _fetch_theme_app_extensions(self, store: Store) -> List[Dict]:
-        """Fetch apps with theme extensions"""
-        # This requires parsing the theme to find app blocks
-        # For now, return empty - will be enhanced in theme_analyzer
-        return []
+        """Fetch apps with theme extensions - now uses app blocks detection"""
+        return await self._fetch_app_blocks_from_theme(store)
+    
+    async def _fetch_app_blocks_from_theme(self, store: Store) -> List[Dict]:
+        """Fetch apps with app blocks from theme settings_data.json"""
+        import json
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                # Get main theme
+                themes_response = await client.get(
+                    f"https://{store.shopify_domain}/admin/api/2024-01/themes.json",
+                    headers={
+                        "X-Shopify-Access-Token": store.access_token,
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                
+                if themes_response.status_code != 200:
+                    print(f"⚠️ [AppScanner] Failed to fetch themes: {themes_response.status_code}")
+                    return []
+                
+                themes = themes_response.json().get("themes", [])
+                main_theme = next((t for t in themes if t.get("role") == "main"), None)
+                
+                if not main_theme:
+                    return []
+                
+                theme_id = main_theme["id"]
+                
+                # Fetch settings_data.json
+                settings_response = await client.get(
+                    f"https://{store.shopify_domain}/admin/api/2024-01/themes/{theme_id}/assets.json",
+                    params={"asset[key]": "config/settings_data.json"},
+                    headers={
+                        "X-Shopify-Access-Token": store.access_token,
+                        "Content-Type": "application/json"
+                    },
+                    timeout=30.0
+                )
+                
+                if settings_response.status_code != 200:
+                    return []
+                
+                asset = settings_response.json().get("asset", {})
+                settings_content = asset.get("value", "{}")
+                
+                try:
+                    settings_data = json.loads(settings_content)
+                except:
+                    return []
+                
+                # Extract app blocks
+                current = settings_data.get("current", {})
+                blocks = current.get("blocks", {})
+                
+                apps_found = []
+                seen_apps = set()
+                
+                for block_id, block_data in blocks.items():
+                    block_type = block_data.get("type", "")
+                    
+                    # Pattern: shopify://apps/{app-handle}/blocks/{block-name}/{uuid}
+                    if block_type.startswith("shopify://apps/"):
+                        parts = block_type.split("/")
+                        if len(parts) >= 4:
+                            app_handle = parts[3]  # e.g., "judge-me-reviews"
+                            
+                            if app_handle not in seen_apps:
+                                seen_apps.add(app_handle)
+                                
+                                # Convert handle to display name
+                                app_name = self._handle_to_display_name(app_handle)
+                                
+                                apps_found.append({
+                                    "source": "app_block",
+                                    "app_name": app_name,
+                                    "app_handle": app_handle,
+                                    "disabled": block_data.get("disabled", False),
+                                })
+                
+                print(f"✅ [AppScanner] Found {len(apps_found)} apps via app blocks")
+                return apps_found
+                
+        except Exception as e:
+            print(f"❌ [AppScanner] Error fetching app blocks: {e}")
+            return []
+    
+    def _handle_to_display_name(self, handle: str) -> str:
+        """Convert app handle to display name"""
+        # Known app mappings
+        known_apps = {
+            "judge-me-reviews": "Judge.me",
+            "hextom-shipping-bar": "Hextom Shipping Bar",
+            "loox": "Loox",
+            "klaviyo": "Klaviyo",
+            "privy": "Privy",
+            "pagefly": "PageFly",
+            "gempages": "GemPages",
+            "shogun": "Shogun",
+            "omnisend": "Omnisend",
+            "smile-io": "Smile.io",
+            "yotpo": "Yotpo",
+            "recharge": "ReCharge",
+            "bold": "Bold",
+        }
+        
+        if handle in known_apps:
+            return known_apps[handle]
+        
+        # Convert handle to title case
+        return handle.replace("-", " ").title()
     
     def _extract_app_name_from_url(self, url: str) -> str:
         """Extract app name from script URL"""
