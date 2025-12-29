@@ -204,24 +204,24 @@ function renderRecentScans(scans) {
 // Render suspect apps
 function renderSuspectApps(apps) {
     const container = document.getElementById('suspect-apps');
+    const card = container.closest('.card');
     const suspectApps = apps.apps ? apps.apps.filter(function (app) { return app.is_suspect; }) : [];
 
+    // Hide entire section when no suspects (Next Best Action handles the "all clear" message)
     if (!suspectApps.length) {
-        container.innerHTML =
-            '<div class="empty-state">' +
-            '<div class="empty-state-icon">✅</div>' +
-            '<h3>All clear!</h3>' +
-            '<p>No suspect apps detected. Your store looks healthy.</p>' +
-            '</div>';
+        if (card) card.style.display = 'none';
         return;
     }
+
+    // Show section when there are suspects
+    if (card) card.style.display = 'block';
 
     let html = '<ul class="app-list">';
     suspectApps.slice(0, 5).forEach(function (app) {
         html += '<li class="app-item suspect">' +
             '<div class="app-info">' +
-            '<span class="app-name">' + escapeHtml(app.title) + '</span>' +
-            '<span class="app-reason">' + escapeHtml(app.suspect_reason || 'Flagged as potentially problematic') + '</span>' +
+            '<span class="app-name">' + escapeHtml(app.app_name || app.title) + '</span>' +
+            '<span class="app-reason">' + escapeHtml((app.risk_reasons && app.risk_reasons[0]) || app.suspect_reason || 'Flagged as potentially problematic') + '</span>' +
             '</div>' +
             '</li>';
     });
