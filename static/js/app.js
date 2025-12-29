@@ -1179,7 +1179,7 @@ function renderInstalledApps(data) {
         </div>
     `;
 
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 async function loadTimeline() {
@@ -1437,7 +1437,7 @@ function renderDiagnosisAlert(diagnosis) {
     // Dismiss button
     html += '<button class="diagnosis-dismiss" onclick="dismissDiagnosis()">Got it, I\'ll check this</button>';
 
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 function dismissDiagnosis() {
@@ -2359,7 +2359,7 @@ function renderRestoreDateOptions(dates, fileCount) {
     html += '</div>';
     html += '</div>';
 
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 function confirmRestore(dateKey, dateLabel) {
@@ -2669,7 +2669,7 @@ function renderRollbackFiles(data) {
     });
 
     html += '</div>';
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 async function loadFileVersions(filePath) {
@@ -2755,7 +2755,7 @@ function renderFileVersions(data, filePath) {
     });
 
     html += '</div>';
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 function closeVersionHistory() {
@@ -3021,7 +3021,7 @@ function renderRollbackHistory(data) {
     });
 
     html += '</div>';
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 function formatFileSize(bytes) {
