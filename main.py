@@ -683,6 +683,23 @@ async def get_diagnosis_report(diagnosis_id: str, db: AsyncSession = Depends(get
         print(f"❌ [Sherlock] Get report error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get diagnosis report")
 
+@app.get("/api/v1/debug/token-check/{shop}")
+async def debug_token_check(shop: str, db: Session = Depends(get_db)):
+    """Debug endpoint to check token status"""
+    store = db.query(Store).filter(Store.shop_domain == shop).first()
+    if not store:
+        return {"status": "NOT_FOUND", "message": "Store not in database"}
+    
+    if not store.access_token:
+        return {"status": "NO_TOKEN", "message": "Token is NULL or empty"}
+    
+    return {
+        "status": "TOKEN_EXISTS",
+        "token_preview": store.access_token[:6] + "...",
+        "token_length": len(store.access_token),
+        "created_at": str(store.created_at) if store.created_at else None
+    }
+
 @app.get("/api/v1/scan/debug/script-tags")
 async def debug_script_tags(shop: str):
     """Debug endpoint to check what script tags Shopify returns"""
@@ -807,22 +824,7 @@ async def debug_app_blocks(shop: str):
         except Exception as e:
             return {"shop": shop, "error": str(e)}
         
-@app.get("/api/v1/debug/token-check/{shop}")
-async def debug_token_check(shop: str, db: Session = Depends(get_db)):
-    """Debug endpoint to check token status"""
-    store = db.query(Store).filter(Store.shop_domain == shop).first()
-    if not store:
-        return {"status": "NOT_FOUND", "message": "Store not in database"}
-    
-    if not store.access_token:
-        return {"status": "NO_TOKEN", "message": "Token is NULL or empty"}
-    
-    return {
-        "status": "TOKEN_EXISTS",
-        "token_preview": store.access_token[:6] + "...",
-        "token_length": len(store.access_token),
-        "created_at": str(store.created_at) if store.created_at else None
-    }
+
         
 @app.get("/api/v1/apps/clear-unknown/{shop}")
 async def clear_unknown_apps(shop: str):
