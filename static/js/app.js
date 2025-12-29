@@ -227,7 +227,7 @@ function renderSuspectApps(apps) {
     });
     html += '</ul>';
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 // Render Next Best Action panel
@@ -366,7 +366,7 @@ function renderNextBestAction(apps, scanHistory) {
 
     html += '</div>';
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 // Format date helper
@@ -901,8 +901,18 @@ async function checkConflicts() {
 function renderConflicts(data) {
     const container = document.getElementById('conflicts-content');
 
+    const capabilityCard = `
+        <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 32px;">⚡</div>
+            <div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Conflict Detection</div>
+                <div style="color: #94a3b8; font-size: 14px;">Identifies apps that are known to conflict with each other based on community reports and technical analysis. Conflicts can cause visual bugs, slow performance, or broken features.</div>
+            </div>
+        </div>
+    `;
+
     if (!data.conflicts || data.conflicts.length === 0) {
-        container.innerHTML =
+        container.innerHTML = capabilityCard +
             '<div class="empty-state">' +
             '<div class="empty-state-icon">✅</div>' +
             '<h3>No Conflicts Found</h3>' +
@@ -926,7 +936,7 @@ function renderConflicts(data) {
             '</div>';
     });
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 // ==================== ORPHAN CODE TAB ====================
@@ -952,8 +962,18 @@ async function scanOrphanCode() {
 function renderOrphanCode(data) {
     const container = document.getElementById('orphan-content');
 
+    const capabilityCard = `
+        <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 32px;">🧹</div>
+            <div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Orphan Code Finder</div>
+                <div style="color: #94a3b8; font-size: 14px;">Finds code left behind by uninstalled apps. This leftover code can slow down your store and cause unexpected issues. Sherlock identifies it so you can clean it up.</div>
+            </div>
+        </div>
+    `;
+
     if (!data.orphans || data.orphans.length === 0) {
-        container.innerHTML =
+        container.innerHTML = capabilityCard +
             '<div class="empty-state">' +
             '<div class="empty-state-icon">✅</div>' +
             '<h3>No Orphan Code Found</h3>' +
@@ -976,7 +996,7 @@ function renderOrphanCode(data) {
             '</div>';
     });
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 // ==================== TIMELINE TAB ====================
@@ -1049,6 +1069,14 @@ function renderInstalledApps(data) {
     const insightText = insights.join('. ') + '.';
 
     let html = `
+        <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 32px;">📦</div>
+            <div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">App Monitoring</div>
+                <div style="color: #94a3b8; font-size: 14px;">Sherlock tracks all installed apps, monitors their behavior, and identifies which ones might cause problems. Each app is classified by category and risk level.</div>
+            </div>
+        </div>
+        
         <div class="apps-summary" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
             <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
                 <span style="font-size: 28px; font-weight: bold; color: var(--cyan);">${data.total}</span>
@@ -1151,7 +1179,7 @@ function renderInstalledApps(data) {
         </div>
     `;
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 async function loadTimeline() {
@@ -1175,8 +1203,18 @@ async function loadTimeline() {
 function renderTimeline(data) {
     const container = document.getElementById('timeline-content');
 
+    const capabilityCard = `
+        <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 32px;">📊</div>
+            <div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Performance Timeline</div>
+                <div style="color: #94a3b8; font-size: 14px;">Tracks how your store's performance changes over time. See when apps were installed, when issues appeared, and correlate changes with performance drops.</div>
+            </div>
+        </div>
+    `;
+
     if (!data.history || data.history.length === 0) {
-        container.innerHTML =
+        container.innerHTML = capabilityCard +
             '<div class="empty-state">' +
             '<div class="empty-state-icon">📈</div>' +
             '<h3>No Timeline Data</h3>' +
@@ -1199,7 +1237,7 @@ function renderTimeline(data) {
             '</div>';
     });
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 // ==================== COMMUNITY TAB ====================
@@ -1213,7 +1251,16 @@ async function loadCommunityInsights() {
         renderCommunityInsights(result);
     } catch (error) {
         console.error('Community insights error:', error);
-        container.innerHTML =
+        const capabilityCard = `
+            <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+                <div style="font-size: 32px;">👥</div>
+                <div>
+                    <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Community Reports</div>
+                    <div style="color: #94a3b8; font-size: 14px;">See what other merchants are reporting about Shopify apps. Community reports help identify problematic apps before they cause issues in your store.</div>
+                </div>
+            </div>
+        `;
+        container.innerHTML = capabilityCard +
             '<div class="empty-state">' +
             '<div class="empty-state-icon">👥</div>' +
             '<h3>Community Insights</h3>' +
@@ -1225,8 +1272,18 @@ async function loadCommunityInsights() {
 function renderCommunityInsights(data) {
     const container = document.getElementById('community-content');
 
+    const capabilityCard = `
+        <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 32px;">👥</div>
+            <div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Community Reports</div>
+                <div style="color: #94a3b8; font-size: 14px;">See what other merchants are reporting about Shopify apps. Community reports help identify problematic apps before they cause issues in your store.</div>
+            </div>
+        </div>
+    `;
+
     if (!data.insights || data.insights.length === 0) {
-        container.innerHTML =
+        container.innerHTML = capabilityCard +
             '<div class="empty-state">' +
             '<div class="empty-state-icon">👥</div>' +
             '<h3>No Issues Reported</h3>' +
@@ -1249,7 +1306,7 @@ function renderCommunityInsights(data) {
             '</div>';
     });
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 async function loadMostReportedApps() {
@@ -1380,7 +1437,7 @@ function renderDiagnosisAlert(diagnosis) {
     // Dismiss button
     html += '<button class="diagnosis-dismiss" onclick="dismissDiagnosis()">Got it, I\'ll check this</button>';
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 function dismissDiagnosis() {
@@ -2059,18 +2116,31 @@ function showReportError(message) {
         '<p style="color: var(--crimson-400);">❌ ' + escapeHtml(message) + '</p>' +
         '</div>';
 }
-// ==================== ROLLBACK TABS ====================
+
 // ==================== SIMPLE ROLLBACK VIEW ====================
 
 async function loadRestorePoints() {
     const container = document.getElementById('theme-protection-content');
+
+    const capabilityCard = `
+        <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 32px;">🔄</div>
+            <div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Rollback Protection</div>
+                <div style="color: #94a3b8; font-size: 14px;">Sherlock saves copies of your theme files every time they change. If an app causes problems, you can restore your theme to a previous working version with one click.</div>
+            </div>
+        </div>
+    `;
+
+    // Store capability card globally for this tab
+    window.rollbackCapabilityCard = capabilityCard;
 
     try {
         const result = await api('/rollback/files/' + state.shop);
         const files = result.files || [];
 
         if (files.length === 0) {
-            container.innerHTML =
+            container.innerHTML = capabilityCard +
                 '<div class="empty-state">' +
                 '<div class="empty-state-icon">🛡️</div>' +
                 '<h3>No Backups Yet</h3>' +
@@ -2089,7 +2159,7 @@ async function loadRestorePoints() {
         const restorePoints = restorePointsResult.restore_points || [];
 
         if (restorePoints.length === 0) {
-            container.innerHTML =
+            container.innerHTML = capabilityCard +
                 '<div class="empty-state">' +
                 '<div class="empty-state-icon">🛡️</div>' +
                 '<h3>No Restore Points Yet</h3>' +
@@ -2110,12 +2180,22 @@ async function loadRestorePoints() {
 async function loadRestorePointsFallback() {
     const container = document.getElementById('theme-protection-content');
 
+    const capabilityCard = window.rollbackCapabilityCard || `
+        <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 32px;">🔄</div>
+            <div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Rollback Protection</div>
+                <div style="color: #94a3b8; font-size: 14px;">Sherlock saves copies of your theme files every time they change. If an app causes problems, you can restore your theme to a previous working version with one click.</div>
+            </div>
+        </div>
+    `;
+
     try {
         const result = await api('/rollback/files/' + state.shop);
         const files = result.files || [];
 
         if (files.length === 0) {
-            container.innerHTML =
+            container.innerHTML = capabilityCard +
                 '<div class="empty-state">' +
                 '<div class="empty-state-icon">🛡️</div>' +
                 '<h3>No Backups Yet</h3>' +
@@ -2152,14 +2232,14 @@ async function loadRestorePointsFallback() {
 
         html += '</div>';
 
-        container.innerHTML = html;
+        container.innerHTML = capabilityCard + html;
 
         // Also load the files into advanced section
         loadRollbackFiles();
 
     } catch (error) {
         console.error('Fallback restore points error:', error);
-        container.innerHTML =
+        container.innerHTML = capabilityCard +
             '<div class="empty-state">' +
             '<div class="empty-state-icon">⚠️</div>' +
             '<h3>Error Loading Backups</h3>' +
@@ -2279,7 +2359,7 @@ function renderRestoreDateOptions(dates, fileCount) {
     html += '</div>';
     html += '</div>';
 
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 function confirmRestore(dateKey, dateLabel) {
@@ -2589,7 +2669,7 @@ function renderRollbackFiles(data) {
     });
 
     html += '</div>';
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 async function loadFileVersions(filePath) {
@@ -2675,7 +2755,7 @@ function renderFileVersions(data, filePath) {
     });
 
     html += '</div>';
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 function closeVersionHistory() {
@@ -2941,7 +3021,7 @@ function renderRollbackHistory(data) {
     });
 
     html += '</div>';
-    container.innerHTML = html;
+    container.innerHTML = capabilityCard + html;
 }
 
 function formatFileSize(bytes) {
