@@ -366,7 +366,7 @@ function renderNextBestAction(apps, scanHistory) {
 
     html += '</div>';
 
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 // Format date helper
