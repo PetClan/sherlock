@@ -1044,7 +1044,7 @@ function renderInstalledApps(data) {
     const appsWithScripts = data.apps ? data.apps.filter(a => a.injects_scripts).length : 0;
     const appsWithThemeCode = data.apps ? data.apps.filter(a => a.injects_theme_code).length : 0;
 
-    // Performance impact based on total risks
+    // Performance impact based on total risk
     let performanceImpact = 'Low';
     let performanceColor = 'var(--green)';
     if (totalRiskScore > 100 || highRiskApps >= 2) {
