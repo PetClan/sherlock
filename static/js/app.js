@@ -106,6 +106,7 @@ async function loadDashboard() {
         renderStats(apps, scanHistory, performance);
         renderRecentScans(scanHistory.scans || []);
         renderSuspectApps(apps);
+        renderNextBestAction(apps, scanHistory);
 
         // Load site health / protection status
         loadSiteHealth();
@@ -225,6 +226,145 @@ function renderSuspectApps(apps) {
             '</li>';
     });
     html += '</ul>';
+
+    container.innerHTML = html;
+}
+
+// Render Next Best Action panel
+function renderNextBestAction(apps, scanHistory) {
+    const container = document.getElementById('next-action-container');
+    if (!container) return;
+
+    // Gather data for decision
+    const suspectCount = apps.suspect_count || 0;
+    const highRiskApps = apps.apps ? apps.apps.filter(a => a.risk_score >= 40).length : 0;
+    const recentScans = scanHistory.scans || [];
+    const lastScan = recentScans.length > 0 ? recentScans[0] : null;
+
+    // Check for conflicts (from last scan)
+    let conflictsDetected = 0;
+    if (lastScan && lastScan.theme_issues) {
+        conflictsDetected = lastScan.theme_issues;
+    }
+
+    // Check days since last scan
+    let daysSinceLastScan = 999;
+    if (lastScan && lastScan.created_at) {
+        const lastScanDate = new Date(lastScan.created_at);
+        const now = new Date();
+        daysSinceLastScan = Math.floor((now - lastScanDate) / (1000 * 60 * 60 * 24));
+    }
+
+    // Check for recently installed apps (within 24 hours)
+    let recentAppInstalled = false;
+    let recentAppName = '';
+    if (apps.apps) {
+        for (const app of apps.apps) {
+            if (app.first_seen) {
+                const firstSeen = new Date(app.first_seen);
+                const hoursSinceInstall = (new Date() - firstSeen) / (1000 * 60 * 60);
+                if (hoursSinceInstall <= 24) {
+                    recentAppInstalled = true;
+                    recentAppName = app.app_name;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Determine the single most important action (priority order)
+    let action = null;
+
+    // Priority 1: Conflicts detected
+    if (conflictsDetected > 0) {
+        action = {
+            icon: '⚡',
+            message: `${conflictsDetected} potential conflict${conflictsDetected > 1 ? 's' : ''} found.`,
+            button: 'Review Now',
+            buttonAction: "switchTab('conflicts')",
+            style: 'danger'
+        };
+    }
+    // Priority 2: High-risk apps detected
+    else if (highRiskApps > 0) {
+        action = {
+            icon: '⚠️',
+            message: `${highRiskApps} high-risk app${highRiskApps > 1 ? 's' : ''} may impact your store.`,
+            button: 'Review Apps',
+            buttonAction: "switchTab('apps')",
+            style: 'warning'
+        };
+    }
+    // Priority 3: Orphan code (TODO: needs orphan code data)
+    // Priority 4: Recent app installed (unscanned)
+    else if (recentAppInstalled) {
+        action = {
+            icon: '🔍',
+            message: `New app "${recentAppName}" was installed recently.`,
+            button: 'Run Scan',
+            buttonAction: 'startFullScan()',
+            style: 'info'
+        };
+    }
+    // Priority 5: No scan in 7+ days
+    else if (daysSinceLastScan >= 7) {
+        action = {
+            icon: '🕐',
+            message: `It's been ${daysSinceLastScan} days since your last scan.`,
+            button: 'Run Scan',
+            buttonAction: 'startFullScan()',
+            style: 'info'
+        };
+    }
+    // Priority 6: Everything OK
+    else {
+        action = {
+            icon: '✅',
+            message: 'Your store looks healthy. Sherlock is monitoring 24/7.',
+            button: null,
+            style: 'success'
+        };
+    }
+
+    // Render the action panel
+    const bgColors = {
+        danger: 'rgba(255,107,107,0.15)',
+        warning: 'rgba(245,158,11,0.15)',
+        info: 'rgba(0,212,255,0.15)',
+        success: 'rgba(16,185,129,0.15)'
+    };
+    const borderColors = {
+        danger: '#ff6b6b',
+        warning: '#f59e0b',
+        info: '#00d4ff',
+        success: '#10b981'
+    };
+
+    let html = `
+        <div style="
+            background: ${bgColors[action.style]};
+            border: 1px solid ${borderColors[action.style]};
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 24px;">${action.icon}</span>
+                <span style="color: #e2e8f0; font-size: 16px;">${action.message}</span>
+            </div>
+    `;
+
+    if (action.button) {
+        html += `
+            <button class="btn btn-primary" onclick="${action.buttonAction}" style="white-space: nowrap;">
+                ${action.button}
+            </button>
+        `;
+    }
+
+    html += '</div>';
 
     container.innerHTML = html;
 }
