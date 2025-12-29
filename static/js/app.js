@@ -227,7 +227,7 @@ function renderSuspectApps(apps) {
     });
     html += '</ul>';
 
-    container.innerHTML = capabilityCard + html;
+    container.innerHTML = html;
 }
 
 // Render Next Best Action panel
