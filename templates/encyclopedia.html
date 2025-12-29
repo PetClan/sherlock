@@ -380,6 +380,7 @@
 
         <div class="nav-section">
             <div class="nav-section-title">Intelligence</div>
+            <a href="#app-classification" class="nav-link">App Classification System</a>
             <a href="#app-learning" class="nav-link">App Signature Learning</a>
             <a href="#reddit-google" class="nav-link">Reddit & Google Integration</a>
             <a href="#conflicts-db" class="nav-link">Known Conflicts Database</a>
@@ -731,6 +732,198 @@
                 <div class="callout-title">⚠️ Why This Matters</div>
                 <p>Clean demo stores were showing 70+ "issues" because Sherlock was flagging normal theme patterns. Now
                     it only flags potentially problematic CSS from apps.</p>
+            </div>
+        </div>
+
+        <!-- ==================== SECTION: App Classification System ==================== -->
+        <div class="section" id="app-classification">
+            <h2>🏷️ App Classification System</h2>
+        
+            <h3>Overview</h3>
+            <p>Sherlock uses a 5-layer classification system to ensure every app is identified and categorized. No app should
+                ever be "unknown" without an explanation.</p>
+        
+            <h3>The 4 Questions Every App Must Answer</h3>
+            <ol>
+                <li><strong>What is this app?</strong> - Name, app ID, developer, install date</li>
+                <li><strong>What category?</strong> - Reviews, Shipping, Marketing, etc.</li>
+                <li><strong>How does it interact?</strong> - Theme injection, ScriptTag, App block, Admin-only</li>
+                <li><strong>What risk level?</strong> - Baseline risk before deep scan</li>
+            </ol>
+        
+            <h3>The 5-Layer Classification System</h3>
+            <table>
+                <tr>
+                    <th>Layer</th>
+                    <th>Method</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>Shopify Identifiers</td>
+                    <td>app_id, title, handle, developer - guaranteed source of truth</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Deterministic Rules</td>
+                    <td>Script = "Storefront", theme asset = "Theme Modifying"</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Known Apps Registry</td>
+                    <td>Top 500+ apps with pre-defined categories and risk scores</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>AI-Assisted (Future)</td>
+                    <td>For unknown apps when metadata is thin</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>"Unknown but Safe"</td>
+                    <td>Honest messaging when confidence is low</td>
+                </tr>
+            </table>
+        
+            <h3>App Categories</h3>
+            <table>
+                <tr>
+                    <th>Category</th>
+                    <th>Risk Level</th>
+                    <th>Merchant Explanation</th>
+                </tr>
+                <tr>
+                    <td>⭐ Reviews</td>
+                    <td style="color: #10b981;">Low-Medium</td>
+                    <td>Usually safe. Adds some code to show stars and reviews.</td>
+                </tr>
+                <tr>
+                    <td>📦 Shipping</td>
+                    <td style="color: #10b981;">Low</td>
+                    <td>Minimal impact. Usually just adds a small banner.</td>
+                </tr>
+                <tr>
+                    <td>📧 Marketing</td>
+                    <td style="color: #f59e0b;">Medium</td>
+                    <td>Can add multiple scripts. Too many can slow your store.</td>
+                </tr>
+                <tr>
+                    <td>📊 Analytics</td>
+                    <td style="color: #10b981;">Low</td>
+                    <td>Runs quietly in background. Rarely causes visual issues.</td>
+                </tr>
+                <tr>
+                    <td>💳 Checkout</td>
+                    <td style="color: #ff6b6b;">High</td>
+                    <td>Critical for sales. Problems here directly lose you money.</td>
+                </tr>
+                <tr>
+                    <td>🏗️ Page Builder</td>
+                    <td style="color: #ff6b6b;">High</td>
+                    <td>Deep theme changes. If broken, whole store looks broken.</td>
+                </tr>
+                <tr>
+                    <td>🔍 SEO</td>
+                    <td style="color: #10b981;">Low</td>
+                    <td>Usually just adds invisible code for search engines.</td>
+                </tr>
+                <tr>
+                    <td>🏷️ Discounts</td>
+                    <td style="color: #f59e0b;">Medium</td>
+                    <td>Can conflict with other discount apps.</td>
+                </tr>
+                <tr>
+                    <td>🛒 Upsell</td>
+                    <td style="color: #f59e0b;">Medium</td>
+                    <td>Too many can clutter your store.</td>
+                </tr>
+                <tr>
+                    <td>💬 Customer Service</td>
+                    <td style="color: #10b981;">Low</td>
+                    <td>Usually just adds a chat bubble. Rarely causes problems.</td>
+                </tr>
+                <tr>
+                    <td>👥 Social Proof</td>
+                    <td style="color: #f59e0b;">Medium</td>
+                    <td>Multiple apps can create annoying popups.</td>
+                </tr>
+                <tr>
+                    <td>🛡️ Trust Badges</td>
+                    <td style="color: #10b981;">Low</td>
+                    <td>Simple images. Very unlikely to cause issues.</td>
+                </tr>
+                <tr>
+                    <td>🔄 Subscriptions</td>
+                    <td style="color: #ff6b6b;">High</td>
+                    <td>Deeply integrated with checkout. Complex setup needed.</td>
+                </tr>
+                <tr>
+                    <td>🌐 Translation</td>
+                    <td style="color: #f59e0b;">Medium</td>
+                    <td>Changes text across entire store. Can slow things down.</td>
+                </tr>
+                <tr>
+                    <td>⚙️ Admin Only</td>
+                    <td style="color: #10b981;">Very Low</td>
+                    <td>Works behind the scenes. Customers never see it.</td>
+                </tr>
+                <tr>
+                    <td>❓ Unknown</td>
+                    <td style="color: #f59e0b;">Medium</td>
+                    <td>Sherlock is monitoring. No problems detected so far.</td>
+                </tr>
+            </table>
+        
+            <h3>Known Apps Registry</h3>
+            <p>Sherlock maintains a registry of popular apps with pre-assigned categories:</p>
+            <div class="code-block">KNOWN_APPS_REGISTRY = {
+                "pagefly": {"risk": 40, "category": "Page Builder"},
+                "judge.me": {"risk": 15, "category": "Reviews"},
+                "klaviyo": {"risk": 15, "category": "Marketing"},
+                "hextom": {"risk": 10, "category": "Shipping"},
+                "recharge": {"risk": 30, "category": "Subscriptions"},
+                // ... 30+ more apps
+                }</div>
+        
+            <h3>Database Fields</h3>
+            <ul>
+                <li><code>category</code> - The assigned category (Reviews, Shipping, etc.)</li>
+                <li><code>category_reason</code> - Merchant-friendly explanation</li>
+            </ul>
+        
+            <h3>Detection Methods</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>What It Detects</th>
+                    <th>Status</th>
+                </tr>
+                <tr>
+                    <td>Script Tags API</td>
+                    <td>Apps that inject JavaScript</td>
+                    <td style="color: #10b981;">✅ Done</td>
+                </tr>
+                <tr>
+                    <td>App Blocks</td>
+                    <td>Apps via theme settings_data.json</td>
+                    <td style="color: #10b981;">✅ Done</td>
+                </tr>
+                <tr>
+                    <td>Theme File Scanning</td>
+                    <td>App snippets in theme files</td>
+                    <td style="color: #f59e0b;">⏳ Planned</td>
+                </tr>
+                <tr>
+                    <td>AI Classification</td>
+                    <td>Unknown apps via description analysis</td>
+                    <td style="color: #f59e0b;">⏳ Planned</td>
+                </tr>
+            </table>
+        
+            <div class="callout callout-warning">
+                <div class="callout-title">⚠️ Classification Rule</div>
+                <p>A scan cannot complete if any app is unclassified. Every app must have: a category, a risk baseline, and a
+                    reason for that risk. No blanks allowed.</p>
             </div>
         </div>
 
