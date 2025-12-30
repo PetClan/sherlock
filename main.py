@@ -708,7 +708,7 @@ async def get_diagnosis_report(diagnosis_id: str, db: AsyncSession = Depends(get
 @app.get("/api/v1/debug/token-check/{shop}")
 async def debug_token_check(shop: str, db: AsyncSession = Depends(get_db)):
     """Debug endpoint to check token status"""
-    result = await db.execute(select(Store).where(Store.shop_domain == shop))
+    result = await db.execute(select(Store).where(Store.shopify_domain == shop))
     store = result.scalar_one_or_none()
     
     if not store:
