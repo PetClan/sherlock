@@ -79,6 +79,18 @@ function hideProgressBanner() {
     }
 }
 
+function showProgressMessage(message) {
+    const progressBanner = document.getElementById('scan-progress');
+    progressBanner.style.display = 'block';
+    progressBanner.innerHTML =
+        '<div class="progress-banner">' +
+        '<div class="progress-content">' +
+        '<div class="spinner"></div>' +
+        '<span>' + message + '</span>' +
+        '</div>' +
+        '</div>';
+}
+
 // Stop polling helper
 function stopPolling() {
     if (state.pollInterval) {
@@ -591,11 +603,14 @@ function pollScanStatus(diagnosisId) {
             if (status.status === 'completed' || status.status === 'failed') {
                 stopPolling();
                 if (status.status === 'completed') {
-                    // Also run monitoring scan to update Store Protection Status
+                    // Show completion, then update protection status
+                    showProgressMessage('Investigation complete! Updating protection status...');
                     await runMonitoringScanSilent();
+                    hideProgressBanner();
                     showNotification('Investigation completed!', 'success');
                     loadDashboard();
                 } else {
+                    hideProgressBanner();
                     showError('Investigation failed: ' + (status.error || 'Unknown error'));
                 }
             }    
