@@ -261,8 +261,8 @@ function renderNextBestAction(apps, scanHistory) {
 
     // Check days since last scan
     let daysSinceLastScan = 999;
-    if (lastScan && lastScan.created_at) {
-        const lastScanDate = new Date(lastScan.created_at);
+    if (lastScan && (lastScan.completed_at || lastScan.started_at)) {
+        const lastScanDate = new Date(lastScan.completed_at || lastScan.started_at);
         const now = new Date();
         daysSinceLastScan = Math.floor((now - lastScanDate) / (1000 * 60 * 60 * 24));
     }
