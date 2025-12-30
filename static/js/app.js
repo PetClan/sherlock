@@ -604,7 +604,7 @@ function pollScanStatus(diagnosisId) {
                 stopPolling();
                 if (status.status === 'completed') {
                     // Show completion, then update protection status
-                    showProgressMessage('Investigation complete! Updating protection status...');
+                    showProgressMessage('Investigation complete! Updating protection status... This may take a minute. You can navigate away.');
                     await runMonitoringScanSilent();
                     hideProgressBanner();
                     showNotification('Investigation completed!', 'success');
