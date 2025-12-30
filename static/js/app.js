@@ -450,11 +450,14 @@ function renderProtectionStatus(scan, action) {
         riskText = 'MEDIUM RISK';
     }
 
-    // Build risk warnings HTML
+    // Build risk warnings HTML (filter out "no changes" message since it's redundant)
     var warningsHtml = '';
-    if (scan.risk_reasons && scan.risk_reasons.length > 0) {
+    var filteredReasons = (scan.risk_reasons || []).filter(function (reason) {
+        return !reason.toLowerCase().includes('no significant changes');
+    });
+    if (filteredReasons.length > 0) {
         warningsHtml = '<div class="risk-warnings">';
-        scan.risk_reasons.forEach(function (reason) {
+        filteredReasons.forEach(function (reason) {
             var warningClass = reason.toLowerCase().includes('high') ? 'high' : '';
             warningsHtml += '<div class="risk-warning-item ' + warningClass + '">⚠️ ' + escapeHtml(reason) + '</div>';
         });
