@@ -1187,6 +1187,18 @@ function renderInstalledApps(data) {
         const riskClass = app.risk_score >= 70 ? 'danger' : app.risk_score >= 40 ? 'warning' : 'success';
         const riskScore = app.risk_score !== null ? app.risk_score : '—';
 
+        // Build risk tooltip
+        let riskTooltip = '';
+        if (app.risk_reasons && app.risk_reasons.length > 0) {
+            riskTooltip = app.risk_reasons.join(' • ');
+        } else if (app.risk_score >= 40) {
+            riskTooltip = 'High risk - click for details';
+        } else if (app.risk_score >= 16) {
+            riskTooltip = 'Medium risk - click for details';
+        } else {
+            riskTooltip = 'Low risk - app appears safe';
+        }
+
         let details = [];
         if (app.injects_scripts) details.push('📜 Scripts');
         if (app.injects_theme_code) details.push('🎨 Theme Code');
@@ -1207,7 +1219,7 @@ function renderInstalledApps(data) {
                 </td>
                 <td><span style="cursor: pointer; color: #94a3b8;" onclick="showCategoryExplainer('${app.category || 'Unknown'}')">${app.category || 'Unknown'} ℹ️</span></td>
                 <td>${installDate}</td>
-                <td><span class="badge badge-${riskClass}">${riskScore}</span></td>
+                <td><span class="badge badge-${riskClass}" style="cursor: pointer;" title="${escapeHtml(riskTooltip)}" onclick='openAppDetailsModal(${JSON.stringify(app).replace(/'/g, "&#39;")})'>${riskScore}</span></td>
                 <td>${lastScanned}</td>
                 <td><button class="btn btn-sm ${app.risk_score >= 40 ? 'btn-danger' : app.risk_score >= 16 ? 'btn-warning' : 'btn-secondary'}" onclick='openAppDetailsModal(${JSON.stringify(app).replace(/'/g, "&#39;")})'>${app.risk_score >= 40 ? '⚠️ Fix Issue' : app.risk_score >= 16 ? '👁️ Review Impact' : 'See Details'}</button></td>
             </tr>
