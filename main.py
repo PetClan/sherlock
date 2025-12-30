@@ -391,6 +391,28 @@ async def install_page(request: Request):
         </html>
     """, status_code=500)
 
+@app.get("/faq", response_class=HTMLResponse)
+async def faq_page(request: Request):
+    """
+    Serve the FAQ page for merchants.
+    """
+    templates_path = os.path.join(os.path.dirname(__file__), "templates", "faq.html")
+    
+    if os.path.exists(templates_path):
+        with open(templates_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    
+    return HTMLResponse(content="""
+        <html>
+            <head><title>FAQ - Sherlock</title></head>
+            <body>
+                <h1>FAQ page not found</h1>
+                <p>Please ensure templates/faq.html exists.</p>
+            </body>
+        </html>
+    """, status_code=500)
+
 # ==================== SEO Routes ====================
 
 @app.get("/robots.txt", include_in_schema=False)

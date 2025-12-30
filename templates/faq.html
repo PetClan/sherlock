@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frequently Asked Questions - Sherlock</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+    <style>
+        :root {
+            --navy-900: #0f172a;
+            --navy-800: #1e293b;
+            --navy-700: #334155;
+            --navy-600: #475569;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --slate-200: #e2e8f0;
+            --white: #ffffff;
+            --emerald-400: #34d399;
+            --emerald-500: #10b981;
+            --amber-400: #fbbf24;
+            --red-400: #f87171;
+            --gold: #d4a843;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--navy-900);
+            color: var(--slate-300);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--navy-800);
+            border-bottom: 1px solid var(--navy-700);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-name {
+            color: var(--white);
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .logo-tagline {
+            color: var(--gold);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .back-link {
+            color: var(--slate-400);
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--white);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .hero-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 {
+            color: var(--white);
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            color: var(--slate-400);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Search */
+        .search-container {
+            margin-bottom: 40px;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: var(--slate-400);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 20px 16px 48px;
+            font-size: 16px;
+            border: 2px solid var(--navy-700);
+            border-radius: 12px;
+            background: var(--navy-800);
+            color: var(--white);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--gold);
+        }
+
+        .search-input::placeholder {
+            color: var(--slate-400);
+        }
+
+        .search-results-info {
+            margin-top: 12px;
+            font-size: 14px;
+            color: var(--slate-400);
+            text-align: center;
+        }
+
+        /* Category */
+        .category {
+            margin-bottom: 32px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--navy-700);
+        }
+
+        .category-icon {
+            font-size: 24px;
+        }
+
+        .category-title {
+            color: var(--gold);
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        /* FAQ Item */
+        .faq-item {
+            background: var(--navy-800);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            border: 1px solid var(--navy-700);
+            transition: border-color 0.2s;
+        }
+
+        .faq-item:hover {
+            border-color: var(--navy-600);
+        }
+
+        .faq-item.hidden {
+            display: none;
+        }
+
+        .faq-question {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 20px 24px;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            color: var(--white);
+            font-size: 16px;
+            font-weight: 500;
+            font-family: inherit;
+        }
+
+        .faq-question:hover {
+            background: var(--navy-700);
+        }
+
+        .faq-arrow {
+            color: var(--gold);
+            font-size: 14px;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+
+        .faq-item.open .faq-arrow {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 1000px;
+        }
+
+        .faq-answer-inner {
+            padding: 0 24px 24px;
+            color: var(--slate-300);
+        }
+
+        .faq-answer-inner p {
+            margin-bottom: 12px;
+        }
+
+        .faq-answer-inner p:last-child {
+            margin-bottom: 0;
+        }
+
+        .faq-answer-inner ul,
+        .faq-answer-inner ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .faq-answer-inner li {
+            margin-bottom: 6px;
+        }
+
+        /* Highlight for emphasis */
+        .highlight {
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        .highlight-green {
+            color: var(--emerald-400);
+        }
+
+        .highlight-amber {
+            color: var(--amber-400);
+        }
+
+        .highlight-red {
+            color: var(--red-400);
+        }
+
+        /* Info box */
+        .info-box {
+            background: rgba(52, 211, 153, 0.1);
+            border-left: 4px solid var(--emerald-400);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+        }
+
+        .info-box-title {
+            color: var(--emerald-400);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .warning-box {
+            background: rgba(251, 191, 36, 0.1);
+            border-left: 4px solid var(--amber-400);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 12px 0;
+        }
+
+        .warning-box-title {
+            color: var(--amber-400);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        /* Category table */
+        .category-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+
+        .category-table th,
+        .category-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--navy-700);
+        }
+
+        .category-table th {
+            color: var(--white);
+            background: var(--navy-900);
+            font-weight: 600;
+        }
+
+        .category-table tr:hover {
+            background: var(--navy-700);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 32px;
+            border-top: 1px solid var(--navy-700);
+            color: var(--slate-400);
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Search highlight */
+        .search-highlight {
+            background: var(--gold);
+            color: var(--navy-900);
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 600px) {
+            .header {
+                padding: 16px 20px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .faq-question {
+                padding: 16px 20px;
+                font-size: 15px;
+            }
+
+            .faq-answer-inner {
+                padding: 0 20px 20px;
+            }
+
+            .category-table {
+                font-size: 13px;
+            }
+
+            .category-table th,
+            .category-table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon">🔍</span>
+                <div class="logo-text">
+                    <span class="logo-name">SHERLOCK</span>
+                    <span class="logo-tagline">Your Store's Detective</span>
+                </div>
+            </div>
+            <a href="/dashboard" class="back-link">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero -->
+        <div class="hero">
+            <div class="hero-icon">❓</div>
+            <h1>Frequently Asked Questions</h1>
+            <p>Everything you need to know about how Sherlock protects your Shopify store</p>
+        </div>
+
+        <!-- Search -->
+        <div class="search-container">
+            <div class="search-wrapper">
+                <span class="search-icon">🔎</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search questions...">
+            </div>
+            <div class="search-results-info" id="searchResultsInfo"></div>
+        </div>
+
+        <!-- ==================== CATEGORY: Getting Started ==================== -->
+        <div class="category" id="cat-getting-started">
+            <div class="category-header">
+                <span class="category-icon">🚀</span>
+                <h2 class="category-title">Getting Started</h2>
+            </div>
+
+            <div class="faq-item" data-category="getting-started">
+                <button class="faq-question">
+                    What is Sherlock and what does it do?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Sherlock is your store's detective — a Shopify app that <span class="highlight">monitors your
+                                store 24/7</span> to protect it from app-related problems.</p>
+                        <p>Sherlock helps you:</p>
+                        <ul>
+                            <li><strong>Detect app conflicts</strong> before they break your store</li>
+                            <li><strong>Find hidden CSS issues</strong> that make your store look broken</li>
+                            <li><strong>Identify orphan code</strong> left behind by uninstalled apps</li>
+                            <li><strong>Restore your theme</strong> to any previous date if something goes wrong</li>
+                            <li><strong>Research apps</strong> before you install them</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="getting-started">
+                <button class="faq-question">
+                    How does Sherlock protect my store?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Sherlock runs <span class="highlight">automatic daily scans</span> during your store's quiet
+                            hours (1-6 AM in your timezone). Each scan:</p>
+                        <ul>
+                            <li>Takes a snapshot of all your theme files (so you can restore later)</li>
+                            <li>Checks for CSS conflicts that could affect your store's appearance</li>
+                            <li>Tracks which scripts your apps are injecting</li>
+                            <li>Measures your store's performance</li>
+                            <li>Compares against known app conflict patterns</li>
+                        </ul>
+                        <p>If Sherlock finds something concerning, you'll see it on your dashboard with a clear
+                            explanation of what to do.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="getting-started">
+                <button class="faq-question">
+                    Do I need to do anything after installing Sherlock?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Nope! Sherlock starts working automatically. After installation:</p>
+                        <ul>
+                            <li>Your first scan runs immediately</li>
+                            <li>Daily automatic scans begin that night (1-6 AM your time)</li>
+                            <li>Theme backups start accumulating for future restore points</li>
+                        </ul>
+                        <p>You can check your dashboard anytime to see your store's health, or run an on-demand scan if
+                            you've just installed a new app.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CATEGORY: Theme Protection ==================== -->
+        <div class="category" id="cat-theme-protection">
+            <div class="category-header">
+                <span class="category-icon">🛡️</span>
+                <h2 class="category-title">Theme Protection & Backups</h2>
+            </div>
+
+            <div class="faq-item" data-category="theme-protection">
+                <button class="faq-question">
+                    What are "theme snapshots"?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Every day, Sherlock saves a complete copy of your theme — every file, every line of code. We
+                            call this a <span class="highlight">theme snapshot</span>.</p>
+                        <p>Think of it like a time machine for your store's design. If an app breaks something, you can
+                            restore your theme to exactly how it looked on any previous day.</p>
+                        <div class="info-box">
+                            <div class="info-box-title">💡 What gets backed up</div>
+                            <p>All theme files including: layouts, sections, snippets, templates, CSS, JavaScript,
+                                images, and configuration files.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="theme-protection">
+                <button class="faq-question">
+                    What do "274 files backed up" and "2409 restore points" mean?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p><span class="highlight">Files backed up</span> (e.g., 274) = The total number of unique files
+                            in your theme that Sherlock has captured. This includes everything: layouts, sections,
+                            snippets, CSS, JavaScript, images, etc.</p>
+                        <p><span class="highlight">Restore points</span> (e.g., 2409) = The total number of file
+                            versions stored. Each daily scan saves a new version of each file.</p>
+                        <p><strong>Example:</strong> If you have 274 files and Sherlock has been running for 9 days,
+                            you'd have roughly 274 × 9 = 2,466 restore points.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="theme-protection">
+                <button class="faq-question">
+                    How long are my backups kept?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>It depends on your plan:</p>
+                        <table class="category-table">
+                            <tr>
+                                <th>Plan</th>
+                                <th>Backup History</th>
+                            </tr>
+                            <tr>
+                                <td>Free Trial</td>
+                                <td>7 days</td>
+                            </tr>
+                            <tr>
+                                <td>Standard ($29/mo)</td>
+                                <td>7 days</td>
+                            </tr>
+                            <tr>
+                                <td>Professional ($69/mo)</td>
+                                <td>30 days</td>
+                            </tr>
+                        </table>
+                        <p>Older backups are automatically cleaned up to keep your data fresh and relevant.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="theme-protection">
+                <button class="faq-question">
+                    Does Sherlock backup my products, orders, or customer data?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p><strong>No.</strong> Sherlock only backs up your <span class="highlight">theme files</span> —
+                            the code that controls how your store looks.</p>
+                        <p>Your products, orders, customers, and other store data are completely separate and are
+                            <strong>not affected</strong> by anything Sherlock does, including restores.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CATEGORY: Restoring Your Theme ==================== -->
+        <div class="category" id="cat-restoring">
+            <div class="category-header">
+                <span class="category-icon">🔄</span>
+                <h2 class="category-title">Restoring Your Theme</h2>
+            </div>
+
+            <div class="faq-item" data-category="restoring">
+                <button class="faq-question">
+                    How does the rollback/restore feature work?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>When you click <span class="highlight">"Restore to [Date]"</span>, Sherlock:</p>
+                        <ol>
+                            <li>Looks up the saved version of each file from that date</li>
+                            <li>Sends each file back to Shopify one at a time</li>
+                            <li>Shopify overwrites the current file with the old version</li>
+                        </ol>
+                        <p>You'll see real-time progress as each file is restored. A typical theme with ~274 files takes
+                            about 4-5 minutes.</p>
+                        <div class="warning-box">
+                            <div class="warning-box-title">⚠️ Important</div>
+                            <p>This is a <strong>real restore</strong> — your live store changes immediately. It's not a
+                                preview. Make sure you want to restore before clicking!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="restoring">
+                <button class="faq-question">
+                    Can I restore multiple times?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p><strong>Yes!</strong> You can restore up to <span class="highlight">3 times per day</span>.
+                        </p>
+                        <p>Each restore is independent — if you restore to December 8th, then decide you want December
+                            15th instead, just pick the new date and restore again. Your theme becomes the December 15th
+                            version.</p>
+                        <p>The daily limit resets at midnight and exists to prevent accidents and protect your store
+                            from too many rapid changes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="restoring">
+                <button class="faq-question">
+                    Can I undo a restore?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>There's no "undo" button, but you can <span class="highlight">restore to a different
+                                date</span>.</p>
+                        <p>For example: if you restored to December 1st but realize you actually wanted yesterday's
+                            version, just go back to the Rollback tab and restore to yesterday instead.</p>
+                        <p>That's why we show a confirmation modal before every restore — to make sure you're ready!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="restoring">
+                <button class="faq-question">
+                    What happens to files added after the restore date?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>New files that were added <strong>after</strong> your restore date are <span
+                                class="highlight">not deleted</span>.</p>
+                        <p>For example: If you restore to December 1st, but an app added a new file on December 5th,
+                            that file stays in your theme.</p>
+                        <p>Sherlock restores <em>existing files</em> to their previous state but doesn't remove files
+                            that didn't exist on the restore date.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CATEGORY: Daily Scans ==================== -->
+        <div class="category" id="cat-scans">
+            <div class="category-header">
+                <span class="category-icon">⏰</span>
+                <h2 class="category-title">Daily Scans & Monitoring</h2>
+            </div>
+
+            <div class="faq-item" data-category="scans">
+                <button class="faq-question">
+                    When does Sherlock scan my store?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Sherlock scans your store automatically every day during <span class="highlight">1:00 AM -
+                                6:00 AM in your store's local timezone</span>.</p>
+                        <p>We chose these hours because:</p>
+                        <ul>
+                            <li>It's typically your store's quietest time</li>
+                            <li>Scanning won't affect your customers' experience</li>
+                            <li>Any issues are caught before your busy daytime hours</li>
+                        </ul>
+                        <p>You can also run an <strong>on-demand scan</strong> anytime from your dashboard (up to 5 per
+                            day).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="scans">
+                <button class="faq-question">
+                    What do the risk levels mean (Low, Medium, High)?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>After each scan, Sherlock calculates an overall risk level:</p>
+                        <table class="category-table">
+                            <tr>
+                                <th>Level</th>
+                                <th>What It Means</th>
+                            </tr>
+                            <tr>
+                                <td><span class="highlight-green">Low</span></td>
+                                <td>Few or no concerning changes. Your store looks healthy.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="highlight-amber">Medium</span></td>
+                                <td>Some changes detected that might need attention.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="highlight-red">High</span></td>
+                                <td>Significant changes detected. We recommend investigating.</td>
+                            </tr>
+                        </table>
+                        <p>Factors that increase risk: many files changed, new scripts added, CSS conflicts found, slow
+                            page load, or poor performance scores.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="scans">
+                <button class="faq-question">
+                    How many on-demand scans can I run?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>You can run up to <span class="highlight">5 on-demand scans per day</span>. This limit resets
+                            at midnight.</p>
+                        <p>Daily automatic scans don't count toward this limit — those happen automatically regardless.
+                        </p>
+                        <p>Most merchants only need 1-2 on-demand scans after installing or removing an app.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CATEGORY: App Conflicts ==================== -->
+        <div class="category" id="cat-conflicts">
+            <div class="category-header">
+                <span class="category-icon">⚡</span>
+                <h2 class="category-title">App Conflicts & Issues</h2>
+            </div>
+
+            <div class="faq-item" data-category="conflicts">
+                <button class="faq-question">
+                    What is a CSS conflict?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>A CSS conflict happens when an app adds styling code that accidentally affects other parts of
+                            your store.</p>
+                        <p><strong>The problem:</strong> Some apps add CSS with generic names like <code>.button</code>
+                            or <code>.card</code> that change <em>every</em> button or card on your store — not just the
+                            app's own elements.</p>
+                        <p><strong>Symptoms you might see:</strong></p>
+                        <ul>
+                            <li>Buttons look different after installing an app</li>
+                            <li>Text colors or fonts changed unexpectedly</li>
+                            <li>Layout shifts or spacing issues</li>
+                            <li>Elements overlapping or hidden</li>
+                        </ul>
+                        <p>Sherlock detects these risky CSS patterns and tells you which app is responsible.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="conflicts">
+                <button class="faq-question">
+                    What is "orphan code"?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Orphan code is <span class="highlight">leftover code from apps you've uninstalled</span>.
+                            Many apps don't clean up after themselves when you remove them.</p>
+                        <p><strong>Why it's a problem:</strong></p>
+                        <ul>
+                            <li>Slows down your store (loading code that does nothing)</li>
+                            <li>Can cause unexpected behavior or errors</li>
+                            <li>May conflict with new apps you install</li>
+                            <li>Clutters your theme files</li>
+                        </ul>
+                        <p>Sherlock detects orphan code by comparing scripts in your theme against your currently
+                            installed apps. If we find code from an app you no longer have, we'll flag it.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="conflicts">
+                <button class="faq-question">
+                    What are "known app conflicts"?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Sherlock maintains a database of <span class="highlight">apps that are known to conflict with
+                                each other</span>. This information comes from:</p>
+                        <ul>
+                            <li>Shopify Community Forums</li>
+                            <li>Reddit r/shopify discussions</li>
+                            <li>Facebook Shopify groups</li>
+                            <li>Common support patterns</li>
+                        </ul>
+                        <p><strong>Examples of conflict pairs:</strong></p>
+                        <ul>
+                            <li><strong>Page Builders:</strong> PageFly + GemPages (both heavily modify theme code)</li>
+                            <li><strong>Review Apps:</strong> Loox + Judge.me (duplicate widgets, layout issues)</li>
+                            <li><strong>Subscription Apps:</strong> ReCharge + Bold (can break checkout)</li>
+                        </ul>
+                        <p>If you have two conflicting apps installed, Sherlock will warn you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CATEGORY: App Categories ==================== -->
+        <div class="category" id="cat-app-categories">
+            <div class="category-header">
+                <span class="category-icon">🏷️</span>
+                <h2 class="category-title">Understanding App Categories</h2>
+            </div>
+
+            <div class="faq-item" data-category="app-categories">
+                <button class="faq-question">
+                    What do the app categories and risk levels mean?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Sherlock categorizes every app and assigns a baseline risk based on <em>what type of app it
+                                is</em> — not whether it's good or bad.</p>
+                        <table class="category-table">
+                            <tr>
+                                <th>Category</th>
+                                <th>Risk</th>
+                                <th>Why</th>
+                            </tr>
+                            <tr>
+                                <td>⭐ Reviews</td>
+                                <td><span class="highlight-amber">Medium</span></td>
+                                <td>Multiple review apps can conflict with each other.</td>
+                            </tr>
+                            <tr>
+                                <td>📦 Shipping</td>
+                                <td><span class="highlight-green">Low</span></td>
+                                <td>Usually just shows rates. Rarely causes problems.</td>
+                            </tr>
+                            <tr>
+                                <td>📧 Marketing</td>
+                                <td><span class="highlight-green">Low</span></td>
+                                <td>Email/SMS apps work behind the scenes.</td>
+                            </tr>
+                            <tr>
+                                <td>🎨 Page Builder</td>
+                                <td><span class="highlight-red">High</span></td>
+                                <td>Deep theme changes. If broken, whole store looks broken.</td>
+                            </tr>
+                            <tr>
+                                <td>🔍 SEO</td>
+                                <td><span class="highlight-green">Low</span></td>
+                                <td>Usually just adds invisible code for search engines.</td>
+                            </tr>
+                            <tr>
+                                <td>🏷️ Discounts</td>
+                                <td><span class="highlight-amber">Medium</span></td>
+                                <td>Can conflict with other discount apps.</td>
+                            </tr>
+                            <tr>
+                                <td>🛒 Upsell</td>
+                                <td><span class="highlight-amber">Medium</span></td>
+                                <td>Too many can clutter your store.</td>
+                            </tr>
+                            <tr>
+                                <td>💬 Customer Service</td>
+                                <td><span class="highlight-green">Low</span></td>
+                                <td>Usually just adds a chat bubble. Rarely causes problems.</td>
+                            </tr>
+                            <tr>
+                                <td>👥 Social Proof</td>
+                                <td><span class="highlight-amber">Medium</span></td>
+                                <td>Multiple apps can create annoying popups.</td>
+                            </tr>
+                            <tr>
+                                <td>🛡️ Trust Badges</td>
+                                <td><span class="highlight-green">Low</span></td>
+                                <td>Simple images. Very unlikely to cause issues.</td>
+                            </tr>
+                            <tr>
+                                <td>🔄 Subscriptions</td>
+                                <td><span class="highlight-red">High</span></td>
+                                <td>Deeply integrated with checkout. Complex setup needed.</td>
+                            </tr>
+                            <tr>
+                                <td>🌐 Translation</td>
+                                <td><span class="highlight-amber">Medium</span></td>
+                                <td>Changes text across entire store. Can slow things down.</td>
+                            </tr>
+                            <tr>
+                                <td>⚙️ Admin Only</td>
+                                <td><span class="highlight-green">Very Low</span></td>
+                                <td>Works behind the scenes. Customers never see it.</td>
+                            </tr>
+                            <tr>
+                                <td>❓ Unknown</td>
+                                <td><span class="highlight-amber">Medium</span></td>
+                                <td>Sherlock is monitoring. No problems detected so far.</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="app-categories">
+                <button class="faq-question">
+                    Can I research an app before installing it?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p><strong>Yes!</strong> Use the <span class="highlight">"🔎 Investigate App"</span> button in
+                            your dashboard header.</p>
+                        <p>Enter any app name and Sherlock will search Reddit and Google to show you:</p>
+                        <ul>
+                            <li>What other merchants are saying</li>
+                            <li>Common complaints or issues</li>
+                            <li>Overall sentiment score</li>
+                            <li>Risk assessment</li>
+                        </ul>
+                        <p>This helps you make informed decisions before adding new apps to your store.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CATEGORY: Limits & Pricing ==================== -->
+        <div class="category" id="cat-pricing">
+            <div class="category-header">
+                <span class="category-icon">💰</span>
+                <h2 class="category-title">Limits & Pricing</h2>
+            </div>
+
+            <div class="faq-item" data-category="pricing">
+                <button class="faq-question">
+                    What are the daily limits?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>To protect your store and ensure reliable service, Sherlock has daily limits:</p>
+                        <table class="category-table">
+                            <tr>
+                                <th>Action</th>
+                                <th>Daily Limit</th>
+                            </tr>
+                            <tr>
+                                <td>On-demand scans</td>
+                                <td>5 per day</td>
+                            </tr>
+                            <tr>
+                                <td>Theme restores</td>
+                                <td>3 per day</td>
+                            </tr>
+                        </table>
+                        <p>Limits reset at midnight. Daily automatic scans don't count toward your on-demand limit.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="pricing">
+                <button class="faq-question">
+                    What's included in each plan?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <table class="category-table">
+                            <tr>
+                                <th>Feature</th>
+                                <th>Trial (14 days)</th>
+                                <th>Standard ($29/mo)</th>
+                                <th>Professional ($69/mo)</th>
+                            </tr>
+                            <tr>
+                                <td>Theme backup history</td>
+                                <td>7 days</td>
+                                <td>7 days</td>
+                                <td>30 days</td>
+                            </tr>
+                            <tr>
+                                <td>Daily automated scans</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                            </tr>
+                            <tr>
+                                <td>On-demand scans</td>
+                                <td>5/day</td>
+                                <td>5/day</td>
+                                <td>5/day</td>
+                            </tr>
+                            <tr>
+                                <td>Theme restores</td>
+                                <td>3/day</td>
+                                <td>3/day</td>
+                                <td>3/day</td>
+                            </tr>
+                            <tr>
+                                <td>App conflict detection</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                            </tr>
+                            <tr>
+                                <td>Orphan code detection</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                            </tr>
+                            <tr>
+                                <td>Support</td>
+                                <td>Email</td>
+                                <td>Email</td>
+                                <td>Priority</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="pricing">
+                <button class="faq-question">
+                    Why is there a 14-day free trial?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>We want you to experience Sherlock's full protection before committing. During your trial:
+                        </p>
+                        <ul>
+                            <li>All features are fully functional</li>
+                            <li>Daily scans run automatically</li>
+                            <li>You can restore your theme up to 3 times per day</li>
+                            <li>7 days of backup history accumulates</li>
+                        </ul>
+                        <p>No credit card required to start. After 14 days, choose the plan that fits your needs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CATEGORY: Your Data ==================== -->
+        <div class="category" id="cat-data">
+            <div class="category-header">
+                <span class="category-icon">🗄️</span>
+                <h2 class="category-title">Your Data</h2>
+            </div>
+
+            <div class="faq-item" data-category="data">
+                <button class="faq-question">
+                    What data does Sherlock store about my store?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>Sherlock stores:</p>
+                        <ul>
+                            <li><strong>Theme file versions</strong> — Copies of your theme files for backup/restore
+                            </li>
+                            <li><strong>Scan results</strong> — What Sherlock found during each scan</li>
+                            <li><strong>Script snapshots</strong> — What scripts your apps are injecting</li>
+                            <li><strong>Basic store info</strong> — Your shop domain and timezone for scheduling</li>
+                        </ul>
+                        <p>Sherlock does <strong>NOT</strong> access or store your customers, orders, products, or
+                            payment information.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="data">
+                <button class="faq-question">
+                    How long is my data kept?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <table class="category-table">
+                            <tr>
+                                <th>Data Type</th>
+                                <th>Trial / Standard</th>
+                                <th>Professional</th>
+                            </tr>
+                            <tr>
+                                <td>Theme file versions</td>
+                                <td>7 days</td>
+                                <td>30 days</td>
+                            </tr>
+                            <tr>
+                                <td>Daily scan results</td>
+                                <td>7 days</td>
+                                <td>30 days</td>
+                            </tr>
+                            <tr>
+                                <td>Script snapshots</td>
+                                <td>7 days</td>
+                                <td>30 days</td>
+                            </tr>
+                        </table>
+                        <p>Older data is automatically cleaned up. This keeps your backups relevant and our systems
+                            fast.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item" data-category="data">
+                <button class="faq-question">
+                    What happens if I uninstall Sherlock?
+                    <span class="faq-arrow">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        <p>If you uninstall Sherlock:</p>
+                        <ul>
+                            <li>Your theme is <strong>not affected</strong> — we don't modify your theme code</li>
+                            <li>Your stored backups will be deleted after a short grace period</li>
+                            <li>You won't have access to restore points anymore</li>
+                        </ul>
+                        <p>If you reinstall later, Sherlock starts fresh with new daily snapshots.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🔍 Sherlock - Your Store's Detective</p>
+            <p style="margin-top: 8px;">Still have questions? <a href="mailto:support@codenamesherlock.com">Contact
+                    Support</a></p>
+        </div>
+    </main>
+
+    <!-- JavaScript -->
+    <script>
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const isOpen = item.classList.contains('open');
+
+                // Close all others (optional - remove this block for multi-open)
+                // document.querySelectorAll('.faq-item.open').forEach(openItem => {
+                //     openItem.classList.remove('open');
+                // });
+
+                // Toggle current
+                item.classList.toggle('open', !isOpen);
+            });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const searchResultsInfo = document.getElementById('searchResultsInfo');
+        const faqItems = document.querySelectorAll('.faq-item');
+        const categories = document.querySelectorAll('.category');
+
+        function performSearch(query) {
+            query = query.trim().toLowerCase();
+
+            if (query.length === 0) {
+                // Reset - show all
+                faqItems.forEach(item => item.classList.remove('hidden'));
+                categories.forEach(cat => cat.style.display = '');
+                searchResultsInfo.textContent = '';
+                return;
+            }
+
+            let matchCount = 0;
+
+            faqItems.forEach(item => {
+                const questionText = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answerText = item.querySelector('.faq-answer-inner').textContent.toLowerCase();
+                const fullText = questionText + ' ' + answerText;
+
+                if (fullText.includes(query)) {
+                    item.classList.remove('hidden');
+                    matchCount++;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            // Hide empty categories
+            categories.forEach(cat => {
+                const visibleItems = cat.querySelectorAll('.faq-item:not(.hidden)');
+                cat.style.display = visibleItems.length === 0 ? 'none' : '';
+            });
+
+            searchResultsInfo.textContent = matchCount > 0
+                ? `Found ${matchCount} question${matchCount !== 1 ? 's' : ''} matching "${query}"`
+                : `No questions found matching "${query}"`;
+        }
+
+        searchInput.addEventListener('input', e => performSearch(e.target.value));
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+                searchInput.select();
+            }
+            if (e.key === 'Escape' && document.activeElement === searchInput) {
+                searchInput.value = '';
+                performSearch('');
+            }
+        });
+    </script>
+</body>
+
+</html>
