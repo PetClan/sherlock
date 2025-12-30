@@ -516,25 +516,25 @@ function renderProtectionStatus(scan, action) {
 
     container.innerHTML = statusBarHtml + warningsHtml +
         '<div class="protection-stats">' +
-        '<div class="protection-stat" onclick="showProtectionStat(\'totalfiles\')" style="cursor: pointer;">' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'totalfiles\')" style="cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background=\'rgba(0,212,255,0.15)\'; this.style.borderColor=\'#00d4ff\';" onmouseout="this.style.background=\'\'; this.style.borderColor=\'\';">' +
         '<div class="protection-stat-value">' + (scan.files_total || 0) + '</div>' +
-        '<div class="protection-stat-label">Total Files</div>' +
+        '<div class="protection-stat-label">Total Files ℹ️</div>' +
         '</div>' +
-        '<div class="protection-stat" onclick="showProtectionStat(\'newfiles\')" style="cursor: pointer;">' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'newfiles\')" style="cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background=\'rgba(0,212,255,0.15)\'; this.style.borderColor=\'#00d4ff\';" onmouseout="this.style.background=\'\'; this.style.borderColor=\'\';">' +
         '<div class="protection-stat-value ' + (scan.files_new > 0 ? 'warning' : '') + '">' + (scan.files_new || 0) + '</div>' +
-        '<div class="protection-stat-label">New Files</div>' +
+        '<div class="protection-stat-label">New Files ℹ️</div>' +
         '</div>' +
-        '<div class="protection-stat" onclick="showProtectionStat(\'changed\')" style="cursor: pointer;">' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'changed\')" style="cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background=\'rgba(0,212,255,0.15)\'; this.style.borderColor=\'#00d4ff\';" onmouseout="this.style.background=\'\'; this.style.borderColor=\'\';">' +
         '<div class="protection-stat-value ' + (scan.files_changed > 0 ? 'warning' : '') + '">' + (scan.files_changed || 0) + '</div>' +
-        '<div class="protection-stat-label">Changed</div>' +
+        '<div class="protection-stat-label">Changed ℹ️</div>' +
         '</div>' +
-        '<div class="protection-stat" onclick="showProtectionStat(\'cssissues\')" style="cursor: pointer;">' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'cssissues\')" style="cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background=\'rgba(0,212,255,0.15)\'; this.style.borderColor=\'#00d4ff\';" onmouseout="this.style.background=\'\'; this.style.borderColor=\'\';">' +
         '<div class="protection-stat-value ' + (scan.css_issues_found > 0 ? 'danger' : '') + '">' + (scan.css_issues_found || 0) + '</div>' +
-        '<div class="protection-stat-label">CSS Issues</div>' +
+        '<div class="protection-stat-label">CSS Issues ℹ️</div>' +
         '</div>' +
-        '<div class="protection-stat" onclick="showProtectionStat(\'scripts\')" style="cursor: pointer;">' +
+        '<div class="protection-stat" onclick="showProtectionStat(\'scripts\')" style="cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background=\'rgba(0,212,255,0.15)\'; this.style.borderColor=\'#00d4ff\';" onmouseout="this.style.background=\'\'; this.style.borderColor=\'\';">' +
         '<div class="protection-stat-value">' + (scan.scripts_total || 0) + '</div>' +
-        '<div class="protection-stat-label">Scripts</div>' +
+        '<div class="protection-stat-label">Scripts ℹ️</div>' +
         '</div>' +
         '</div>';
 }
