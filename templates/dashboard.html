@@ -49,7 +49,8 @@
             <div class="hero-icon">🔍</div>
             <h1 class="hero-title">Your Store is Under <span class="highlight">Protection</span></h1>
             <p class="hero-subtitle">
-                Sherlock monitors your store 24/7 — detecting app conflicts, uncovering hidden issues, and watching for suspicious
+                Sherlock monitors your store 24/7 — detecting app conflicts, uncovering hidden issues, and watching for
+                suspicious
                 changes before they become problems.
             </p>
             <div class="built-for-shopify">
@@ -95,7 +96,7 @@
                 </div>
             </div>
 
-                      
+
 
             <!-- Stats Cards -->
             <div id="stats-container">
@@ -122,14 +123,14 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Next Best Action -->
             <div id="next-action-container" style="margin-bottom: 24px;"></div>
-            
+
             <!-- Recent Investigations -->
             <div class="card" style="margin-bottom: 24px;">
                 <div class="card-header">
-                    <h3 class="card-title">📋 Recent Investigations</h3>
+                    <h3 class="card-title">📋 Recent Full Scans</h3>
                 </div>
                 <div class="card-body" id="recent-scans">
                     <div class="loading">
@@ -157,21 +158,21 @@
         </div>
         <!-- Apps Tab -->
         <div id="tab-apps" class="tab-content hidden"></div>
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">📦 Installed Apps</h3>
-                    <button class="btn btn-primary btn-sm" onclick="loadInstalledApps()">
-                        Refresh Apps
-                    </button>
-                </div>
-                <div id="apps-content">
-                    <div class="empty-state">
-                        <div class="empty-icon">📦</div>
-                        <h3>Loading Apps...</h3>
-                        <p>Fetching your installed apps list.</p>
-                    </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📦 Installed Apps</h3>
+                <button class="btn btn-primary btn-sm" onclick="loadInstalledApps()">
+                    Refresh Apps
+                </button>
+            </div>
+            <div id="apps-content">
+                <div class="empty-state">
+                    <div class="empty-icon">📦</div>
+                    <h3>Loading Apps...</h3>
+                    <p>Fetching your installed apps list.</p>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- Conflicts Tab -->
@@ -382,41 +383,41 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="closeCapabilityModal()">Got it!</button>
             </div>
+        </div>
+    </div>
+
+    <!-- App Details Modal -->
+    <div id="app-details-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="app-details-title">App Details</h2>
+                <button class="modal-close" onclick="closeAppDetailsModal()">&times;</button>
             </div>
+            <div class="modal-body" id="app-details-body">
+                <!-- Populated by JavaScript -->
             </div>
-            
-            <!-- App Details Modal -->
-            <div id="app-details-modal" class="modal hidden">
-                <div class="modal-content" style="max-width: 600px;">
-                    <div class="modal-header">
-                        <h2 id="app-details-title">App Details</h2>
-                        <button class="modal-close" onclick="closeAppDetailsModal()">&times;</button>
-                    </div>
-                    <div class="modal-body" id="app-details-body">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" onclick="closeAppDetailsModal()">Close</button>
-                    </div>
-                </div>
-                </div>
-                
-                <!-- Badge Explainer Modal -->
-                <div id="badge-explainer-modal" class="modal hidden">
-                    <div class="modal-content" style="max-width: 450px;">
-                        <div class="modal-header">
-                            <h2 id="badge-explainer-title">Info</h2>
-                            <button class="modal-close" onclick="closeBadgeExplainer()">&times;</button>
-                        </div>
-                        <div class="modal-body" id="badge-explainer-body">
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" onclick="closeBadgeExplainer()">Got it</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Report App Modal -->
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAppDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badge Explainer Modal -->
+    <div id="badge-explainer-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="badge-explainer-title">Info</h2>
+                <button class="modal-close" onclick="closeBadgeExplainer()">&times;</button>
+            </div>
+            <div class="modal-body" id="badge-explainer-body">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBadgeExplainer()">Got it</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report App Modal -->
     <div id="report-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -493,28 +494,28 @@ Judge.me"></textarea>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeAppDetailsModal()">Close</button>
             </div>
+        </div>
+
+    </div>
+
+    <!-- App Details Modal -->
+    <div id="app-details-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="app-details-title">App Details</h2>
+                <button class="modal-close" onclick="closeAppDetailsModal()">&times;</button>
             </div>
-            
+            <div class="modal-body" id="app-details-body">
+                <!-- Populated by JavaScript -->
             </div>
-            
-            <!-- App Details Modal -->
-            <div id="app-details-modal" class="modal hidden">
-                <div class="modal-content" style="max-width: 600px;">
-                    <div class="modal-header">
-                        <h2 id="app-details-title">App Details</h2>
-                        <button class="modal-close" onclick="closeAppDetailsModal()">&times;</button>
-                    </div>
-                    <div class="modal-body" id="app-details-body">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" onclick="closeAppDetailsModal()">Close</button>
-                        <button class="btn btn-primary" onclick="investigateCurrentApp()">🔍 Investigate App</button>
-                    </div>
-                </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAppDetailsModal()">Close</button>
+                <button class="btn btn-primary" onclick="investigateCurrentApp()">🔍 Investigate App</button>
             </div>
-            
-            <!-- Rating Widget -->
+        </div>
+    </div>
+
+    <!-- Rating Widget -->
     <div id="rating-widget" class="rating-widget hidden">
         <div class="rating-widget-inner">
             <button class="rating-close" onclick="dismissRating()">&times;</button>
