@@ -118,7 +118,8 @@ async function loadDashboard() {
         renderStats(apps, scanHistory, performance);
         renderRecentScans(scanHistory.scans || []);
         renderSuspectApps(apps);
-        renderNextBestAction(apps, scanHistory);
+        const action = getNextBestAction(apps, scanHistory);
+        window.currentAction = action; // Store for renderProtectionStatus
 
         // Load site health / protection status
         loadSiteHealth();
@@ -243,9 +244,10 @@ function renderSuspectApps(apps) {
 }
 
 // Render Next Best Action panel
-function renderNextBestAction(apps, scanHistory) {
+function getNextBestAction(apps, scanHistory) {
+    // Hide the old container since we're consolidating
     const container = document.getElementById('next-action-container');
-    if (!container) return;
+    if (container) container.style.display = 'none';
 
     // Gather data for decision
     const suspectCount = apps.suspect_count || 0;
@@ -376,9 +378,8 @@ function renderNextBestAction(apps, scanHistory) {
         `;
     }
 
-    html += '</div>';
-
-    container.innerHTML = html;
+    // Return action instead of rendering
+    return action;
 }
 
 // Format date helper
@@ -409,7 +410,7 @@ async function loadSiteHealth() {
         const data = await response.json();
 
         if (data.has_scan && data.scan) {
-            renderProtectionStatus(data.scan);
+            renderProtectionStatus(data.scan, window.currentAction);
         } else {
             container.innerHTML =
                 '<div class="empty-state">' +
@@ -431,28 +432,22 @@ async function loadSiteHealth() {
     }
 }
 
-function renderProtectionStatus(scan) {
+function renderProtectionStatus(scan, action) {
     const container = document.getElementById('protection-body');
 
-    // Determine risk styling and messages
+    // Determine risk styling
     var riskClass = 'low';
     var riskIcon = '✅';
     var riskText = 'LOW RISK';
-    var statusMessage = 'Your store is protected. No suspicious activity detected.';
-    var detectiveQuote = '"Elementary, my dear merchant. All is well."';
 
     if (scan.risk_level === 'high') {
         riskClass = 'high';
         riskIcon = '🚨';
         riskText = 'HIGH RISK';
-        statusMessage = 'Sherlock has detected issues that need your attention.';
-        detectiveQuote = '"The game is afoot! Immediate action recommended."';
     } else if (scan.risk_level === 'medium') {
         riskClass = 'medium';
         riskIcon = '⚠️';
         riskText = 'MEDIUM RISK';
-        statusMessage = 'Some potential issues detected. Review recommended.';
-        detectiveQuote = '"There are curious elements here worth investigating."';
     }
 
     // Build risk warnings HTML
@@ -466,19 +461,57 @@ function renderProtectionStatus(scan) {
         warningsHtml += '</div>';
     }
 
-    container.innerHTML =
-        '<div class="status-banner">' +
-        '<div class="status-badge ' + riskClass + '">' +
-        '<span class="status-icon">' + riskIcon + '</span>' +
-        '<span>' + riskText + '</span>' +
-        '</div>' +
-        '<div class="status-meta">Last scan: ' + formatDate(scan.scan_date) + '</div>' +
-        '</div>' +
-        '<div class="status-message">' +
-        '<p>' + statusMessage + '</p>' +
-        '<p class="detective-quote">' + detectiveQuote + '</p>' +
-        '</div>' +
-        warningsHtml +
+    // Consolidated status bar colors
+    const bgColors = {
+        danger: 'rgba(255,107,107,0.15)',
+        warning: 'rgba(245,158,11,0.15)',
+        info: 'rgba(0,212,255,0.15)',
+        success: 'rgba(16,185,129,0.15)'
+    };
+    const borderColors = {
+        danger: '#ff6b6b',
+        warning: '#f59e0b',
+        info: '#00d4ff',
+        success: '#10b981'
+    };
+
+    const actionStyle = action ? action.style : 'success';
+    const actionMessage = action ? action.message : 'Your store looks healthy.';
+    const lastScanText = scan.scan_date ? ' Last scan: ' + formatDate(scan.scan_date) : '';
+
+    let statusBarHtml = `
+        <div style="
+            background: ${bgColors[actionStyle]};
+            border: 1px solid ${borderColors[actionStyle]};
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        ">
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <div class="status-badge ${riskClass}" style="margin: 0;">
+                    <span class="status-icon">${riskIcon}</span>
+                    <span>${riskText}</span>
+                </div>
+                <span style="color: #e2e8f0;">${actionMessage}${lastScanText}</span>
+            </div>
+    `;
+
+    if (action && action.button) {
+        statusBarHtml += `
+            <button class="btn btn-primary" onclick="${action.buttonAction}" style="white-space: nowrap;">
+                ${action.button}
+            </button>
+        `;
+    }
+
+    statusBarHtml += '</div>';
+
+    container.innerHTML = statusBarHtml + warningsHtml +
         '<div class="protection-stats">' +
         '<div class="protection-stat" onclick="showProtectionStat(\'totalfiles\')" style="cursor: pointer;">' +
         '<div class="protection-stat-value">' + (scan.files_total || 0) + '</div>' +
@@ -528,7 +561,7 @@ async function runMonitoringScan() {
         const result = await response.json();
 
         if (response.ok && result.success) {
-            renderProtectionStatus(result);
+            renderProtectionStatus(result, window.currentAction);
             updateCaseFiles(result);
             showNotification('Investigation complete!', 'success');
         } else {
