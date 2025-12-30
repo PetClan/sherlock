@@ -712,16 +712,15 @@ async def debug_token_check(shop: str, db: AsyncSession = Depends(get_db)):
     store = result.scalar_one_or_none()
     
     if not store:
-        return {"status": "NOT_FOUND", "message": "Store not in database"}
+        return {"status": "NOT_FOUND"}
     
     if not store.access_token:
-        return {"status": "NO_TOKEN", "message": "Token is NULL or empty"}
+        return {"status": "NO_TOKEN"}
     
     return {
         "status": "TOKEN_EXISTS",
         "token_preview": store.access_token[:6] + "...",
-        "token_length": len(store.access_token),
-        "created_at": str(store.created_at) if store.created_at else None
+        "token_length": len(store.access_token)
     }
 
 @app.get("/api/v1/scan/debug/script-tags")
