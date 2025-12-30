@@ -3378,6 +3378,70 @@ var capabilityData = {
         `
     }
 };
+async function showFilesList(type) {
+    const modal = document.getElementById('capability-modal');
+    const title = document.getElementById('capability-modal-title');
+    const body = document.getElementById('capability-modal-body');
+
+    const titles = {
+        'new': '🆕 New Files',
+        'changed': '✏️ Changed Files',
+        'css': '🎨 CSS Issues',
+        'scripts': '⚡ Script Tags'
+    };
+
+    title.innerHTML = titles[type] || 'Files';
+    body.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading files...</p></div>';
+    modal.classList.remove('hidden');
+
+    try {
+        if (type === 'scripts') {
+            const data = await api('/monitoring/scripts/' + state.shop);
+            if (data.scripts && data.scripts.length > 0) {
+                let html = '<table class="data-table"><thead><tr><th>Source</th><th>App</th><th>Added</th></tr></thead><tbody>';
+                data.scripts.forEach(function (script) {
+                    html += `<tr>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(script.src)}">${escapeHtml(script.src.split('/').pop() || script.src)}</td>
+                        <td>${escapeHtml(script.app_name || 'Unknown')}</td>
+                        <td>${new Date(script.created_at).toLocaleDateString()}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                body.innerHTML = html;
+            } else {
+                body.innerHTML = '<p style="color: var(--slate-400);">No scripts found.</p>';
+            }
+        } else {
+            const data = await api('/monitoring/files/' + state.shop + '?limit=500');
+            let files = data.files || [];
+
+            if (type === 'new') {
+                files = files.filter(f => f.is_new);
+            } else if (type === 'changed') {
+                files = files.filter(f => f.is_changed);
+            }
+
+            if (files.length > 0) {
+                let html = '<table class="data-table"><thead><tr><th>File</th><th>Likely App</th><th>Date</th></tr></thead><tbody>';
+                files.forEach(function (file) {
+                    html += `<tr>
+                        <td style="font-family: monospace; font-size: 12px;">${escapeHtml(file.file_path)}</td>
+                        <td>${file.app_owner_guess ? '<span class="badge badge-warning">' + escapeHtml(file.app_owner_guess) + '</span>' : '<span style="color: var(--slate-500);">—</span>'}</td>
+                        <td>${new Date(file.created_at).toLocaleDateString()}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                body.innerHTML = html;
+            } else {
+                body.innerHTML = '<p style="color: var(--slate-400);">No ' + (type === 'new' ? 'new' : 'changed') + ' files found.</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading files:', error);
+        body.innerHTML = '<p style="color: var(--coral);">Failed to load files. Please try again.</p>';
+    }
+}
+
 var protectionStatData = {
     totalfiles: {
         title: '📄 Total Files',
@@ -3413,6 +3477,8 @@ var protectionStatData = {
             
             <h4>What to do</h4>
             <p>If you see unexpected new files, check what apps you recently installed. New files aren't necessarily bad, but you should know where they came from.</p>
+            
+            <button class="btn btn-primary" onclick="showFilesList('new')" style="margin-top: 16px;">View New Files</button>
         `
     },
     changed: {
@@ -3431,6 +3497,8 @@ var protectionStatData = {
             
             <h4>What to do</h4>
             <p>If you didn't make changes yourself, investigate which app modified your files. Unexpected changes can cause display issues or conflicts.</p>
+            
+            <button class="btn btn-primary" onclick="showFilesList('changed')" style="margin-top: 16px;">View Changed Files</button>
         `
     },
     cssissues: {
@@ -3473,6 +3541,8 @@ var protectionStatData = {
             
             <h4>What to do</h4>
             <p>If you have many scripts and slow page loads, consider which apps are essential. Some apps offer "lazy loading" options to reduce performance impact.</p>
+            
+            <button class="btn btn-primary" onclick="showFilesList('scripts')" style="margin-top: 16px;">View Scripts</button>
         `
     }
 };
