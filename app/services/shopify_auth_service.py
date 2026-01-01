@@ -46,7 +46,8 @@ class ShopifyAuthService:
             "scope": settings.shopify_scopes,
             "redirect_uri": redirect_uri,
             "state": state,
-            "grant_options[]": "per-user",  # Optional: for online access tokens
+            # Note: Removed "grant_options[]": "per-user" to use offline tokens
+            # Offline tokens persist until app uninstall (required for background scans)
         }
         
         install_url = f"https://{shop}/admin/oauth/authorize?{urlencode(params)}"

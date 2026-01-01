@@ -3402,8 +3402,8 @@ async function showFilesList(type) {
                 data.scripts.forEach(function (script) {
                     html += `<tr>
                         <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(script.src)}">${escapeHtml(script.src.split('/').pop() || script.src)}</td>
-                        <td>${escapeHtml(script.app_name || 'Unknown')}</td>
-                        <td>${new Date(script.created_at).toLocaleDateString()}</td>
+                        <td>${escapeHtml(script.likely_app || 'Unknown')}</td>
+                        <td>${new Date(script.first_seen).toLocaleDateString()}</td>
                     </tr>`;
                 });
                 html += '</tbody></table>';
