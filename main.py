@@ -21,7 +21,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from app.core.config import settings
 from app.db.database import init_db, get_db
-from app.db.models import Store, InstalledApp, Diagnosis, ThemeIssue, PerformanceSnapshot
+from app.db.models import Store, InstalledApp, Diagnosis, ThemeIssue, PerformanceSnapshot, DailyScan
 from app.services.diagnosis_service import DiagnosisService
 from app.services.app_scanner_service import AppScannerService
 from app.services.theme_analyzer_service import ThemeAnalyzerService
@@ -653,12 +653,13 @@ async def get_scan_result(diagnosis_id: str, db: AsyncSession = Depends(get_db))
 
 @app.get("/api/v1/scan/history/{shop}")
 async def get_scan_history(shop: str, limit: int = 10, db: AsyncSession = Depends(get_db)):
-    """Get scan history for a store"""
+    """Get scan history for a store (includes both manual and auto scans)"""
     try:
         store = await get_store_by_domain(db, shop)
         if not store:
             return {"scans": []}
         
+        # Get manual scans (Diagnosis)
         result = await db.execute(
             select(Diagnosis)
             .where(Diagnosis.store_id == store.id)
@@ -667,19 +668,46 @@ async def get_scan_history(shop: str, limit: int = 10, db: AsyncSession = Depend
         )
         diagnoses = result.scalars().all()
         
+        # Get auto scans (DailyScan)
+        auto_result = await db.execute(
+            select(DailyScan)
+            .where(DailyScan.store_id == store.id)
+            .order_by(DailyScan.started_at.desc())
+            .limit(limit)
+        )
+        daily_scans = auto_result.scalars().all()
+        
+        # Combine both types
+        all_scans = []
+        
+        for d in diagnoses:
+            all_scans.append({
+                "diagnosis_id": d.id,
+                "scan_type": "manual",
+                "status": d.status,
+                "issues_found": d.issues_found or 0,
+                "started_at": d.started_at.isoformat() if d.started_at else None,
+                "completed_at": d.completed_at.isoformat() if d.completed_at else None
+            })
+        
+        for s in daily_scans:
+            issues = (s.files_changed or 0) + (s.css_issues_found or 0)
+            all_scans.append({
+                "diagnosis_id": s.id,
+                "scan_type": "auto",
+                "status": s.status,
+                "issues_found": issues,
+                "started_at": s.started_at.isoformat() if s.started_at else None,
+                "completed_at": s.completed_at.isoformat() if s.completed_at else None
+            })
+        
+        # Sort by date (most recent first) and limit
+        all_scans.sort(key=lambda x: x["completed_at"] or x["started_at"] or "", reverse=True)
+        all_scans = all_scans[:limit]
+        
         return {
             "shop": shop,
-            "scans": [
-                {
-                    "diagnosis_id": d.id,
-                    "scan_type": d.scan_type,
-                    "status": d.status,
-                    "issues_found": d.issues_found or 0,
-                    "started_at": d.started_at.isoformat() if d.started_at else None,
-                    "completed_at": d.completed_at.isoformat() if d.completed_at else None
-                }
-                for d in diagnoses
-            ]
+            "scans": all_scans
         }
     
     except Exception as e:
