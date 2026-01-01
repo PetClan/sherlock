@@ -118,7 +118,8 @@ async def get_scan_history(
     limit: int = 10,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get scan history for a shop"""
+    """Get scan history for a shop (includes both manual and auto scans)"""
+    from app.db.models import DailyScan
     
     # Find store
     result = await db.execute(
@@ -129,28 +130,58 @@ async def get_scan_history(
     if not store:
         raise HTTPException(status_code=404, detail="Store not found")
     
-    # Get scans
-    scans_result = await db.execute(
+    # Get manual scans (Diagnosis)
+    manual_result = await db.execute(
         select(Diagnosis)
         .where(Diagnosis.store_id == store.id)
         .order_by(desc(Diagnosis.started_at))
         .limit(limit)
     )
-    scans = scans_result.scalars().all()
+    manual_scans = manual_result.scalars().all()
+    
+    # Get auto scans (DailyScan)
+    auto_result = await db.execute(
+        select(DailyScan)
+        .where(DailyScan.store_id == store.id)
+        .order_by(desc(DailyScan.started_at))
+        .limit(limit)
+    )
+    auto_scans = auto_result.scalars().all()
+    
+    # Combine and format
+    all_scans = []
+    
+    for s in manual_scans:
+        all_scans.append({
+            "diagnosis_id": str(s.id),
+            "scan_type": "manual",
+            "status": s.status,
+            "issues_found": s.issues_found or 0,
+            "started_at": s.started_at.isoformat() if s.started_at else None,
+            "completed_at": s.completed_at.isoformat() if s.completed_at else None,
+            "source": "manual"
+        })
+    
+    for s in auto_scans:
+        # Calculate issues for auto scans
+        issues = (s.files_changed or 0) + (s.css_issues_found or 0)
+        all_scans.append({
+            "diagnosis_id": str(s.id),
+            "scan_type": "auto",
+            "status": s.status,
+            "issues_found": issues,
+            "started_at": s.started_at.isoformat() if s.started_at else None,
+            "completed_at": s.completed_at.isoformat() if s.completed_at else None,
+            "source": "auto"
+        })
+    
+    # Sort by date (most recent first) and limit
+    all_scans.sort(key=lambda x: x["completed_at"] or x["started_at"] or "", reverse=True)
+    all_scans = all_scans[:limit]
     
     return {
-        "total_scans": len(scans),
-        "scans": [
-            {
-                "diagnosis_id": str(s.id),
-                "scan_type": s.scan_type,
-                "status": s.status,
-                "issues_found": s.issues_found or 0,
-                "started_at": s.started_at.isoformat() if s.started_at else None,
-                "completed_at": s.completed_at.isoformat() if s.completed_at else None
-            }
-            for s in scans
-        ]
+        "total_scans": len(all_scans),
+        "scans": all_scans
     }
 
 
