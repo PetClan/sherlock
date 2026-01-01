@@ -717,6 +717,42 @@ async function viewScan(diagnosisId) {
 function renderScanReport(report) {
     const mainContent = document.getElementById('main-content');
 
+    // Extract data from results
+    const results = report.results || {};
+    const apps = results.apps || {};
+    const theme = results.theme || {};
+    const performance = results.performance || {};
+
+    const appsList = apps.apps || [];
+    const filesScanned = theme.files_scanned || 0;
+    const themeIssues = theme.issues || [];
+    const perfScore = performance.overall_score || performance.performance_score || null;
+    const perfBreakdown = performance.breakdown || {};
+
+    // Build apps list HTML
+    let appsListHtml = '';
+    if (appsList.length > 0) {
+        appsListHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
+        appsList.forEach(function (app) {
+            appsListHtml += '<li style="margin-bottom: 4px;">' + escapeHtml(app.app_name || app.name || 'Unknown App') + '</li>';
+        });
+        appsListHtml += '</ul>';
+    } else {
+        appsListHtml = '<p style="color: var(--slate-400); margin: 0;">No apps detected</p>';
+    }
+
+    // Build performance breakdown HTML
+    let perfBreakdownHtml = '';
+    if (perfBreakdown.homepage || perfBreakdown.collection || perfBreakdown.cart) {
+        const homepage = perfBreakdown.homepage ? (perfBreakdown.homepage / 1000).toFixed(1) + 's' : '—';
+        const collection = perfBreakdown.collection ? (perfBreakdown.collection / 1000).toFixed(1) + 's' : '—';
+        const cart = perfBreakdown.cart ? (perfBreakdown.cart / 1000).toFixed(1) + 's' : '—';
+        perfBreakdownHtml = 'Homepage: ' + homepage + ' • Collection: ' + collection + ' • Cart: ' + cart;
+    } else {
+        perfBreakdownHtml = 'No performance data available';
+    }
+
+    // Build issues HTML
     let issuesHtml = '';
     if (report.issues && report.issues.length > 0) {
         report.issues.forEach(function (issue) {
@@ -725,76 +761,102 @@ function renderScanReport(report) {
             const severityLabel = issue.severity === 'high' ? 'Needs attention' :
                 issue.severity === 'medium' ? 'Worth checking' : 'Minor';
 
-            // Get plain English description
             const friendlyType = getFriendlyIssueType(issue.type || issue.issue_type);
             const friendlyFile = getFriendlyFilePath(issue.file);
 
             issuesHtml +=
                 '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--' + (severityClass === 'danger' ? 'crimson' : severityClass === 'warning' ? 'amber' : 'gold') + '-500);">' +
                 '<div class="card-body" style="padding: 20px;">' +
-
-                // Header with severity
                 '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">' +
                 '<span class="badge badge-' + severityClass + '">' + severityLabel + '</span>' +
                 '<span style="color: var(--slate-500); font-size: 12px;">' + escapeHtml(issue.type || issue.issue_type || '') + '</span>' +
                 '</div>' +
-
-                // Main description
                 '<h4 style="margin-bottom: 8px; color: var(--slate-100);">' + escapeHtml(friendlyType) + '</h4>' +
                 '<p style="margin-bottom: 12px; color: var(--slate-300);">' + escapeHtml(issue.description) + '</p>' +
-
-                // Details section
                 '<div style="background: var(--navy-800); border-radius: 8px; padding: 12px; margin-top: 12px;">' +
-
-                // Suspected app
                 (issue.likely_source ?
                     '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
                     '<span style="color: var(--slate-500);">🎯 Suspected app:</span>' +
                     '<span style="color: var(--gold-400); font-weight: 600;">' + escapeHtml(issue.likely_source) + '</span>' +
                     '</div>' : '') +
-
-            // File location with link
-            (issue.file ?
-                '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
-                '<span style="color: var(--slate-500);">📁 Location:</span>' +
-                '<span style="color: var(--slate-300);">' + escapeHtml(friendlyFile) + '</span>' +
-                getViewPageLink(issue.file) +
-                '</div>' : '') +
-
-            // Code snippet if available
-            (issue.code_snippet ?
-                '<div style="margin-top: 12px; margin-bottom: 8px;">' +
-                '<div style="color: var(--slate-500); margin-bottom: 6px;">📝 Code causing issue:</div>' +
-                '<pre style="background: var(--navy-900); border: 1px solid var(--navy-600); border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 12px; color: var(--slate-300); margin: 0;">' +
-                escapeHtml(issue.code_snippet) +
-                '</pre>' +
-                '</div>' : '') +
-
-                // What to do
+                (issue.file ?
+                    '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
+                    '<span style="color: var(--slate-500);">📍 Location:</span>' +
+                    '<span style="color: var(--slate-300);">' + escapeHtml(friendlyFile) + '</span>' +
+                    getViewPageLink(issue.file) +
+                    '</div>' : '') +
+                (issue.code_snippet ?
+                    '<div style="margin-top: 12px; margin-bottom: 8px;">' +
+                    '<div style="color: var(--slate-500); margin-bottom: 6px;">🔍 Code causing issue:</div>' +
+                    '<pre style="background: var(--navy-900); border: 1px solid var(--navy-600); border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 12px; color: var(--slate-300); margin: 0;">' +
+                    escapeHtml(issue.code_snippet) +
+                    '</pre>' +
+                    '</div>' : '') +
                 '<div style="display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--navy-600);">' +
                 '<span style="color: var(--slate-500);">💡 What to do:</span>' +
                 '<span style="color: var(--slate-300);">' + getActionAdvice(issue) + '</span>' +
                 '</div>' +
-
                 '</div>' +
                 '</div>' +
                 '</div>';
         });
     } else {
-        issuesHtml = '<div class="empty-state"><div class="empty-state-icon">✅</div><h3>No issues found</h3><p>Your store passed all checks.</p></div>';
+        issuesHtml =
+            '<div class="card" style="border: 1px solid var(--success); background: rgba(16, 185, 129, 0.1);">' +
+            '<div class="card-body" style="padding: 24px; text-align: center;">' +
+            '<div style="font-size: 48px; margin-bottom: 12px;">✅</div>' +
+            '<h3 style="color: var(--success); margin-bottom: 8px;">No Issues Found</h3>' +
+            '<p style="color: var(--slate-400); margin: 0;">Your store passed all checks. Sherlock found nothing suspicious.</p>' +
+            '</div>' +
+            '</div>';
     }
 
+    // Build the full page
     mainContent.innerHTML =
         '<div style="padding: 24px;">' +
+
+        // Back button
         '<button class="btn btn-secondary" onclick="backToDashboard()" style="margin-bottom: 20px;">← Back to Dashboard</button>' +
-        '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">📋 Investigation Report</h2>' +
-        '<div class="grid grid-3" style="margin-bottom: 24px;">' +
-        '<div class="stat-card"><div class="stat-value">' + (report.issues_found || 0) + '</div><div class="stat-label">Issues Found</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + (report.apps_scanned || 0) + '</div><div class="stat-label">Apps Analyzed</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + formatDate(report.completed_at) + '</div><div class="stat-label">Completed</div></div>' +
+
+        // Title
+        '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">📋 Scan Report</h2>' +
+
+        // Stats row
+        '<div class="grid grid-4" style="margin-bottom: 24px;">' +
+        '<div class="stat-card"><div class="stat-value ' + (report.issues_found > 0 ? 'danger' : 'success') + '">' + (report.issues_found || 0) + '</div><div class="stat-label">Issues Found</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + appsList.length + '</div><div class="stat-label">Apps Analyzed</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + filesScanned + '</div><div class="stat-label">Files Scanned</div></div>' +
+        '<div class="stat-card"><div class="stat-value ' + getScoreClass(perfScore) + '">' + (perfScore ? Math.round(perfScore) : '—') + '</div><div class="stat-label">Performance</div></div>' +
         '</div>' +
-        '<h3 style="margin-bottom: 16px;">Findings</h3>' +
+
+        // Apps Checked section
+        '<div class="card" style="margin-bottom: 16px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📦 Apps Checked (' + appsList.length + ')</h3>' +
+        appsListHtml +
+        '</div>' +
+        '</div>' +
+
+        // Theme Analysis section
+        '<div class="card" style="margin-bottom: 16px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📁 Theme Analysis</h3>' +
+        '<p style="color: var(--slate-300); margin: 0;">' + filesScanned + ' files scanned • ' + themeIssues.length + ' issues found</p>' +
+        '</div>' +
+        '</div>' +
+
+        // Performance Breakdown section
+        '<div class="card" style="margin-bottom: 24px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">⚡ Performance Breakdown</h3>' +
+        '<p style="color: var(--slate-300); margin: 0;">' + perfBreakdownHtml + '</p>' +
+        '</div>' +
+        '</div>' +
+
+        // Findings section
+        '<h3 style="margin-bottom: 16px;">🔍 Findings</h3>' +
         issuesHtml +
+
         '</div>';
 }
 
