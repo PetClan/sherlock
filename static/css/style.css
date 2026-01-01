@@ -1013,9 +1013,9 @@ tr:hover td {
 }
 
 .badge-secondary {
-    background: rgba(148, 163, 184, 0.2);
-    border: 1px solid rgba(148, 163, 184, 0.4);
-    color: #94a3b8;
+    background: rgba(20, 184, 166, 0.2);
+    border: 1px solid rgba(20, 184, 166, 0.4);
+    color: #2dd4bf;
 }
 
 /* ==================== EMPTY STATE ==================== */
