@@ -925,6 +925,15 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+.stat-card.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
 
 /* ==================== TABLES ==================== */
 .table-container {

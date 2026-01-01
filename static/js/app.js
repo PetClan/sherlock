@@ -135,18 +135,18 @@ async function loadDashboard() {
 // Render stats cards
 function renderStats(apps, scanHistory, performance) {
     const statsHtml =
-        '<div class="grid grid-3">' +
-        '<div class="stat-card">' +
+        '<div class="grid grid-3" style="margin-bottom: 24px;">' +
+        '<div class="stat-card clickable" onclick="switchTab(\'apps\', document.querySelector(\'.tab[onclick*=apps]\'))" title="View all installed apps">' +
         '<div class="stat-value">' + (apps.total || 0) + '</div>' +
         '<div class="stat-label">Installed Apps</div>' +
         '</div>' +
-        '<div class="stat-card">' +
+        '<div class="stat-card clickable" onclick="switchTab(\'apps\', document.querySelector(\'.tab[onclick*=apps]\'))" title="View suspect apps">' +
         '<div class="stat-value ' + (apps.suspect_count > 0 ? 'danger' : 'success') + '">' +
         (apps.suspect_count || 0) +
         '</div>' +
         '<div class="stat-label">Suspect Apps</div>' +
         '</div>' +
-        '<div class="stat-card">' +
+        '<div class="stat-card clickable" onclick="showPerformanceExplainer()" title="What does this score mean?">' +
         '<div class="stat-value ' + getScoreClass(performance?.performance_score) + '">' +
         (performance?.performance_score ? Math.round(performance.performance_score) : '—') +
         '</div>' +
@@ -155,6 +155,33 @@ function renderStats(apps, scanHistory, performance) {
         '</div>';
 
     document.getElementById('stats-container').innerHTML = statsHtml;
+}
+// Show performance score explainer modal
+function showPerformanceExplainer() {
+    const modal = document.getElementById('capability-modal');
+    const title = document.getElementById('capability-modal-title');
+    const body = document.getElementById('capability-modal-body');
+
+    title.textContent = '📊 Performance Score Explained';
+    body.innerHTML =
+        '<div style="line-height: 1.6;">' +
+        '<p style="margin-bottom: 16px;">Your <strong>Performance Score</strong> measures how fast your store loads for customers. A faster store means better conversions and happier shoppers.</p>' +
+        '<h4 style="margin-bottom: 8px;">How it\'s calculated:</h4>' +
+        '<ul style="margin-bottom: 16px; padding-left: 20px;">' +
+        '<li><strong>Homepage</strong> – First impression speed</li>' +
+        '<li><strong>Collection pages</strong> – Product browsing speed</li>' +
+        '<li><strong>Cart page</strong> – Checkout readiness</li>' +
+        '</ul>' +
+        '<h4 style="margin-bottom: 8px;">Score ranges:</h4>' +
+        '<ul style="padding-left: 20px;">' +
+        '<li><span style="color: var(--success);">●</span> <strong>90-100:</strong> Excellent – Your store is fast!</li>' +
+        '<li><span style="color: var(--warning);">●</span> <strong>50-89:</strong> Fair – Some room for improvement</li>' +
+        '<li><span style="color: var(--danger);">●</span> <strong>Below 50:</strong> Needs attention – Apps may be slowing you down</li>' +
+        '</ul>' +
+        '<p style="margin-top: 16px; color: var(--text-secondary);"><em>Tip: If your score drops after installing an app, that app might be affecting performance.</em></p>' +
+        '</div>';
+
+    modal.classList.remove('hidden');
 }
 
 // Get score class for styling
