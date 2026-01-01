@@ -718,7 +718,7 @@ function renderScanReport(report) {
     const mainContent = document.getElementById('main-content');
 
     // Extract data from results
-    const results = report.results || {};
+    const results = report.full_results || report.results || {};
     const apps = results.apps || {};
     const theme = results.theme || {};
     const performance = results.performance || {};
