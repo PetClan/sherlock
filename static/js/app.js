@@ -244,6 +244,12 @@ function renderRecentScans(scans) {
 // Render suspect apps
 function renderSuspectApps(apps) {
     const container = document.getElementById('suspect-apps');
+
+    // Container was removed - function no longer needed
+    if (!container) {
+        return;
+    }
+
     const card = container.closest('.card');
     const suspectApps = apps.apps ? apps.apps.filter(function (app) { return app.is_suspect; }) : [];
 
