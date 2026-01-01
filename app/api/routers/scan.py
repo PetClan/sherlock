@@ -139,7 +139,7 @@ async def get_scan_history(
     )
     manual_scans = manual_result.scalars().all()
     
-    # Get auto scans (DailyScan)
+    # Get auto scans (DailyScans)
     auto_result = await db.execute(
         select(DailyScan)
         .where(DailyScan.store_id == store.id)
