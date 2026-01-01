@@ -215,7 +215,7 @@ function renderRecentScans(scans) {
             capitalizeFirst(scan.status) +
             '</span>' +
             '</td>' +
-            '<td><span class="badge badge-info">' + scan.scan_type + '</span></td>' +
+            '<td><span class="badge ' + (scan.scan_type === 'manual' ? 'badge-primary' : 'badge-secondary') + '">' + scan.scan_type + '</span></td>' +
             '<td>' + scan.issues_found + ' issues</td>' +
             '<td>' + formatDate(scan.started_at) + '</td>' +
             '<td class="text-right">' +
