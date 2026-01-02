@@ -737,6 +737,8 @@ async def get_diagnosis_report(diagnosis_id: str, db: AsyncSession = Depends(get
 @app.get("/api/v1/scan/daily/{scan_id}/report")
 async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)):
     """Get daily auto scan report"""
+    from app.db.models import ThemeFileVersion
+    
     try:
         result = await db.execute(
             select(DailyScan).where(DailyScan.id == scan_id)
@@ -745,6 +747,40 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
         
         if not scan:
             raise HTTPException(status_code=404, detail="Daily scan not found")
+        
+        # Get changed/new files for this scan
+        changed_files_result = await db.execute(
+            select(ThemeFileVersion)
+            .where(
+                ThemeFileVersion.scan_id == scan_id,
+                ThemeFileVersion.is_changed == True
+            )
+        )
+        changed_files = changed_files_result.scalars().all()
+        
+        new_files_result = await db.execute(
+            select(ThemeFileVersion)
+            .where(
+                ThemeFileVersion.scan_id == scan_id,
+                ThemeFileVersion.is_new == True
+            )
+        )
+        new_files = new_files_result.scalars().all()
+        
+        # Get app-owned files
+        app_files_result = await db.execute(
+            select(ThemeFileVersion)
+            .where(
+                ThemeFileVersion.scan_id == scan_id,
+                ThemeFileVersion.is_app_owned == True
+            )
+        )
+        app_owned_files = app_files_result.scalars().all()
+        
+        # Format file lists
+        changed_list = [{"file_path": f.file_path, "app_guess": f.app_owner_guess} for f in changed_files]
+        new_list = [{"file_path": f.file_path, "app_guess": f.app_owner_guess} for f in new_files]
+        app_list = [{"file_path": f.file_path, "app_guess": f.app_owner_guess or "Unknown"} for f in app_owned_files]
         
         return {
             "scan_id": str(scan.id),
@@ -759,7 +795,9 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
                 "total": scan.files_total or 0,
                 "changed": scan.files_changed or 0,
                 "new": scan.files_new or 0,
-                "deleted": scan.files_deleted or 0
+                "deleted": scan.files_deleted or 0,
+                "changed_files": changed_list,
+                "new_files": new_list
             },
             "scripts": {
                 "total": scan.scripts_total or 0,
@@ -769,7 +807,8 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
             "css_issues": {
                 "count": scan.css_issues_found or 0,
                 "details": scan.non_namespaced_css or []
-            }
+            },
+            "app_owned_files": app_list
         }
     
     except HTTPException:

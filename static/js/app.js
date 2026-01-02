@@ -877,6 +877,7 @@ function renderDailyScanReport(report) {
     const files = report.files || {};
     const scripts = report.scripts || {};
     const cssIssues = report.css_issues || {};
+    const appOwnedFiles = report.app_owned_files || [];
 
     // Check if there are any changes
     const hasFileChanges = (files.changed > 0 || files.new > 0 || files.deleted > 0);
@@ -892,70 +893,106 @@ function renderDailyScanReport(report) {
     };
     const riskClass = riskColors[report.risk_level] || 'success';
 
-    let contentHtml = '';
+    // Build app-owned files list (grouped by app)
+    let appsHtml = '';
+    if (appOwnedFiles.length > 0) {
+        // Group by app
+        const appGroups = {};
+        appOwnedFiles.forEach(function (f) {
+            const app = f.app_guess || 'Unknown';
+            if (!appGroups[app]) appGroups[app] = [];
+            appGroups[app].push(f.file_path);
+        });
+
+        appsHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
+        Object.keys(appGroups).forEach(function (app) {
+            appsHtml += '<li><strong>' + escapeHtml(app) + '</strong> (' + appGroups[app].length + ' file' + (appGroups[app].length > 1 ? 's' : '') + ')</li>';
+        });
+        appsHtml += '</ul>';
+    } else {
+        appsHtml = '<p style="color: var(--slate-400); margin: 0;">No app-related files detected</p>';
+    }
+
+    // Build findings HTML
+    let findingsHtml = '';
 
     if (!hasAnyChanges) {
-        // Simple "all clear" message
-        contentHtml =
+        findingsHtml =
             '<div class="card" style="border: 1px solid var(--success); background: rgba(16, 185, 129, 0.1);">' +
-            '<div class="card-body" style="padding: 32px; text-align: center;">' +
+            '<div class="card-body" style="padding: 24px; text-align: center;">' +
             '<div style="font-size: 48px; margin-bottom: 12px;">✅</div>' +
-            '<h3 style="color: var(--success); margin-bottom: 8px;">No Significant Changes Detected</h3>' +
-            '<p style="color: var(--slate-400); margin: 0;">Your theme files and scripts are unchanged since the last scan.</p>' +
+            '<h3 style="color: var(--success); margin-bottom: 8px;">No Issues Found</h3>' +
+            '<p style="color: var(--slate-400); margin: 0;">Your store passed all checks. Sherlock found nothing suspicious.</p>' +
             '</div>' +
             '</div>';
     } else {
-        // Show what changed
-        contentHtml =
-            '<div class="card" style="border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.1); margin-bottom: 16px;">' +
-            '<div class="card-body" style="padding: 20px; text-align: center;">' +
-            '<div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>' +
-            '<h3 style="color: var(--warning); margin-bottom: 4px;">Changes Detected</h3>' +
-            '<p style="color: var(--slate-400); margin: 0;">Review the details below.</p>' +
-            '</div>' +
-            '</div>';
+        // Build issue cards for each type of change
+        findingsHtml = '';
 
-        // File changes section
-        if (hasFileChanges) {
-            let fileDetails = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
-            if (files.new > 0) fileDetails += '<li><strong>' + files.new + '</strong> new file(s) added</li>';
-            if (files.changed > 0) fileDetails += '<li><strong>' + files.changed + '</strong> file(s) modified</li>';
-            if (files.deleted > 0) fileDetails += '<li><strong>' + files.deleted + '</strong> file(s) deleted</li>';
-            fileDetails += '</ul>';
+        // New files
+        if (files.new > 0 && files.new_files) {
+            let fileList = files.new_files.map(function (f) {
+                return '<li>' + escapeHtml(f.file_path) + (f.app_guess ? ' <span style="color: var(--slate-500);">(' + escapeHtml(f.app_guess) + ')</span>' : '') + '</li>';
+            }).join('');
 
-            contentHtml +=
-                '<div class="card" style="margin-bottom: 16px;">' +
+            findingsHtml +=
+                '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--warning);">' +
                 '<div class="card-body" style="padding: 20px;">' +
-                '<h3 style="margin-bottom: 12px; font-size: 16px;">📁 File Changes</h3>' +
-                fileDetails +
+                '<h4 style="color: var(--warning); margin-bottom: 12px;">📄 ' + files.new + ' New File(s) Added</h4>' +
+                '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">' + fileList + '</ul>' +
+                '</div>' +
+                '</div>';
+        }
+
+        // Changed files
+        if (files.changed > 0 && files.changed_files) {
+            let fileList = files.changed_files.map(function (f) {
+                return '<li>' + escapeHtml(f.file_path) + (f.app_guess ? ' <span style="color: var(--slate-500);">(' + escapeHtml(f.app_guess) + ')</span>' : '') + '</li>';
+            }).join('');
+
+            findingsHtml +=
+                '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--warning);">' +
+                '<div class="card-body" style="padding: 20px;">' +
+                '<h4 style="color: var(--warning); margin-bottom: 12px;">✏️ ' + files.changed + ' File(s) Modified</h4>' +
+                '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">' + fileList + '</ul>' +
                 '<button class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="switchTab(\'rollback\', document.querySelector(\'.tab\'))">View in Rollback Tab →</button>' +
                 '</div>' +
                 '</div>';
         }
 
-        // Script changes section
-        if (hasScriptChanges) {
-            let scriptDetails = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
-            if (scripts.new > 0) scriptDetails += '<li><strong>' + scripts.new + '</strong> new script(s) added</li>';
-            if (scripts.removed > 0) scriptDetails += '<li><strong>' + scripts.removed + '</strong> script(s) removed</li>';
-            scriptDetails += '</ul>';
-
-            contentHtml +=
-                '<div class="card" style="margin-bottom: 16px;">' +
+        // Deleted files
+        if (files.deleted > 0) {
+            findingsHtml +=
+                '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--danger);">' +
                 '<div class="card-body" style="padding: 20px;">' +
-                '<h3 style="margin-bottom: 12px; font-size: 16px;">📜 Script Changes</h3>' +
-                scriptDetails +
+                '<h4 style="color: var(--danger); margin-bottom: 12px;">🗑️ ' + files.deleted + ' File(s) Deleted</h4>' +
+                '<p style="color: var(--slate-400); margin: 0;">Files were removed from your theme since the last scan.</p>' +
                 '</div>' +
                 '</div>';
         }
 
-        // CSS issues section
-        if (hasCssIssues) {
-            contentHtml +=
-                '<div class="card" style="margin-bottom: 16px;">' +
+        // Script changes
+        if (hasScriptChanges) {
+            let scriptDetails = '';
+            if (scripts.new > 0) scriptDetails += '<li>' + scripts.new + ' new script(s) added</li>';
+            if (scripts.removed > 0) scriptDetails += '<li>' + scripts.removed + ' script(s) removed</li>';
+
+            findingsHtml +=
+                '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--warning);">' +
                 '<div class="card-body" style="padding: 20px;">' +
-                '<h3 style="margin-bottom: 12px; font-size: 16px;">🎨 CSS Issues</h3>' +
-                '<p style="color: var(--warning); margin: 0;"><strong>' + cssIssues.count + '</strong> potential CSS conflict(s) found</p>' +
+                '<h4 style="color: var(--warning); margin-bottom: 12px;">📜 Script Changes</h4>' +
+                '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">' + scriptDetails + '</ul>' +
+                '</div>' +
+                '</div>';
+        }
+
+        // CSS issues
+        if (hasCssIssues) {
+            findingsHtml +=
+                '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--warning);">' +
+                '<div class="card-body" style="padding: 20px;">' +
+                '<h4 style="color: var(--warning); margin-bottom: 12px;">🎨 ' + cssIssues.count + ' CSS Issue(s) Found</h4>' +
+                '<p style="color: var(--slate-400); margin: 0;">Potential CSS conflicts detected that may affect your store\'s appearance.</p>' +
                 '<button class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="switchTab(\'conflicts\', document.querySelector(\'.tab\'))">View in Conflicts Tab →</button>' +
                 '</div>' +
                 '</div>';
@@ -969,18 +1006,35 @@ function renderDailyScanReport(report) {
         '<button class="btn btn-secondary" onclick="backToDashboard()" style="margin-bottom: 20px;">← Back to Dashboard</button>' +
 
         // Title
-        '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">🔄 Auto Scan Report</h2>' +
+        '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">📋 Scan Report</h2>' +
 
         // Stats row
         '<div class="grid grid-4" style="margin-bottom: 24px;">' +
-        '<div class="stat-card"><div class="stat-value">' + files.total + '</div><div class="stat-label">Total Files</div></div>' +
-        '<div class="stat-card"><div class="stat-value ' + (files.changed > 0 ? 'warning' : 'success') + '">' + files.changed + '</div><div class="stat-label">Files Changed</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + scripts.total + '</div><div class="stat-label">Scripts Tracked</div></div>' +
+        '<div class="stat-card"><div class="stat-value ' + (hasAnyChanges ? 'warning' : 'success') + '">' + (hasAnyChanges ? (files.changed + files.new + files.deleted) : 0) + '</div><div class="stat-label">Changes Found</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + appOwnedFiles.length + '</div><div class="stat-label">App Files</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + files.total + '</div><div class="stat-label">Files Scanned</div></div>' +
         '<div class="stat-card"><div class="stat-value ' + riskClass + '">' + capitalizeFirst(report.risk_level || 'low') + '</div><div class="stat-label">Risk Level</div></div>' +
         '</div>' +
 
-        // Content (changes or all-clear)
-        contentHtml +
+        // App Files section
+        '<div class="card" style="margin-bottom: 16px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📦 App Files Detected</h3>' +
+        appsHtml +
+        '</div>' +
+        '</div>' +
+
+        // Theme Analysis section
+        '<div class="card" style="margin-bottom: 16px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📁 Theme Analysis</h3>' +
+        '<p style="color: var(--slate-300); margin: 0;">' + files.total + ' files scanned • ' + (files.changed + files.new + files.deleted) + ' changes found</p>' +
+        '</div>' +
+        '</div>' +
+
+        // Findings section
+        '<h3 style="margin-bottom: 16px;">🔍 Findings</h3>' +
+        findingsHtml +
 
         // Timestamp
         '<p style="color: var(--slate-500); font-size: 12px; text-align: center; margin-top: 24px;">' +
