@@ -759,7 +759,7 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
             apps_result = await db.execute(
                 select(InstalledApp).where(InstalledApp.store_id == store.id)
             )
-            installed_apps = [{"app_name": app.title or app.app_name} for app in apps_result.scalars().all()]
+            installed_apps = [{"app_name": app.app_name} for app in apps_result.scalars().all()]
         
         # Get changed/new files for this scan
         changed_files_result = await db.execute(
