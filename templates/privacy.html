@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Sherlock for Shopify</title>
+    <meta name="description"
+        content="Privacy Policy for Sherlock - Your Store's Detective. Learn how we collect, use, and protect your data.">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+
+    <style>
+        /* ============================================
+           SHERLOCK PRIVACY POLICY - STANDALONE CSS
+           ============================================ */
+
+        :root {
+            --navy-900: #0c1222;
+            --navy-800: #0f172a;
+            --navy-700: #1e293b;
+            --gold-500: #d4a853;
+            --gold-400: #e4bc6a;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+            color: var(--slate-200);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(212, 168, 83, 0.2);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gold-500);
+            letter-spacing: 2px;
+        }
+
+        .logo-tagline {
+            font-size: 11px;
+            color: var(--slate-400);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            color: var(--gold-400);
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--gold-500);
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .last-updated {
+            color: var(--slate-400);
+            font-size: 14px;
+            margin-bottom: 40px;
+        }
+
+        .content-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(212, 168, 83, 0.15);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--gold-400);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(212, 168, 83, 0.2);
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--white);
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--slate-300);
+        }
+
+        ul {
+            margin: 0 0 16px 24px;
+            color: var(--slate-300);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--slate-100);
+        }
+
+        a {
+            color: var(--gold-400);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .highlight-box {
+            background: rgba(212, 168, 83, 0.1);
+            border-left: 3px solid var(--gold-500);
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: var(--slate-200);
+        }
+
+        .contact-info {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+
+        .contact-info p {
+            margin: 8px 0;
+            color: var(--slate-200);
+        }
+
+        .contact-info strong {
+            color: #34d399;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--slate-400);
+            font-size: 13px;
+            border-top: 1px solid rgba(212, 168, 83, 0.1);
+            background: rgba(12, 18, 34, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .main-container {
+                padding: 32px 16px 60px;
+            }
+
+            .content-card {
+                padding: 24px 20px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <span class="logo-icon">🔍</span>
+                <div class="logo-text">
+                    <span class="logo-name">SHERLOCK</span>
+                    <span class="logo-tagline">Your Store's Detective</span>
+                </div>
+            </a>
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <h1 class="page-title">Privacy Policy</h1>
+        <p class="last-updated">Last updated: January 2, 2026</p>
+
+        <!-- Introduction -->
+        <div class="content-card">
+            <h2>1. Introduction</h2>
+            <p>Sherlock ("we", "our", or "us") is operated by Codename: Clan, based in Scotland, UK. We are committed to
+                protecting your privacy and handling your data transparently.</p>
+            <p>This Privacy Policy explains how we collect, use, store, and protect information when you use Sherlock
+                for Shopify ("the App").</p>
+
+            <div class="highlight-box">
+                <p><strong>In simple terms:</strong> Sherlock helps you diagnose app conflicts and protect your Shopify
+                    store. We only access the data we need to do this job, and we don't sell your information to anyone.
+                </p>
+            </div>
+        </div>
+
+        <!-- Data We Collect -->
+        <div class="content-card">
+            <h2>2. Data We Collect</h2>
+
+            <h3>Store Information</h3>
+            <p>When you install Sherlock, we collect:</p>
+            <ul>
+                <li>Your Shopify store domain (e.g., your-store.myshopify.com)</li>
+                <li>Store owner email address</li>
+                <li>Store timezone and currency settings</li>
+                <li>Shopify access token (securely stored, used only for API access)</li>
+            </ul>
+
+            <h3>Theme Data</h3>
+            <p>To monitor and protect your store, we access:</p>
+            <ul>
+                <li>Theme file names and contents (for version tracking and rollback)</li>
+                <li>Theme file checksums (to detect changes)</li>
+                <li>Historical snapshots of your theme files</li>
+            </ul>
+
+            <h3>App Data</h3>
+            <p>We collect information about apps installed on your store:</p>
+            <ul>
+                <li>Script tags injected by apps</li>
+                <li>App block configurations</li>
+                <li>Installation dates (when detectable)</li>
+            </ul>
+
+            <h3>Diagnostic Data</h3>
+            <p>When you run scans, we collect:</p>
+            <ul>
+                <li>Scan results and detected issues</li>
+                <li>Performance metrics (page load times)</li>
+                <li>CSS conflict analysis results</li>
+            </ul>
+
+            <h3>What We Do NOT Collect</h3>
+            <ul>
+                <li>Customer personal data (names, emails, addresses)</li>
+                <li>Order or transaction information</li>
+                <li>Payment or financial data</li>
+                <li>Customer browsing behavior</li>
+            </ul>
+        </div>
+
+        <!-- How We Use Data -->
+        <div class="content-card">
+            <h2>3. How We Use Your Data</h2>
+            <p>We use your data exclusively to provide Sherlock's services:</p>
+            <ul>
+                <li><strong>Theme Protection:</strong> Monitor your theme files for unexpected changes and provide
+                    rollback capabilities</li>
+                <li><strong>Conflict Detection:</strong> Identify app conflicts, CSS issues, and potential problems</li>
+                <li><strong>Diagnostics:</strong> Run scans and generate reports to help you troubleshoot issues</li>
+                <li><strong>Performance Monitoring:</strong> Track your store's loading performance over time</li>
+                <li><strong>Product Improvement:</strong> Aggregate, anonymized data may be used to improve our conflict
+                    detection algorithms</li>
+            </ul>
+
+            <div class="highlight-box">
+                <p><strong>We never:</strong> Sell your data, share it with advertisers, use it for marketing purposes
+                    unrelated to Sherlock, or access your customer information.</p>
+            </div>
+        </div>
+
+        <!-- Data Retention -->
+        <div class="content-card">
+            <h2>4. Data Retention</h2>
+            <p>How long we keep your data depends on your subscription plan:</p>
+            <ul>
+                <li><strong>Standard Plan ($29/month):</strong> Theme snapshots and scan history retained for 7 days
+                </li>
+                <li><strong>Professional Plan ($69/month):</strong> Theme snapshots and scan history retained for 30
+                    days</li>
+            </ul>
+            <p>When you uninstall Sherlock, we delete your store data within 30 days, in compliance with Shopify's
+                requirements.</p>
+            <p>You can request immediate deletion of your data at any time by contacting us.</p>
+        </div>
+
+        <!-- Data Security -->
+        <div class="content-card">
+            <h2>5. Data Security</h2>
+            <p>We take security seriously and implement appropriate measures to protect your data:</p>
+            <ul>
+                <li>All data is transmitted over HTTPS/TLS encryption</li>
+                <li>Access tokens are stored securely and never exposed</li>
+                <li>Our database is hosted on secure, managed infrastructure</li>
+                <li>We follow Shopify's security best practices for app development</li>
+                <li>Access to production systems is restricted and logged</li>
+            </ul>
+        </div>
+
+        <!-- Third Party Services -->
+        <div class="content-card">
+            <h2>6. Third-Party Services</h2>
+            <p>Sherlock uses the following third-party services:</p>
+            <ul>
+                <li><strong>Shopify:</strong> We access your store via Shopify's Admin API under their terms of service
+                </li>
+                <li><strong>Railway:</strong> Our application and database hosting provider</li>
+                <li><strong>Cloudflare:</strong> DNS and security services</li>
+            </ul>
+            <p>We do not share your store data with any other third parties.</p>
+        </div>
+
+        <!-- Your Rights -->
+        <div class="content-card">
+            <h2>7. Your Rights</h2>
+            <p>You have the following rights regarding your data:</p>
+            <ul>
+                <li><strong>Access:</strong> Request a copy of the data we hold about your store</li>
+                <li><strong>Correction:</strong> Request correction of any inaccurate data</li>
+                <li><strong>Deletion:</strong> Request deletion of your data at any time</li>
+                <li><strong>Portability:</strong> Request your data in a portable format</li>
+                <li><strong>Withdrawal:</strong> Uninstall the app at any time to stop data collection</li>
+            </ul>
+            <p>To exercise any of these rights, contact us at the email address below.</p>
+        </div>
+
+        <!-- Cookies -->
+        <div class="content-card">
+            <h2>8. Cookies</h2>
+            <p>Sherlock uses minimal cookies necessary for the app to function:</p>
+            <ul>
+                <li><strong>Session cookies:</strong> To maintain your authenticated session within the app</li>
+            </ul>
+            <p>We do not use tracking cookies, advertising cookies, or any third-party analytics within the app.</p>
+        </div>
+
+        <!-- Changes to Policy -->
+        <div class="content-card">
+            <h2>9. Changes to This Policy</h2>
+            <p>We may update this Privacy Policy from time to time. When we make significant changes, we will:</p>
+            <ul>
+                <li>Update the "Last updated" date at the top of this page</li>
+                <li>Notify you via email or in-app notification for material changes</li>
+            </ul>
+            <p>We encourage you to review this policy periodically.</p>
+        </div>
+
+        <!-- Contact -->
+        <div class="content-card">
+            <h2>10. Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy or how we handle your data, please contact us:</p>
+
+            <div class="contact-info">
+                <p><strong>Email:</strong> <a href="mailto:team@codenamesherlock.com">team@codenamesherlock.com</a></p>
+                <p><strong>Business:</strong> Codename: Clan</p>
+                <p><strong>Location:</strong> Scotland, United Kingdom</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>🔍 Sherlock for Shopify · Your Store's Detective · Built in Scotland by Codename: Clan</p>
+    </footer>
+</body>
+
+</html>
