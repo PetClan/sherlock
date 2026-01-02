@@ -738,7 +738,7 @@ function renderScanReport(report) {
     const filesScanned = theme.files_scanned || 0;
     const themeIssues = theme.issues || [];
     const perfScore = performance.overall_score || performance.performance_score || null;
-    const perfBreakdown = performance.breakdown || {};
+    const perfBreakdown = performance.details || performance.breakdown || {};
 
     // Build apps list HTML
     let appsListHtml = '';
@@ -755,9 +755,9 @@ function renderScanReport(report) {
     // Build performance breakdown HTML
     let perfBreakdownHtml = '';
     if (perfBreakdown.homepage || perfBreakdown.collection || perfBreakdown.cart) {
-        const homepage = perfBreakdown.homepage ? (perfBreakdown.homepage / 1000).toFixed(1) + 's' : '—';
-        const collection = perfBreakdown.collection ? (perfBreakdown.collection / 1000).toFixed(1) + 's' : '—';
-        const cart = perfBreakdown.cart ? (perfBreakdown.cart / 1000).toFixed(1) + 's' : '—';
+        const homepage = perfBreakdown.homepage && perfBreakdown.homepage.load_time_ms ? (perfBreakdown.homepage.load_time_ms / 1000).toFixed(1) + 's' : '—';
+        const collection = perfBreakdown.collection && perfBreakdown.collection.load_time_ms ? (perfBreakdown.collection.load_time_ms / 1000).toFixed(1) + 's' : '—';
+        const cart = perfBreakdown.cart && perfBreakdown.cart.load_time_ms ? (perfBreakdown.cart.load_time_ms / 1000).toFixed(1) + 's' : '—';
         perfBreakdownHtml = 'Homepage: ' + homepage + ' • Collection: ' + collection + ' • Cart: ' + cart;
     } else {
         perfBreakdownHtml = 'No performance data available';
