@@ -342,7 +342,7 @@ function getNextBestAction(apps, scanHistory) {
             style: 'warning'
         };
     }
-    // Priority 3: Orphan code (TODO: needs orphan code data)
+    // Priority 3: Leftover code (TODO: needs leftover code data)
     // Priority 4: Recent app installed (unscanned)
     else if (recentAppInstalled) {
         action = {
@@ -1263,57 +1263,56 @@ function renderConflicts(data) {
 
 // ==================== ORPHAN CODE TAB ====================
 
-async function scanOrphanCode() {
-    const container = document.getElementById('orphan-content');
-    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Scanning for orphan code...</p></div>';
+async function scanLeftoverCode() {
+    const container = document.getElementById('leftover-content');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Scanning for leftover code...</p></div>';
 
     try {
-        const result = await api('/orphan/scan?shop=' + state.shop, { method: 'POST' });
-        renderOrphanCode(result);
+        const result = await api('/leftover/scan?shop=' + state.shop, { method: 'POST' });
+        renderLeftoverCode(result);
     } catch (error) {
-        console.error('Orphan scan error:', error);
+        console.error('Leftover scan error:', error);
         container.innerHTML =
             '<div class="empty-state">' +
-            '<div class="empty-state-icon">❌</div>' +
-            '<h3>Error</h3>' +
-            '<p>Could not scan for orphan code.</p>' +
+            '<span class="empty-icon">❌</span>' +
+            '<p>Could not scan for leftover code.</p>' +
             '</div>';
     }
 }
 
-function renderOrphanCode(data) {
-    const container = document.getElementById('orphan-content');
+function renderLeftoverCode(data) {
+    const container = document.getElementById('leftover-content');
 
     const capabilityCard = `
         <div style="background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;">
             <div style="font-size: 32px;">🧹</div>
             <div>
-                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Orphan Code Finder</div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">Leftover Code Finder</div>
                 <div style="color: #94a3b8; font-size: 14px;">Finds code left behind by uninstalled apps. This leftover code can slow down your store and cause unexpected issues. Sherlock identifies it so you can clean it up.</div>
             </div>
         </div>
     `;
 
-    if (!data.orphans || data.orphans.length === 0) {
+    if (!data.leftovers || data.leftovers.length === 0) {
         container.innerHTML = capabilityCard +
             '<div class="empty-state">' +
             '<div class="empty-state-icon">✅</div>' +
-            '<h3>No Orphan Code Found</h3>' +
+            '<h3>No Leftover Code Found</h3>' +
             '<p>Your theme appears clean of leftover app code.</p>' +
             '</div>';
         return;
     }
 
     let html = '';
-    data.orphans.forEach(function (orphan) {
+    data.leftovers.forEach(function (leftover) {
         html +=
             '<div class="card" style="margin-bottom: 12px;">' +
             '<div class="card-body">' +
             '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
-            '<code>' + escapeHtml(orphan.file) + '</code>' +
-            '<span class="badge badge-warning">' + escapeHtml(orphan.likely_app) + '</span>' +
+            '<code>' + escapeHtml(leftover.file) + '</code>' +
+            '<span class="badge badge-warning">' + escapeHtml(leftover.likely_app) + '</span>' +
             '</div>' +
-            '<p style="color: var(--slate-400);">' + escapeHtml(orphan.description) + '</p>' +
+            '<p style="color: var(--slate-400);">' + escapeHtml(leftover.description) + '</p>' +
             '</div>' +
             '</div>';
     });
@@ -2169,7 +2168,7 @@ function showBadgeExplainer(type) {
                     <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">Sherlock is tracking any changes for you.</p>
                 </div>
                 <div style="border-left: 3px solid #00d4ff; padding-left: 12px; color: #94a3b8; font-size: 14px;">
-                    💡 <strong>Tip:</strong> If you uninstall this app later, use Orphan Code to identify any leftover code that may need manual cleanup.
+                  💡<strong>Tip:</strong> If you uninstall this app later, use Leftover Code to identify any leftover code that may need manual cleanup.
                 </div>
             `
         }
@@ -3584,8 +3583,8 @@ var capabilityData = {
             <p>Check the Conflicts tab to see if any of your installed apps have known issues with each other. If conflicts are found, we'll explain the issue and suggest solutions.</p>
         `
     },
-    orphan: {
-        title: '🧹 Orphan Code Finder',
+    leftover: {
+        title: '🧹 Leftover Code Finder',
         content: `
             <h4>What it does</h4>
             <p>When you uninstall an app, it should remove all the code it added to your theme. But many apps don't clean up after themselves. Sherlock finds this leftover "orphan" code.</p>

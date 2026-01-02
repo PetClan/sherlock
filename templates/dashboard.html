@@ -65,7 +65,7 @@
                 <button class="tab active" onclick="switchTab('dashboard', this)">🏠 Dashboard</button>
                 <button class="tab" onclick="switchTab('apps', this)">📦 Apps</button>
                 <button class="tab" onclick="switchTab('conflicts', this)">⚡ Conflicts</button>
-                <button class="tab" onclick="switchTab('orphan', this)">🧹 Orphan Code</button>
+                <button class="tab" onclick="switchTab('leftover', this)">🧹 Leftover Code</button>
                 <button class="tab" onclick="switchTab('timeline', this)">📈 Timeline</button>
                 <button class="tab" onclick="switchTab('rollback', this)">🔄 Rollback</button>
                 <button class="tab" onclick="switchTab('community', this)">👥 Community</button>
@@ -163,20 +163,20 @@
             </div>
         </div>
 
-        <!-- Orphan Code Tab -->
-        <div id="tab-orphan" class="tab-content hidden">
+        <!-- Leftover Code Tab -->
+        <div id="tab-leftover" class="tab-content hidden">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">🧹 Orphan Code Detection</h3>
-                    <button class="btn btn-primary btn-sm" onclick="scanOrphanCode()">
-                        Scan for Orphan Code
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title">🧹 Leftover Code Detection</h3>
+                    <button class="btn btn-primary btn-sm" onclick="scanLeftoverCode()">
+                        Scan for Leftover Code
                     </button>
                 </div>
-                <div class="card-body" id="orphan-content">
+                <div class="card-body" id="leftover-content">
                     <div class="empty-state">
-                        <div class="empty-state-icon">🧹</div>
+                        <span class="empty-icon">🔍</span>
                         <h3>Find Leftover Code</h3>
-                        <p>Scan your theme for code left behind by uninstalled apps. This orphan code can slow down your
+                        <p>Scan your theme for code left behind by uninstalled apps. This leftover code can slow down your
                             store and cause conflicts.</p>
                     </div>
                 </div>
