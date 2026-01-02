@@ -413,6 +413,28 @@ async def faq_page(request: Request):
         </html>
     """, status_code=500)
 
+@app.get("/privacy")
+async def privacy_policy():
+    """
+    Privacy Policy page.
+    """
+    templates_path = os.path.join(os.path.dirname(__file__), "templates", "privacy.html")
+    
+    if os.path.exists(templates_path):
+        with open(templates_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    
+    return HTMLResponse(content="""
+        <html>
+            <head><title>Privacy Policy - Sherlock</title></head>
+            <body>
+                <h1>Privacy Policy not found</h1>
+                <p>Please ensure templates/privacy.html exists.</p>
+            </body>
+        </html>
+    """, status_code=500)
+
 # ==================== SEO Routes ====================
 
 @app.get("/robots.txt", include_in_schema=False)
