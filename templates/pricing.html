@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Sherlock for Shopify</title>
+    <meta name="description"
+        content="Simple, transparent pricing for Sherlock - Your Store's Detective. Start with a 14-day free trial.">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
+
+    <style>
+        /* ============================================
+           SHERLOCK PRICING PAGE - STANDALONE CSS
+           ============================================ */
+
+        :root {
+            --navy-900: #0c1222;
+            --navy-800: #0f172a;
+            --navy-700: #1e293b;
+            --gold-500: #d4a853;
+            --gold-400: #e4bc6a;
+            --gold-300: #f0d68a;
+            --emerald-500: #10b981;
+            --emerald-400: #34d399;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 100%);
+            color: var(--slate-200);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(212, 168, 83, 0.2);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gold-500);
+            letter-spacing: 2px;
+        }
+
+        .logo-tagline {
+            font-size: 11px;
+            color: var(--slate-400);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            color: var(--gold-400);
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--gold-500);
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            color: var(--slate-400);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Pricing Grid */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .pricing-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(212, 168, 83, 0.15);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(212, 168, 83, 0.3);
+        }
+
+        .pricing-card.featured {
+            border: 2px solid var(--gold-500);
+            background: rgba(30, 41, 59, 0.7);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gold-500);
+            color: var(--navy-900);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 16px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .plan-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 8px;
+        }
+
+        .plan-description {
+            color: var(--slate-400);
+            font-size: 14px;
+            margin-bottom: 24px;
+            min-height: 40px;
+        }
+
+        .plan-price {
+            margin-bottom: 24px;
+        }
+
+        .price-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .price-currency {
+            font-size: 24px;
+            color: var(--slate-400);
+            vertical-align: top;
+        }
+
+        .price-period {
+            font-size: 16px;
+            color: var(--slate-400);
+        }
+
+        .price-trial {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--emerald-400);
+        }
+
+        .trial-duration {
+            display: block;
+            font-size: 14px;
+            color: var(--slate-400);
+            margin-top: 4px;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: var(--slate-300);
+            font-size: 14px;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: var(--emerald-400);
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cta-primary {
+            background: var(--gold-500);
+            color: var(--navy-900);
+        }
+
+        .cta-primary:hover {
+            background: var(--gold-400);
+        }
+
+        .cta-secondary {
+            background: transparent;
+            border: 2px solid var(--gold-500);
+            color: var(--gold-400);
+        }
+
+        .cta-secondary:hover {
+            background: rgba(212, 168, 83, 0.1);
+        }
+
+        /* Feature Comparison */
+        .comparison-section {
+            margin-top: 64px;
+        }
+
+        .comparison-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(212, 168, 83, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(212, 168, 83, 0.1);
+        }
+
+        .comparison-table th {
+            background: rgba(212, 168, 83, 0.1);
+            color: var(--gold-400);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .comparison-table td {
+            color: var(--slate-300);
+            font-size: 14px;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 500;
+            color: var(--slate-200);
+        }
+
+        .check-icon {
+            color: var(--emerald-400);
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            margin-top: 64px;
+        }
+
+        .faq-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .faq-item {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(212, 168, 83, 0.15);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .faq-answer {
+            color: var(--slate-400);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--slate-400);
+            font-size: 13px;
+            border-top: 1px solid rgba(212, 168, 83, 0.1);
+            background: rgba(12, 18, 34, 0.5);
+        }
+
+        .footer a {
+            color: var(--gold-400);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .pricing-card.featured {
+                order: -1;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main-container {
+                padding: 32px 16px 60px;
+            }
+
+            .page-title {
+                font-size: 32px;
+            }
+
+            .comparison-table {
+                font-size: 13px;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <span class="logo-icon">🔍</span>
+                <div class="logo-text">
+                    <span class="logo-name">SHERLOCK</span>
+                    <span class="logo-tagline">Your Store's Detective</span>
+                </div>
+            </a>
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">Simple, Transparent Pricing</h1>
+            <p class="page-subtitle">Protect your Shopify store with Sherlock. Start with a 14-day free trial, no credit
+                card required.</p>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid">
+            <!-- Free Trial -->
+            <div class="pricing-card">
+                <h2 class="plan-name">Free Trial</h2>
+                <p class="plan-description">Try Sherlock risk-free for 14 days</p>
+                <div class="plan-price">
+                    <span class="price-trial">FREE</span>
+                    <span class="trial-duration">14 days, full access</span>
+                </div>
+                <ul class="feature-list">
+                    <li>Daily automated scans</li>
+                    <li>Theme file monitoring</li>
+                    <li>App conflict detection</li>
+                    <li>CSS risk analysis</li>
+                    <li>7-day theme history</li>
+                    <li>Theme rollback</li>
+                    <li>Email support</li>
+                </ul>
+                <a href="/install" class="cta-button cta-secondary">Start Free Trial</a>
+            </div>
+
+            <!-- Standard -->
+            <div class="pricing-card featured">
+                <span class="popular-badge">Most Popular</span>
+                <h2 class="plan-name">Standard</h2>
+                <p class="plan-description">Essential protection for growing stores</p>
+                <div class="plan-price">
+                    <span class="price-currency">$</span><span class="price-amount">29</span>
+                    <span class="price-period">/month</span>
+                </div>
+                <ul class="feature-list">
+                    <li>Daily automated scans</li>
+                    <li>Theme file monitoring</li>
+                    <li>App conflict detection</li>
+                    <li>CSS risk analysis</li>
+                    <li>7-day theme history</li>
+                    <li>Theme rollback</li>
+                    <li>Performance monitoring</li>
+                    <li>Email support</li>
+                </ul>
+                <a href="/install" class="cta-button cta-primary">Get Started</a>
+            </div>
+
+            <!-- Professional -->
+            <div class="pricing-card">
+                <h2 class="plan-name">Professional</h2>
+                <p class="plan-description">Extended protection for established stores</p>
+                <div class="plan-price">
+                    <span class="price-currency">$</span><span class="price-amount">69</span>
+                    <span class="price-period">/month</span>
+                </div>
+                <ul class="feature-list">
+                    <li>Everything in Standard, plus:</li>
+                    <li>30-day theme history</li>
+                    <li>Extended rollback window</li>
+                    <li>Priority support</li>
+                    <li>Faster response times</li>
+                </ul>
+                <a href="/install" class="cta-button cta-secondary">Get Started</a>
+            </div>
+        </div>
+
+        <!-- Feature Comparison -->
+        <section class="comparison-section">
+            <h2 class="comparison-title">Compare Plans</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Free Trial</th>
+                        <th>Standard</th>
+                        <th>Professional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Daily Automated Scans</td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>Theme File Monitoring</td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>App Conflict Detection</td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>CSS Risk Analysis</td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>Theme Rollback</td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>Performance Monitoring</td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>Theme History</td>
+                        <td>7 days</td>
+                        <td>7 days</td>
+                        <td>30 days</td>
+                    </tr>
+                    <tr>
+                        <td>On-Demand Scans</td>
+                        <td>5/day</td>
+                        <td>5/day</td>
+                        <td>5/day</td>
+                    </tr>
+                    <tr>
+                        <td>Theme Restores</td>
+                        <td>3/day</td>
+                        <td>3/day</td>
+                        <td>3/day</td>
+                    </tr>
+                    <tr>
+                        <td>Support</td>
+                        <td>Email</td>
+                        <td>Email</td>
+                        <td>Priority</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- FAQ -->
+        <section class="faq-section">
+            <h2 class="faq-title">Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3 class="faq-question">What happens after the free trial?</h3>
+                    <p class="faq-answer">After 14 days, you can choose to subscribe to Standard or Professional. If you
+                        don't subscribe, your account will be paused but your data will be retained for 30 days in case
+                        you decide to come back.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Can I cancel anytime?</h3>
+                    <p class="faq-answer">Yes! You can cancel your subscription at any time from your Shopify admin.
+                        There are no long-term contracts or cancellation fees.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">What is theme history?</h3>
+                    <p class="faq-answer">Theme history is how far back you can restore your theme files. Standard keeps
+                        7 days of snapshots, while Professional keeps 30 days, giving you more restore points to choose
+                        from.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">What does Priority Support mean?</h3>
+                    <p class="faq-answer">Professional plan customers get faster response times and priority handling
+                        for support requests. We aim to respond to Priority support within 4 hours during business
+                        hours.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Will Sherlock slow down my store?</h3>
+                    <p class="faq-answer">No. Sherlock runs scans in the background using Shopify's API. It doesn't add
+                        any scripts or code to your storefront, so there's zero impact on your store's performance.</p>
+                </div>
+                <div class="faq-item">
+                    <h3 class="faq-question">Is my data secure?</h3>
+                    <p class="faq-answer">Yes. We only access theme files and app data necessary for diagnostics. We
+                        never access customer data, orders, or payment information. Read our <a href="/privacy">Privacy
+                            Policy</a> for details.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>🔍 Sherlock for Shopify · Your Store's Detective · Built in Scotland by Codename: Clan · <a
+                href="/privacy">Privacy Policy</a></p>
+    </footer>
+</body>
+
+</html>

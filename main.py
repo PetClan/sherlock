@@ -435,6 +435,28 @@ async def privacy_policy():
         </html>
     """, status_code=500)
 
+@app.get("/pricing")
+async def pricing_page():
+    """
+    Pricing page.
+    """
+    templates_path = os.path.join(os.path.dirname(__file__), "templates", "pricing.html")
+    
+    if os.path.exists(templates_path):
+        with open(templates_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    
+    return HTMLResponse(content="""
+        <html>
+            <head><title>Pricing - Sherlock</title></head>
+            <body>
+                <h1>Pricing page not found</h1>
+                <p>Please ensure templates/pricing.html exists.</p>
+            </body>
+        </html>
+    """, status_code=500)
+
 # ==================== SEO Routes ====================
 
 @app.get("/robots.txt", include_in_schema=False)
