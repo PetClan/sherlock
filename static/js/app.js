@@ -878,6 +878,12 @@ function renderDailyScanReport(report) {
     const scripts = report.scripts || {};
     const cssIssues = report.css_issues || {};
 
+    // Check if there are any changes
+    const hasFileChanges = (files.changed > 0 || files.new > 0 || files.deleted > 0);
+    const hasScriptChanges = (scripts.new > 0 || scripts.removed > 0);
+    const hasCssIssues = (cssIssues.count > 0);
+    const hasAnyChanges = hasFileChanges || hasScriptChanges || hasCssIssues;
+
     // Risk level styling
     const riskColors = {
         'low': 'success',
@@ -886,39 +892,75 @@ function renderDailyScanReport(report) {
     };
     const riskClass = riskColors[report.risk_level] || 'success';
 
-    // Build file changes HTML
-    let changesHtml = '';
-    if (files.changed > 0 || files.new > 0 || files.deleted > 0) {
-        changesHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
-        if (files.changed > 0) changesHtml += '<li>' + files.changed + ' file(s) modified</li>';
-        if (files.new > 0) changesHtml += '<li>' + files.new + ' new file(s) added</li>';
-        if (files.deleted > 0) changesHtml += '<li>' + files.deleted + ' file(s) deleted</li>';
-        changesHtml += '</ul>';
-    } else {
-        changesHtml = '<p style="color: var(--slate-400); margin: 0;">No file changes detected</p>';
-    }
+    let contentHtml = '';
 
-    // Build script changes HTML
-    let scriptsHtml = '';
-    if (scripts.new > 0 || scripts.removed > 0) {
-        scriptsHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
-        if (scripts.new > 0) scriptsHtml += '<li>' + scripts.new + ' new script(s) added</li>';
-        if (scripts.removed > 0) scriptsHtml += '<li>' + scripts.removed + ' script(s) removed</li>';
-        scriptsHtml += '</ul>';
+    if (!hasAnyChanges) {
+        // Simple "all clear" message
+        contentHtml =
+            '<div class="card" style="border: 1px solid var(--success); background: rgba(16, 185, 129, 0.1);">' +
+            '<div class="card-body" style="padding: 32px; text-align: center;">' +
+            '<div style="font-size: 48px; margin-bottom: 12px;">✅</div>' +
+            '<h3 style="color: var(--success); margin-bottom: 8px;">No Significant Changes Detected</h3>' +
+            '<p style="color: var(--slate-400); margin: 0;">Your theme files and scripts are unchanged since the last scan.</p>' +
+            '</div>' +
+            '</div>';
     } else {
-        scriptsHtml = '<p style="color: var(--slate-400); margin: 0;">No script changes detected</p>';
-    }
+        // Show what changed
+        contentHtml =
+            '<div class="card" style="border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.1); margin-bottom: 16px;">' +
+            '<div class="card-body" style="padding: 20px; text-align: center;">' +
+            '<div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>' +
+            '<h3 style="color: var(--warning); margin-bottom: 4px;">Changes Detected</h3>' +
+            '<p style="color: var(--slate-400); margin: 0;">Review the details below.</p>' +
+            '</div>' +
+            '</div>';
 
-    // Build CSS issues HTML
-    let cssHtml = '';
-    if (cssIssues.count > 0) {
-        cssHtml = '<p style="color: var(--warning); margin: 0;">' + cssIssues.count + ' CSS issue(s) found</p>';
-    } else {
-        cssHtml = '<p style="color: var(--slate-400); margin: 0;">No CSS issues detected</p>';
-    }
+        // File changes section
+        if (hasFileChanges) {
+            let fileDetails = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
+            if (files.new > 0) fileDetails += '<li><strong>' + files.new + '</strong> new file(s) added</li>';
+            if (files.changed > 0) fileDetails += '<li><strong>' + files.changed + '</strong> file(s) modified</li>';
+            if (files.deleted > 0) fileDetails += '<li><strong>' + files.deleted + '</strong> file(s) deleted</li>';
+            fileDetails += '</ul>';
 
-    // Summary section
-    let summaryHtml = report.summary || 'Automated daily monitoring scan completed.';
+            contentHtml +=
+                '<div class="card" style="margin-bottom: 16px;">' +
+                '<div class="card-body" style="padding: 20px;">' +
+                '<h3 style="margin-bottom: 12px; font-size: 16px;">📁 File Changes</h3>' +
+                fileDetails +
+                '<button class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="switchTab(\'rollback\', document.querySelector(\'.tab\'))">View in Rollback Tab →</button>' +
+                '</div>' +
+                '</div>';
+        }
+
+        // Script changes section
+        if (hasScriptChanges) {
+            let scriptDetails = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
+            if (scripts.new > 0) scriptDetails += '<li><strong>' + scripts.new + '</strong> new script(s) added</li>';
+            if (scripts.removed > 0) scriptDetails += '<li><strong>' + scripts.removed + '</strong> script(s) removed</li>';
+            scriptDetails += '</ul>';
+
+            contentHtml +=
+                '<div class="card" style="margin-bottom: 16px;">' +
+                '<div class="card-body" style="padding: 20px;">' +
+                '<h3 style="margin-bottom: 12px; font-size: 16px;">📜 Script Changes</h3>' +
+                scriptDetails +
+                '</div>' +
+                '</div>';
+        }
+
+        // CSS issues section
+        if (hasCssIssues) {
+            contentHtml +=
+                '<div class="card" style="margin-bottom: 16px;">' +
+                '<div class="card-body" style="padding: 20px;">' +
+                '<h3 style="margin-bottom: 12px; font-size: 16px;">🎨 CSS Issues</h3>' +
+                '<p style="color: var(--warning); margin: 0;"><strong>' + cssIssues.count + '</strong> potential CSS conflict(s) found</p>' +
+                '<button class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="switchTab(\'conflicts\', document.querySelector(\'.tab\'))">View in Conflicts Tab →</button>' +
+                '</div>' +
+                '</div>';
+        }
+    }
 
     mainContent.innerHTML =
         '<div style="padding: 24px;">' +
@@ -937,40 +979,11 @@ function renderDailyScanReport(report) {
         '<div class="stat-card"><div class="stat-value ' + riskClass + '">' + capitalizeFirst(report.risk_level || 'low') + '</div><div class="stat-label">Risk Level</div></div>' +
         '</div>' +
 
-        // Summary section
-        '<div class="card" style="margin-bottom: 16px;">' +
-        '<div class="card-body" style="padding: 20px;">' +
-        '<h3 style="margin-bottom: 12px; font-size: 16px;">📋 Summary</h3>' +
-        '<p style="color: var(--slate-300); margin: 0;">' + escapeHtml(summaryHtml) + '</p>' +
-        '</div>' +
-        '</div>' +
-
-        // File Changes section
-        '<div class="card" style="margin-bottom: 16px;">' +
-        '<div class="card-body" style="padding: 20px;">' +
-        '<h3 style="margin-bottom: 12px; font-size: 16px;">📁 File Changes</h3>' +
-        changesHtml +
-        '</div>' +
-        '</div>' +
-
-        // Script Changes section
-        '<div class="card" style="margin-bottom: 16px;">' +
-        '<div class="card-body" style="padding: 20px;">' +
-        '<h3 style="margin-bottom: 12px; font-size: 16px;">📜 Script Changes</h3>' +
-        scriptsHtml +
-        '</div>' +
-        '</div>' +
-
-        // CSS Issues section
-        '<div class="card" style="margin-bottom: 24px;">' +
-        '<div class="card-body" style="padding: 20px;">' +
-        '<h3 style="margin-bottom: 12px; font-size: 16px;">🎨 CSS Issues</h3>' +
-        cssHtml +
-        '</div>' +
-        '</div>' +
+        // Content (changes or all-clear)
+        contentHtml +
 
         // Timestamp
-        '<p style="color: var(--slate-500); font-size: 12px; text-align: center;">' +
+        '<p style="color: var(--slate-500); font-size: 12px; text-align: center; margin-top: 24px;">' +
         'Scan completed: ' + formatDate(report.completed_at) +
         '</p>' +
 
