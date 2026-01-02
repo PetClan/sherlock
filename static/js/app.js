@@ -208,7 +208,7 @@ function renderRecentScans(scans) {
 
     let rows = '';
     scans.forEach(function (scan) {
-        rows += '<tr onclick="viewScan(\'' + scan.diagnosis_id + '\')" style="cursor: pointer;">' +
+        rows += '<tr onclick="viewScan(\'' + scan.diagnosis_id + '\', \'' + scan.scan_type + '\')" style="cursor: pointer;">' +
             '<td>' +
             '<span class="scan-status">' +
             '<span class="scan-status-dot ' + scan.status + '"></span>' +
@@ -219,7 +219,7 @@ function renderRecentScans(scans) {
             '<td>' + scan.issues_found + ' issues</td>' +
             '<td>' + formatDate(scan.started_at) + '</td>' +
             '<td class="text-right">' +
-            '<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); viewScan(\'' + scan.diagnosis_id + '\')">View</button>' +
+            '<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); viewScan(\'' + scan.diagnosis_id + '\', \'' + scan.scan_type + '\')">View</button>' +
             '</td>' +
             '</tr>';
     });
@@ -710,10 +710,15 @@ function showScanProgress(scan) {
         '</div>';
 }
 
-async function viewScan(diagnosisId) {
+async function viewScan(scanId, scanType) {
     try {
-        const report = await api('/scan/' + diagnosisId + '/report');
-        renderScanReport(report);
+        if (scanType === 'auto') {
+            const report = await api('/scan/daily/' + scanId + '/report');
+            renderDailyScanReport(report);
+        } else {
+            const report = await api('/scan/' + scanId + '/report');
+            renderScanReport(report);
+        }
     } catch (error) {
         console.error('View scan error:', error);
         showError('Failed to load investigation report');
@@ -862,6 +867,112 @@ function renderScanReport(report) {
         // Findings section
         '<h3 style="margin-bottom: 16px;">🔍 Findings</h3>' +
         issuesHtml +
+
+        '</div>';
+}
+
+function renderDailyScanReport(report) {
+    const mainContent = document.getElementById('main-content');
+
+    const files = report.files || {};
+    const scripts = report.scripts || {};
+    const cssIssues = report.css_issues || {};
+
+    // Risk level styling
+    const riskColors = {
+        'low': 'success',
+        'medium': 'warning',
+        'high': 'danger'
+    };
+    const riskClass = riskColors[report.risk_level] || 'success';
+
+    // Build file changes HTML
+    let changesHtml = '';
+    if (files.changed > 0 || files.new > 0 || files.deleted > 0) {
+        changesHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
+        if (files.changed > 0) changesHtml += '<li>' + files.changed + ' file(s) modified</li>';
+        if (files.new > 0) changesHtml += '<li>' + files.new + ' new file(s) added</li>';
+        if (files.deleted > 0) changesHtml += '<li>' + files.deleted + ' file(s) deleted</li>';
+        changesHtml += '</ul>';
+    } else {
+        changesHtml = '<p style="color: var(--slate-400); margin: 0;">No file changes detected</p>';
+    }
+
+    // Build script changes HTML
+    let scriptsHtml = '';
+    if (scripts.new > 0 || scripts.removed > 0) {
+        scriptsHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
+        if (scripts.new > 0) scriptsHtml += '<li>' + scripts.new + ' new script(s) added</li>';
+        if (scripts.removed > 0) scriptsHtml += '<li>' + scripts.removed + ' script(s) removed</li>';
+        scriptsHtml += '</ul>';
+    } else {
+        scriptsHtml = '<p style="color: var(--slate-400); margin: 0;">No script changes detected</p>';
+    }
+
+    // Build CSS issues HTML
+    let cssHtml = '';
+    if (cssIssues.count > 0) {
+        cssHtml = '<p style="color: var(--warning); margin: 0;">' + cssIssues.count + ' CSS issue(s) found</p>';
+    } else {
+        cssHtml = '<p style="color: var(--slate-400); margin: 0;">No CSS issues detected</p>';
+    }
+
+    // Summary section
+    let summaryHtml = report.summary || 'Automated daily monitoring scan completed.';
+
+    mainContent.innerHTML =
+        '<div style="padding: 24px;">' +
+
+        // Back button
+        '<button class="btn btn-secondary" onclick="backToDashboard()" style="margin-bottom: 20px;">← Back to Dashboard</button>' +
+
+        // Title
+        '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">🔄 Auto Scan Report</h2>' +
+
+        // Stats row
+        '<div class="grid grid-4" style="margin-bottom: 24px;">' +
+        '<div class="stat-card"><div class="stat-value">' + files.total + '</div><div class="stat-label">Total Files</div></div>' +
+        '<div class="stat-card"><div class="stat-value ' + (files.changed > 0 ? 'warning' : 'success') + '">' + files.changed + '</div><div class="stat-label">Files Changed</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + scripts.total + '</div><div class="stat-label">Scripts Tracked</div></div>' +
+        '<div class="stat-card"><div class="stat-value ' + riskClass + '">' + capitalizeFirst(report.risk_level || 'low') + '</div><div class="stat-label">Risk Level</div></div>' +
+        '</div>' +
+
+        // Summary section
+        '<div class="card" style="margin-bottom: 16px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📋 Summary</h3>' +
+        '<p style="color: var(--slate-300); margin: 0;">' + escapeHtml(summaryHtml) + '</p>' +
+        '</div>' +
+        '</div>' +
+
+        // File Changes section
+        '<div class="card" style="margin-bottom: 16px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📁 File Changes</h3>' +
+        changesHtml +
+        '</div>' +
+        '</div>' +
+
+        // Script Changes section
+        '<div class="card" style="margin-bottom: 16px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📜 Script Changes</h3>' +
+        scriptsHtml +
+        '</div>' +
+        '</div>' +
+
+        // CSS Issues section
+        '<div class="card" style="margin-bottom: 24px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">🎨 CSS Issues</h3>' +
+        cssHtml +
+        '</div>' +
+        '</div>' +
+
+        // Timestamp
+        '<p style="color: var(--slate-500); font-size: 12px; text-align: center;">' +
+        'Scan completed: ' + formatDate(report.completed_at) +
+        '</p>' +
 
         '</div>';
 }

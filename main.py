@@ -733,6 +733,52 @@ async def get_diagnosis_report(diagnosis_id: str, db: AsyncSession = Depends(get
         print(f"❌ [Sherlock] Get report error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get diagnosis report")
 
+
+@app.get("/api/v1/scan/daily/{scan_id}/report")
+async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)):
+    """Get daily auto scan report"""
+    try:
+        result = await db.execute(
+            select(DailyScan).where(DailyScan.id == scan_id)
+        )
+        scan = result.scalar()
+        
+        if not scan:
+            raise HTTPException(status_code=404, detail="Daily scan not found")
+        
+        return {
+            "scan_id": str(scan.id),
+            "scan_type": "auto",
+            "status": scan.status,
+            "started_at": scan.started_at.isoformat() if scan.started_at else None,
+            "completed_at": scan.completed_at.isoformat() if scan.completed_at else None,
+            "risk_level": scan.risk_level,
+            "risk_reasons": scan.risk_reasons or [],
+            "summary": scan.summary,
+            "files": {
+                "total": scan.files_total or 0,
+                "changed": scan.files_changed or 0,
+                "new": scan.files_new or 0,
+                "deleted": scan.files_deleted or 0
+            },
+            "scripts": {
+                "total": scan.scripts_total or 0,
+                "new": scan.scripts_new or 0,
+                "removed": scan.scripts_removed or 0
+            },
+            "css_issues": {
+                "count": scan.css_issues_found or 0,
+                "details": scan.non_namespaced_css or []
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Daily scan report error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get daily scan report")
+
+
 @app.get("/api/v1/debug/token-check/{shop}")
 async def debug_token_check(shop: str, db: AsyncSession = Depends(get_db)):
     """Debug endpoint to check token status"""
