@@ -1261,7 +1261,7 @@ function renderConflicts(data) {
     container.innerHTML = capabilityCard + html;
 }
 
-// ==================== ORPHAN CODE TAB ====================
+// ==================== LEFTOVER CODE TAB ====================
 
 async function scanLeftoverCode() {
     const container = document.getElementById('leftover-content');
@@ -3587,10 +3587,10 @@ var capabilityData = {
         title: '🧹 Leftover Code Finder',
         content: `
             <h4>What it does</h4>
-            <p>When you uninstall an app, it should remove all the code it added to your theme. But many apps don't clean up after themselves. Sherlock finds this leftover "orphan" code.</p>
+            <p>When you uninstall an app, it should remove all the code it added to your theme. But many apps don't clean up after themselves. Sherlock finds this leftover code.</p>
             
             <h4>Why it matters for your store</h4>
-            <p>Orphan code slows down your store. Every extra line of code takes time to load and process. If you've installed and uninstalled several apps over the years, you might have hundreds of lines of useless code dragging down your performance.</p>
+            <p>Leftover code slows down your store. Every extra line of code takes time to load and process. If you've installed and uninstalled several apps over the years, you might have hundreds of lines of useless code dragging down your performance.</p>
             
             <h4>Common culprits</h4>
             <ul>
@@ -3601,7 +3601,7 @@ var capabilityData = {
             </ul>
             
             <h4>What you can do</h4>
-            <p>Check the Orphan Code tab. Sherlock identifies suspicious code and tells you which app likely left it behind. You can then safely remove it or ask a developer to help.</p>
+            <p>Check the Leftover Code tab. Sherlock identifies suspicious code and tells you which app likely left it behind. You can then safely remove it or ask a developer to help.</p>
         `
     },
     performance: {
