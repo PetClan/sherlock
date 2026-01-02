@@ -874,49 +874,39 @@ function renderScanReport(report) {
 function renderDailyScanReport(report) {
     const mainContent = document.getElementById('main-content');
 
+    // Extract data - matching manual scan structure
+    const apps = report.apps || {};
+    const theme = report.theme || {};
     const files = report.files || {};
     const scripts = report.scripts || {};
     const cssIssues = report.css_issues || {};
-    const appOwnedFiles = report.app_owned_files || [];
+
+    const appsList = apps.apps || [];
+    const filesScanned = theme.files_scanned || files.total || 0;
+    const themeIssues = theme.issues || [];
+    const totalIssues = report.issues_found || 0;
 
     // Check if there are any changes
     const hasFileChanges = (files.changed > 0 || files.new > 0 || files.deleted > 0);
     const hasScriptChanges = (scripts.new > 0 || scripts.removed > 0);
     const hasCssIssues = (cssIssues.count > 0);
-    const hasAnyChanges = hasFileChanges || hasScriptChanges || hasCssIssues;
 
-    // Risk level styling
-    const riskColors = {
-        'low': 'success',
-        'medium': 'warning',
-        'high': 'danger'
-    };
-    const riskClass = riskColors[report.risk_level] || 'success';
-
-    // Build app-owned files list (grouped by app)
-    let appsHtml = '';
-    if (appOwnedFiles.length > 0) {
-        // Group by app
-        const appGroups = {};
-        appOwnedFiles.forEach(function (f) {
-            const app = f.app_guess || 'Unknown';
-            if (!appGroups[app]) appGroups[app] = [];
-            appGroups[app].push(f.file_path);
+    // Build apps list HTML - matching manual scan
+    let appsListHtml = '';
+    if (appsList.length > 0) {
+        appsListHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
+        appsList.forEach(function (app) {
+            appsListHtml += '<li>' + escapeHtml(app.app_name) + '</li>';
         });
-
-        appsHtml = '<ul style="margin: 0; padding-left: 20px; color: var(--slate-300);">';
-        Object.keys(appGroups).forEach(function (app) {
-            appsHtml += '<li><strong>' + escapeHtml(app) + '</strong> (' + appGroups[app].length + ' file' + (appGroups[app].length > 1 ? 's' : '') + ')</li>';
-        });
-        appsHtml += '</ul>';
+        appsListHtml += '</ul>';
     } else {
-        appsHtml = '<p style="color: var(--slate-400); margin: 0;">No app-related files detected</p>';
+        appsListHtml = '<p style="color: var(--slate-400); margin: 0;">No apps detected</p>';
     }
 
     // Build findings HTML
     let findingsHtml = '';
 
-    if (!hasAnyChanges) {
+    if (!hasFileChanges && !hasScriptChanges && !hasCssIssues) {
         findingsHtml =
             '<div class="card" style="border: 1px solid var(--success); background: rgba(16, 185, 129, 0.1);">' +
             '<div class="card-body" style="padding: 24px; text-align: center;">' +
@@ -926,13 +916,12 @@ function renderDailyScanReport(report) {
             '</div>' +
             '</div>';
     } else {
-        // Build issue cards for each type of change
         findingsHtml = '';
 
         // New files
-        if (files.new > 0 && files.new_files) {
+        if (files.new > 0 && files.new_files && files.new_files.length > 0) {
             let fileList = files.new_files.map(function (f) {
-                return '<li>' + escapeHtml(f.file_path) + (f.app_guess ? ' <span style="color: var(--slate-500);">(' + escapeHtml(f.app_guess) + ')</span>' : '') + '</li>';
+                return '<li>' + escapeHtml(f.file_path) + '</li>';
             }).join('');
 
             findingsHtml +=
@@ -945,9 +934,9 @@ function renderDailyScanReport(report) {
         }
 
         // Changed files
-        if (files.changed > 0 && files.changed_files) {
+        if (files.changed > 0 && files.changed_files && files.changed_files.length > 0) {
             let fileList = files.changed_files.map(function (f) {
-                return '<li>' + escapeHtml(f.file_path) + (f.app_guess ? ' <span style="color: var(--slate-500);">(' + escapeHtml(f.app_guess) + ')</span>' : '') + '</li>';
+                return '<li>' + escapeHtml(f.file_path) + '</li>';
             }).join('');
 
             findingsHtml +=
@@ -992,13 +981,14 @@ function renderDailyScanReport(report) {
                 '<div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--warning);">' +
                 '<div class="card-body" style="padding: 20px;">' +
                 '<h4 style="color: var(--warning); margin-bottom: 12px;">🎨 ' + cssIssues.count + ' CSS Issue(s) Found</h4>' +
-                '<p style="color: var(--slate-400); margin: 0;">Potential CSS conflicts detected that may affect your store\'s appearance.</p>' +
+                '<p style="color: var(--slate-400); margin: 0;">Potential CSS conflicts detected.</p>' +
                 '<button class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="switchTab(\'conflicts\', document.querySelector(\'.tab\'))">View in Conflicts Tab →</button>' +
                 '</div>' +
                 '</div>';
         }
     }
 
+    // Build the full page - matching manual scan layout
     mainContent.innerHTML =
         '<div style="padding: 24px;">' +
 
@@ -1008,31 +998,39 @@ function renderDailyScanReport(report) {
         // Title
         '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">📋 Scan Report</h2>' +
 
-        // Stats row
+        // Stats row - matching manual scan
         '<div class="grid grid-4" style="margin-bottom: 24px;">' +
-        '<div class="stat-card"><div class="stat-value ' + (hasAnyChanges ? 'warning' : 'success') + '">' + (hasAnyChanges ? (files.changed + files.new + files.deleted) : 0) + '</div><div class="stat-label">Changes Found</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + appOwnedFiles.length + '</div><div class="stat-label">App Files</div></div>' +
-        '<div class="stat-card"><div class="stat-value">' + files.total + '</div><div class="stat-label">Files Scanned</div></div>' +
-        '<div class="stat-card"><div class="stat-value ' + riskClass + '">' + capitalizeFirst(report.risk_level || 'low') + '</div><div class="stat-label">Risk Level</div></div>' +
+        '<div class="stat-card"><div class="stat-value ' + (totalIssues > 0 ? 'danger' : 'success') + '">' + totalIssues + '</div><div class="stat-label">Issues Found</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + appsList.length + '</div><div class="stat-label">Apps Analyzed</div></div>' +
+        '<div class="stat-card"><div class="stat-value">' + filesScanned + '</div><div class="stat-label">Files Scanned</div></div>' +
+        '<div class="stat-card"><div class="stat-value">—</div><div class="stat-label">Performance</div></div>' +
         '</div>' +
 
-        // App Files section
+        // Apps Checked section - matching manual scan
         '<div class="card" style="margin-bottom: 16px;">' +
         '<div class="card-body" style="padding: 20px;">' +
-        '<h3 style="margin-bottom: 12px; font-size: 16px;">📦 App Files Detected</h3>' +
-        appsHtml +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">📦 Apps Checked (' + appsList.length + ')</h3>' +
+        appsListHtml +
         '</div>' +
         '</div>' +
 
-        // Theme Analysis section
+        // Theme Analysis section - matching manual scan
         '<div class="card" style="margin-bottom: 16px;">' +
         '<div class="card-body" style="padding: 20px;">' +
         '<h3 style="margin-bottom: 12px; font-size: 16px;">📁 Theme Analysis</h3>' +
-        '<p style="color: var(--slate-300); margin: 0;">' + files.total + ' files scanned • ' + (files.changed + files.new + files.deleted) + ' changes found</p>' +
+        '<p style="color: var(--slate-300); margin: 0;">' + filesScanned + ' files scanned • ' + themeIssues.length + ' issues found</p>' +
         '</div>' +
         '</div>' +
 
-        // Findings section
+        // Performance Breakdown section - not available for auto scans
+        '<div class="card" style="margin-bottom: 24px;">' +
+        '<div class="card-body" style="padding: 20px;">' +
+        '<h3 style="margin-bottom: 12px; font-size: 16px;">⚡ Performance Breakdown</h3>' +
+        '<p style="color: var(--slate-400); margin: 0;">Performance testing not available for auto scans. Run a manual scan for performance data.</p>' +
+        '</div>' +
+        '</div>' +
+
+        // Findings section - matching manual scan
         '<h3 style="margin-bottom: 16px;">🔍 Findings</h3>' +
         findingsHtml +
 

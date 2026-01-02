@@ -748,6 +748,19 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
         if not scan:
             raise HTTPException(status_code=404, detail="Daily scan not found")
         
+        # Get store's installed apps
+        store_result = await db.execute(
+            select(Store).where(Store.id == scan.store_id)
+        )
+        store = store_result.scalar()
+        
+        installed_apps = []
+        if store:
+            apps_result = await db.execute(
+                select(InstalledApp).where(InstalledApp.store_id == store.id)
+            )
+            installed_apps = [{"app_name": app.title or app.app_name} for app in apps_result.scalars().all()]
+        
         # Get changed/new files for this scan
         changed_files_result = await db.execute(
             select(ThemeFileVersion)
@@ -767,20 +780,9 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
         )
         new_files = new_files_result.scalars().all()
         
-        # Get app-owned files
-        app_files_result = await db.execute(
-            select(ThemeFileVersion)
-            .where(
-                ThemeFileVersion.scan_id == scan_id,
-                ThemeFileVersion.is_app_owned == True
-            )
-        )
-        app_owned_files = app_files_result.scalars().all()
-        
         # Format file lists
         changed_list = [{"file_path": f.file_path, "app_guess": f.app_owner_guess} for f in changed_files]
         new_list = [{"file_path": f.file_path, "app_guess": f.app_owner_guess} for f in new_files]
-        app_list = [{"file_path": f.file_path, "app_guess": f.app_owner_guess or "Unknown"} for f in app_owned_files]
         
         return {
             "scan_id": str(scan.id),
@@ -791,6 +793,14 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
             "risk_level": scan.risk_level,
             "risk_reasons": scan.risk_reasons or [],
             "summary": scan.summary,
+            "apps": {
+                "apps": installed_apps,
+                "total_apps": len(installed_apps)
+            },
+            "theme": {
+                "files_scanned": scan.files_total or 0,
+                "issues": []
+            },
             "files": {
                 "total": scan.files_total or 0,
                 "changed": scan.files_changed or 0,
@@ -808,7 +818,7 @@ async def get_daily_scan_report(scan_id: str, db: AsyncSession = Depends(get_db)
                 "count": scan.css_issues_found or 0,
                 "details": scan.non_namespaced_css or []
             },
-            "app_owned_files": app_list
+            "issues_found": (scan.files_changed or 0) + (scan.files_new or 0) + (scan.css_issues_found or 0)
         }
     
     except HTTPException:
