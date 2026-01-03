@@ -1373,11 +1373,23 @@ async def scan_leftover_code(
         orphan_service = OrphanCodeService(db)
         results = await orphan_service.scan_for_orphan_code(store)
         
-        # Rename 'orphans' to 'leftovers' for frontend compatibility
-        if 'orphans' in results:
-            results['leftovers'] = results.pop('orphans')
+        # Transform data for frontend compatibility
+        leftovers = []
+        for app_data in results.get("orphan_code_by_app", []):
+            for file_path in app_data.get("files_affected", []):
+                leftovers.append({
+                    "file": file_path,
+                    "likely_app": app_data.get("app", "Unknown"),
+                    "description": app_data.get("cleanup_guide", "Review and remove if no longer needed")
+                })
         
-        return results
+        return {
+            "success": results.get("success", False),
+            "leftovers": leftovers,
+            "total_found": results.get("total_orphan_instances", 0),
+            "files_scanned": results.get("files_scanned", 0),
+            "apps_with_leftover_code": results.get("uninstalled_apps_with_leftover_code", 0)
+        }
     
     except HTTPException:
         raise
