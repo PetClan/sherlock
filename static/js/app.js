@@ -1305,14 +1305,22 @@ function renderLeftoverCode(data) {
 
     let html = '';
     data.leftovers.forEach(function (leftover) {
+        let lineInfo = leftover.line_number ? ' (line ' + leftover.line_number + ')' : '';
+        let codeBlock = '';
+        if (leftover.code_snippet) {
+            codeBlock = '<div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 12px; margin-top: 12px; overflow-x: auto;">' +
+                '<pre style="margin: 0; font-family: monospace; font-size: 12px; color: #e2e8f0; white-space: pre-wrap; word-break: break-word;">' + escapeHtml(leftover.code_snippet) + '</pre>' +
+                '</div>';
+        }
         html +=
             '<div class="card" style="margin-bottom: 12px;">' +
             '<div class="card-body">' +
             '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
-            '<code>' + escapeHtml(leftover.file) + '</code>' +
+            '<code>' + escapeHtml(leftover.file) + lineInfo + '</code>' +
             '<span class="badge badge-warning">' + escapeHtml(leftover.likely_app) + '</span>' +
             '</div>' +
             '<p style="color: var(--slate-400);">' + escapeHtml(leftover.description) + '</p>' +
+            codeBlock +
             '</div>' +
             '</div>';
     });

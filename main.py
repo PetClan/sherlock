@@ -1373,15 +1373,16 @@ async def scan_leftover_code(
         orphan_service = OrphanCodeService(db)
         results = await orphan_service.scan_for_orphan_code(store)
         
-        # Transform data for frontend compatibility
+        # Transform data for frontend compatibility - use detailed findings
         leftovers = []
-        for app_data in results.get("orphan_code_by_app", []):
-            for file_path in app_data.get("files_affected", []):
-                leftovers.append({
-                    "file": file_path,
-                    "likely_app": app_data.get("app", "Unknown"),
-                    "description": app_data.get("cleanup_guide", "Review and remove if no longer needed")
-                })
+        for finding in results.get("orphan_findings", []):
+            leftovers.append({
+                "file": finding.get("file_path", "Unknown"),
+                "likely_app": finding.get("app", "Unknown"),
+                "description": finding.get("cleanup_guide", "Review and remove if no longer needed"),
+                "line_number": finding.get("line_number"),
+                "code_snippet": finding.get("code_snippet")
+            })
         
         return {
             "success": results.get("success", False),

@@ -144,6 +144,7 @@ class OrphanCodeService:
             "total_orphan_instances": len(orphan_only),
             "uninstalled_apps_with_leftover_code": len(orphan_by_app),
             "orphan_code_by_app": list(orphan_by_app.values()),
+            "orphan_findings": orphan_only,  # Detailed findings with code snippets
             "active_app_code_detected": len(active_app_code),
             "files_scanned": len(theme_files),
             "recommendations": self._generate_orphan_recommendations(orphan_by_app),
