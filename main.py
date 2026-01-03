@@ -1353,6 +1353,37 @@ async def check_app_conflicts(
         print(f"❌ [Sherlock] Check conflicts error: {e}")
         raise HTTPException(status_code=500, detail="Failed to check conflicts")
 
+@app.post("/api/v1/leftover/scan")
+async def scan_leftover_code(
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Scan for leftover code from uninstalled apps.
+    """
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain == shop)
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        orphan_service = OrphanCodeService(db)
+        results = await orphan_service.scan_for_orphan_code(store)
+        
+        # Rename 'orphans' to 'leftovers' for frontend compatibility
+        if 'orphans' in results:
+            results['leftovers'] = results.pop('orphans')
+        
+        return results
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ [Sherlock] Leftover code scan error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to scan leftover code")
 
 @app.post("/api/v1/orphan-code/scan")
 async def scan_orphan_code(
