@@ -1245,15 +1245,23 @@ function renderConflicts(data) {
 
     let html = '';
     data.conflicts.forEach(function (conflict) {
+        const apps = conflict.conflicting_apps || [];
+        const severityColor = conflict.severity === 'critical' ? '#ef4444' :
+            conflict.severity === 'high' ? '#f59e0b' : '#3b82f6';
+        const severityBadge = '<span class="badge" style="background: ' + severityColor + '; margin-left: 8px;">' +
+            escapeHtml(conflict.severity || 'unknown') + '</span>';
+
         html +=
-            '<div class="card" style="margin-bottom: 12px;">' +
+            '<div class="card" style="margin-bottom: 12px; border-left: 3px solid ' + severityColor + ';">' +
             '<div class="card-body">' +
             '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">' +
-            '<strong>' + escapeHtml(conflict.app1) + '</strong>' +
+            '<strong>' + escapeHtml(apps[0] || 'Unknown') + '</strong>' +
             '<span>⚡</span>' +
-            '<strong>' + escapeHtml(conflict.app2) + '</strong>' +
+            '<strong>' + escapeHtml(apps[1] || 'Unknown') + '</strong>' +
+            severityBadge +
             '</div>' +
-            '<p style="color: var(--slate-400);">' + escapeHtml(conflict.description) + '</p>' +
+            '<p style="color: var(--slate-400); margin-bottom: 8px;">' + escapeHtml(conflict.description || '') + '</p>' +
+            '<p style="color: var(--emerald-400); font-size: 14px;"><strong>Solution:</strong> ' + escapeHtml(conflict.solution || '') + '</p>' +
             '</div>' +
             '</div>';
     });
