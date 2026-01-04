@@ -577,7 +577,9 @@
                 </div>
 
                 <div class="install-footer">
-                    <p>Already installed? <a href="/dashboard">Go to Dashboard</a></p>
+                    <p>Already installed? <a href="/dashboard"
+                        onclick="event.preventDefault(); window.location.href='/dashboard?shop=' + new URLSearchParams(window.location.search).get('shop');">Go
+                        to Dashboard</a></p>
                 </div>
             </div>
         </div>
