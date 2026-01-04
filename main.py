@@ -1090,10 +1090,16 @@ async def get_installed_apps(shop: str, db: AsyncSession = Depends(get_db)):
         )
         apps = result.scalars().all()
         
+        # Check for actual conflicts between installed apps
+        from app.services.conflict_database import ConflictDatabase
+        conflict_db = ConflictDatabase()
+        app_names = [a.app_name for a in apps]
+        conflicts = conflict_db.check_conflicts(app_names)
+        
         return {
             "shop": shop,
             "total": len(apps),
-            "suspect_count": sum(1 for a in apps if a.is_suspect),
+            "suspect_count": len(conflicts),
             "apps": [
                 {
                     "id": a.id,
