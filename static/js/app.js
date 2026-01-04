@@ -1198,6 +1198,9 @@ function switchTab(tabName, el) {
     if (tabName === 'apps') {
         loadInstalledApps();
     }
+    if (tabName === 'conflicts') {
+        checkConflicts();
+    }
 }
 
 // ==================== CONFLICTS TAB ====================
@@ -1423,9 +1426,10 @@ function renderInstalledApps(data) {
                 <span style="font-size: 28px; font-weight: bold; color: ${appsWithRisk > 0 ? 'var(--gold)' : 'var(--green)'};">${appsWithRisk}</span>
                 <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Apps With Risk</span>
             </div>
-            <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
+            <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center; cursor: pointer;" onclick="switchTab('conflicts', document.querySelector('.tab[onclick*=conflicts]'))">
                 <span style="font-size: 28px; font-weight: bold; color: ${data.suspect_count > 0 ? 'var(--coral)' : 'var(--green)'};">${data.suspect_count}</span>
                 <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Potential Conflicts</span>
+                ${data.suspect_count > 0 ? '<span style="color: var(--cyan); font-size: 11px; display: block; margin-top: 4px;">Click to view →</span>' : ''}
             </div>
             <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
                 <span style="font-size: 28px; font-weight: bold; color: ${performanceColor};">${performanceImpact}</span>
