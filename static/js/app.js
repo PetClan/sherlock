@@ -1424,12 +1424,12 @@ function renderInstalledApps(data) {
             </div>
             <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
                 <span style="font-size: 28px; font-weight: bold; color: ${appsWithRisk > 0 ? 'var(--gold)' : 'var(--green)'};">${appsWithRisk}</span>
-                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Apps With Risk</span>
+                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Apps With Activity</span>
             </div>
-            <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center; cursor: pointer;" onclick="switchTab('conflicts', document.querySelector('.tab[onclick*=conflicts]'))">
+            <div style="background: ${data.suspect_count > 0 ? 'rgba(255,107,107,0.2)' : 'rgba(0,0,0,0.2)'}; padding: 16px; border-radius: 8px; text-align: center; cursor: ${data.suspect_count > 0 ? 'pointer' : 'default'}; border: ${data.suspect_count > 0 ? '2px solid var(--coral)' : 'none'}; transition: transform 0.2s;" onclick="if(${data.suspect_count} > 0) { switchTab('conflicts', null); }" onmouseover="if(${data.suspect_count} > 0) this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <span style="font-size: 28px; font-weight: bold; color: ${data.suspect_count > 0 ? 'var(--coral)' : 'var(--green)'};">${data.suspect_count}</span>
                 <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Potential Conflicts</span>
-                ${data.suspect_count > 0 ? '<span style="color: var(--cyan); font-size: 11px; display: block; margin-top: 4px;">Click to view →</span>' : ''}
+                ${data.suspect_count > 0 ? '<span style="color: var(--coral); font-size: 11px; display: block; margin-top: 4px; font-weight: bold;">⚡ View Details →</span>' : ''}
             </div>
             <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
                 <span style="font-size: 28px; font-weight: bold; color: ${performanceColor};">${performanceImpact}</span>
