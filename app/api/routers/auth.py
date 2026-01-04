@@ -319,6 +319,65 @@ async def webhook_shop_redact(request: Request, db: AsyncSession = Depends(get_d
     
     return Response(status_code=200)
 
+
+@router.post("/webhooks")
+async def webhook_unified(request: Request, db: AsyncSession = Depends(get_db)):
+    """
+    Unified Webhook Endpoint for Shopify Compliance Webhooks
+    Handles: customers/data_request, customers/redact, shop/redact
+    
+    Required by Shopify for App Store approval.
+    """
+    import json
+    
+    # Get raw body for HMAC verification
+    body = await request.body()
+    hmac_header = request.headers.get("X-Shopify-Hmac-SHA256", "")
+    topic = request.headers.get("X-Shopify-Topic", "")
+    shop = request.headers.get("X-Shopify-Shop-Domain", "")
+    
+    # Verify HMAC signature - MUST return 401 for invalid signatures
+    auth_service = ShopifyAuthService(db)
+    if not hmac_header or not await auth_service.verify_webhook(body, hmac_header):
+        print(f"⚠️ [Webhook] Invalid HMAC signature for topic: {topic}")
+        return Response(status_code=401, content="Unauthorized")
+    
+    # Parse payload
+    try:
+        payload = json.loads(body) if body else {}
+    except json.JSONDecodeError:
+        return Response(status_code=400, content="Invalid JSON")
+    
+    print(f"📨 [Webhook] Received {topic} from {shop}")
+    
+    # Handle each compliance topic
+    if topic == "customers/data_request":
+        # Sherlock doesn't store customer PII, so we just acknowledge
+        print("📋 [GDPR] Customer data request received - no PII stored")
+        return Response(status_code=200)
+    
+    elif topic == "customers/redact":
+        # Sherlock doesn't store customer PII, so we just acknowledge
+        print("📋 [GDPR] Customer redact request received - no PII stored")
+        return Response(status_code=200)
+    
+    elif topic == "shop/redact":
+        # Delete all store data 48 hours after uninstall
+        shop_domain = payload.get("shop_domain", "")
+        if shop_domain:
+            store = await auth_service.get_store_by_domain(shop_domain)
+            if store:
+                await db.delete(store)
+                await db.commit()
+                print(f"🗑️ [GDPR] All data deleted for {shop_domain}")
+        return Response(status_code=200)
+    
+    else:
+        # Unknown topic - still return 200 to acknowledge receipt
+        print(f"⚠️ [Webhook] Unknown topic: {topic}")
+        return Response(status_code=200)
+
+
 @router.get("/debug/scopes")
 async def debug_scopes(shop: str, db: AsyncSession = Depends(get_db)):
     """Debug: Check what scopes the current token has"""

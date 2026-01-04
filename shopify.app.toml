@@ -1,0 +1,17 @@
+client_id = "c09876c44b54257a0e42cc707beaffd1"
+name = "Sherlock"
+application_url = "https://app.codenamesherlock.com/install"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,read_script_tags,read_content,read_themes,write_themes"
+
+[auth]
+redirect_urls = ["https://app.codenamesherlock.com/api/v1/auth/callback"]
+
+[webhooks]
+api_version = "2025-10"
+
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://app.codenamesherlock.com/api/v1/auth/webhooks"
