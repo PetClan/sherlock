@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="en">
 
     <head>
@@ -291,7 +291,7 @@
                 background: white;
                 border-radius: 16px;
                 box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
-                padding: 48px;
+                padding: 32px;
                 max-width: 480px;
                 width: 100%;
                 margin: 20px;
@@ -315,20 +315,22 @@
 
             .install-logo {
                 font-size: 64px;
-                margin-bottom: 24px;
+                margin-bottom: 16px;
             }
 
             .install-title {
-                font-size: 28px;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                font-size: 24px;
                 font-weight: 700;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
                 color: #212b36;
             }
 
             .install-subtitle {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                 color: #637381;
-                margin-bottom: 32px;
-                font-size: 16px;
+                margin-bottom: 20px;
+                font-size: 14px;
                 line-height: 1.5;
             }
 
@@ -368,23 +370,25 @@
             }
 
             .install-features {
-                margin-top: 32px;
+                margin-top: 20px;
                 text-align: left;
             }
 
             .install-features h3 {
-                font-size: 14px;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                font-size: 12px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
-                color: #637381;
-                margin-bottom: 16px;
+                color: #212b36;
+                margin-bottom: 12px;
+                text-align: center;
             }
 
             .feature-item {
                 display: flex;
                 align-items: flex-start;
-                gap: 12px;
-                margin-bottom: 12px;
+                gap: 10px;
+                margin-bottom: 8px;
             }
 
             .feature-icon {
@@ -399,12 +403,12 @@
             }
 
             .trust-badges {
-                margin-top: 24px;
-                padding-top: 24px;
+                margin-top: 16px;
+                padding-top: 16px;
                 border-top: 1px solid #eee;
                 display: flex;
                 justify-content: center;
-                gap: 24px;
+                gap: 20px;
                 flex-wrap: wrap;
             }
 
@@ -417,7 +421,7 @@
             }
 
             .install-footer {
-                margin-top: 32px;
+                margin-top: 16px;
                 font-size: 13px;
                 color: #637381;
             }
@@ -509,11 +513,12 @@
                         style="width: 80px; height: 80px; border-radius: 16px;">
                 </div>
                 <h1 class="install-title">Sherlock</h1>
-                <p class="install-subtitle">Find which Shopify app is causing issues in your store. Get a free
-                    diagnostic report in minutes.</p>
+                <p class="install-subtitle">Let Sherlock handle the detective work. You focus on growing your store.</p>
 
                 <form class="install-form" onsubmit="installApp(event)">
-                    <label for="shop-input" class="sr-only">Your Shopify store URL</label>
+                    <label for="shop-input"
+                        style="display: block; color: #212b36; font-size: 14px; margin-bottom: 8px; font-weight: 500;">Your Shopify store
+                        URL</label>
                     <input type="text" id="shop-input" class="install-input" placeholder="your-store.myshopify.com"
                         required pattern="[a-zA-Z0-9\-]+\.myshopify\.com|[a-zA-Z0-9\-]+"
                         aria-label="Your Shopify store URL">
