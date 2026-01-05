@@ -11,62 +11,52 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
 
-    <!-- Shopify App Bridge -->
-    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
-    <script>
-        // Initialize App Bridge
-        var appBridge = null;
-        var sessionToken = null;
+<!-- Shopify App Bridge (injected automatically by Shopify) -->
+<script>
+    // Session token for API authentication
+    var sessionToken = null;
 
-        function initAppBridge() {
-            const params = new URLSearchParams(window.location.search);
-            const host = params.get('host');
-            const shop = params.get('shop');
+    async function initAppBridge() {
+        const params = new URLSearchParams(window.location.search);
+        const host = params.get('host');
+        const shop = params.get('shop');
 
-            if (host && window['app-bridge']) {
-                // Running embedded in Shopify Admin
-                try {
-                    appBridge = window['app-bridge'].createApp({
-                        apiKey: 'c09876c44b54257a0e42cc707beaffd1',
-                        host: host,
-                        forceRedirect: true
-                    });
+        if (host && window.shopify) {
+            // Running embedded in Shopify Admin
+            console.log('🔗 [AppBridge] Running in embedded mode');
 
-                    console.log('🔗 [AppBridge] Initialized for embedded mode');
+            // Get session token
+            await getSessionToken();
+        } else if (shop) {
+            // Fallback: running standalone (during development)
+            console.log('⚠️ [AppBridge] Running in standalone mode (no host parameter)');
+        } else {
+            console.error('❌ [AppBridge] No shop or host parameter found');
+        }
+    }
 
-                    // Get session token
-                    getSessionToken();
-                } catch (error) {
-                    console.error('❌ [AppBridge] Initialization error:', error);
-                }
-            } else if (shop) {
-                // Fallback: running standalone (during development)
-                console.log('⚠️ [AppBridge] Running in standalone mode (no host parameter)');
-            } else {
-                console.error('❌ [AppBridge] No shop or host parameter found');
-            }
+    async function getSessionToken() {
+        if (!window.shopify || !window.shopify.idToken) {
+            console.log('⚠️ [AppBridge] shopify.idToken not available');
+            return null;
         }
 
-        async function getSessionToken() {
-            if (!appBridge || !window['app-bridge'].utilities) return null;
-
-            try {
-                const utils = window['app-bridge'].utilities;
-                const token = await utils.getSessionToken(appBridge);
-                sessionToken = token;
-                console.log('🔑 [AppBridge] Session token obtained');
-                return token;
-            } catch (error) {
-                console.error('❌ [AppBridge] Failed to get session token:', error);
-                return null;
-            }
+        try {
+            const token = await window.shopify.idToken();
+            sessionToken = token;
+            console.log('🔑 [AppBridge] Session token obtained');
+            return token;
+        } catch (error) {
+            console.error('❌ [AppBridge] Failed to get session token:', error);
+            return null;
         }
+    }
 
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', function () {
-            initAppBridge();
-        });
-    </script>
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        initAppBridge();
+    });
+</scr    
 </head>
 
 <body>
