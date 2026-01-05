@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_subscription_fields'
-down_revision = 'add_system_settings'
+down_revision = 'add_app_category'
 branch_labels = None
 depends_on = None
 
