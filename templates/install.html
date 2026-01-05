@@ -643,27 +643,35 @@
             <h1 class="install-title">Sherlock</h1>
             <p class="install-subtitle">Let Sherlock handle the detective work.<br>While you focus on growing your store.</p>
 
-            <form class="install-form" onsubmit="installApp(event)">
-                <label for="shop-input"
-                    style="display: block; color: #212b36; font-size: 16px; margin-bottom: 10px; font-weight: 700;">Your Shopify store
-                    URL</label>
-                <input type="text" id="shop-input" class="install-input" placeholder="your-store.myshopify.com" required
-                    pattern="[a-zA-Z0-9\-]+\.myshopify\.com|[a-zA-Z0-9\-]+" aria-label="Your Shopify store URL">
-                <button type="submit" class="install-btn">
-                    <span style="
-                        display:inline-flex;
-                        align-items:center;
-                        justify-content:center;
-                        width: 36px;
-                        height: 36px;
-                        border-radius: 50%;
-                        background:#ffffff22;
-                        margin-right:8px;
-                        font-size:1.4em;
-                    ">🕵️</span>
-                    Assign Sherlock
-                </button>
-            </form>
+            <!-- Redirecting message shown when shop parameter is present -->
+            <div id="install-with-shop" style="display: none;">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🔐</div>
+                    <p style="color: #212b36; font-size: 18px; margin-bottom: 8px; font-weight: 600;">
+                        Redirecting to Shopify...
+                    </p>
+                    <p style="color: #637381; font-size: 14px;">
+                        You'll be asked to authorize Sherlock to protect your store.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Instructions shown when no shop parameter -->
+            <div id="install-no-shop" style="display: none;">
+                <div style="background: #f4f6f8; border-radius: 12px; padding: 24px; text-align: left;">
+                    <h3 style="color: #212b36; margin-bottom: 16px; font-size: 18px;">📦 Install from Shopify App Store</h3>
+                    <p style="color: #637381; margin-bottom: 16px; line-height: 1.6;">
+                        Sherlock is installed directly through Shopify to ensure a secure connection to your store.
+                    </p>
+                    <p style="color: #637381; margin-bottom: 16px; line-height: 1.6;">
+                        <strong>Coming soon:</strong> Sherlock will be available in the Shopify App Store.
+                        Once listed, you'll be able to install with one click.
+                    </p>
+                    <p style="color: #637381; font-size: 14px; border-top: 1px solid #dfe3e8; padding-top: 16px; margin-top: 16px;">
+                        🔒 All installs go through Shopify's secure OAuth process.
+                    </p>
+                </div>
+            </div>
 
             <div class="install-features">
                 <h3>Why Every Store Needs Sherlock</h3>
@@ -723,14 +731,14 @@
     </div>
 
     <script>
-        // Check if already installed and redirect to dashboard
-        (async function checkInstallation() {
+        // Check installation status and handle OAuth flow
+        (async function handleInstall() {
             const params = new URLSearchParams(window.location.search);
             const shop = params.get('shop');
             const host = params.get('host');
 
-            // If we have shop param, check if already installed
             if (shop) {
+                // Shop parameter present - check if already installed
                 try {
                     const response = await fetch('/api/v1/auth/verify?shop=' + encodeURIComponent(shop));
                     const data = await response.json();
@@ -749,27 +757,28 @@
                     console.log('Could not verify installation:', error);
                 }
 
-                // Pre-fill the shop input if not installed
-                const shopInput = document.getElementById('shop-input');
-                if (shopInput) {
-                    shopInput.value = shop;
+                // Not installed - show redirecting message and auto-start OAuth
+                document.getElementById('install-with-shop').style.display = 'block';
+                document.getElementById('install-no-shop').style.display = 'none';
+
+                // Normalize shop domain
+                let normalizedShop = shop;
+                if (!normalizedShop.includes('.myshopify.com')) {
+                    normalizedShop = normalizedShop + '.myshopify.com';
                 }
+
+                // Auto-start OAuth after brief delay (so user sees the message)
+                setTimeout(function () {
+                    console.log('🔐 Starting OAuth flow for ' + normalizedShop);
+                    window.location.href = '/auth/shopify?shop=' + encodeURIComponent(normalizedShop);
+                }, 800);
+
+            } else {
+                // No shop parameter - show instructions
+                document.getElementById('install-with-shop').style.display = 'none';
+                document.getElementById('install-no-shop').style.display = 'block';
             }
         })();
-
-        function installApp(e) {
-            e.preventDefault();
-
-            let shop = document.getElementById('shop-input').value.trim();
-
-            // Normalize shop domain
-            if (!shop.includes('.myshopify.com')) {
-                shop = shop + '.myshopify.com';
-            }
-
-            // Redirect to OAuth flow
-            window.location.href = '/auth/shopify?shop=' + encodeURIComponent(shop);
-        }
     </script>
 </body>
 
