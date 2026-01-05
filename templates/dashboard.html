@@ -15,7 +15,6 @@
     <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
     <script>
         // Initialize App Bridge
-        var AppBridge = window['app-bridge'];
         var appBridge = null;
         var sessionToken = null;
 
@@ -24,18 +23,22 @@
             const host = params.get('host');
             const shop = params.get('shop');
 
-            if (host) {
+            if (host && window['app-bridge']) {
                 // Running embedded in Shopify Admin
-                appBridge = AppBridge.createApp({
-                    apiKey: 'c09876c44b54257a0e42cc707beaffd1',
-                    host: host,
-                    forceRedirect: true
-                });
+                try {
+                    appBridge = window['app-bridge'].createApp({
+                        apiKey: 'c09876c44b54257a0e42cc707beaffd1',
+                        host: host,
+                        forceRedirect: true
+                    });
 
-                console.log('🔗 [AppBridge] Initialized for embedded mode');
+                    console.log('🔗 [AppBridge] Initialized for embedded mode');
 
-                // Get session token
-                getSessionToken();
+                    // Get session token
+                    getSessionToken();
+                } catch (error) {
+                    console.error('❌ [AppBridge] Initialization error:', error);
+                }
             } else if (shop) {
                 // Fallback: running standalone (during development)
                 console.log('⚠️ [AppBridge] Running in standalone mode (no host parameter)');
@@ -45,10 +48,11 @@
         }
 
         async function getSessionToken() {
-            if (!appBridge) return null;
+            if (!appBridge || !window['app-bridge'].utilities) return null;
 
             try {
-                const token = await AppBridge.actions.getSessionToken(appBridge);
+                const utils = window['app-bridge'].utilities;
+                const token = await utils.getSessionToken(appBridge);
                 sessionToken = token;
                 console.log('🔑 [AppBridge] Session token obtained');
                 return token;
