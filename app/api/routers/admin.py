@@ -1006,3 +1006,40 @@ async def reset_scan_status(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{secret_key}/reset-store/{shop}")
+async def reset_store_for_reinstall(
+    secret_key: str,
+    shop: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Reset a store's installation status to allow reinstall.
+    Used when uninstall webhook wasn't received.
+    """
+    if secret_key != ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain.contains(shop))
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        # Mark as uninstalled
+        store.access_token = None
+        store.is_active = False
+        
+        await db.commit()
+        
+        return {
+            "success": True,
+            "shop": store.shopify_domain,
+            "message": "Store reset for reinstall"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
