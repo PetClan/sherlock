@@ -31,6 +31,11 @@ class Store(Base):
     sherlock_plan = Column(String(20), default="standard")  # standard ($29, 7 days, email) or professional ($69, 30 days, priority)
     timezone = Column(String(100), nullable=True, default="UTC")  # Store's IANA timezone e.g. "America/New_York"
     
+    # Billing / Subscription
+    subscription_id = Column(String(255), nullable=True)  # Shopify subscription GID
+    subscription_status = Column(String(50), nullable=True)  # active, pending, cancelled, expired
+    trial_ends_at = Column(DateTime(timezone=True), nullable=True)  # When trial period ends
+    
     # Scan scheduling (1-6 AM local, 20 slots of 15 mins each)
     scan_slot = Column(Integer, default=0)  # 0-19, assigned on install via hash
     

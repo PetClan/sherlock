@@ -335,6 +335,10 @@ app.include_router(api_router, prefix="/api/v1")
 from app.api.routers.auth import router as auth_router
 app.include_router(auth_router)
 
+# Include billing router for subscription management
+from billing import router as billing_router
+app.include_router(billing_router)
+
 # Mount static files
 import os
 static_path = os.path.join(os.path.dirname(__file__), "static")
