@@ -723,6 +723,40 @@
     </div>
 
     <script>
+        // Check if already installed and redirect to dashboard
+        (async function checkInstallation() {
+            const params = new URLSearchParams(window.location.search);
+            const shop = params.get('shop');
+            const host = params.get('host');
+
+            // If we have shop param, check if already installed
+            if (shop) {
+                try {
+                    const response = await fetch('/api/v1/auth/verify?shop=' + encodeURIComponent(shop));
+                    const data = await response.json();
+
+                    if (data.installed) {
+                        // Already installed - redirect to dashboard
+                        let redirectUrl = '/dashboard?shop=' + encodeURIComponent(shop);
+                        if (host) {
+                            redirectUrl += '&host=' + encodeURIComponent(host);
+                        }
+                        console.log('✅ Already installed, redirecting to dashboard');
+                        window.location.href = redirectUrl;
+                        return;
+                    }
+                } catch (error) {
+                    console.log('Could not verify installation:', error);
+                }
+
+                // Pre-fill the shop input if not installed
+                const shopInput = document.getElementById('shop-input');
+                if (shopInput) {
+                    shopInput.value = shop;
+                }
+            }
+        })();
+
         function installApp(e) {
             e.preventDefault();
 
