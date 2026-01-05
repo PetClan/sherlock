@@ -3,7 +3,7 @@ Sherlock - Scan Router
 Handles diagnostic scan endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from pydantic import BaseModel
@@ -12,22 +12,40 @@ from typing import Optional
 from app.db.database import get_db
 from app.db.models import Store, Diagnosis
 from app.services.diagnosis_service import DiagnosisService
+from auth_middleware import get_optional_shop
 
 router = APIRouter(prefix="/scan", tags=["Scan"])
 
 
 class ScanRequest(BaseModel):
-    shop: str
+    shop: Optional[str] = None  # Optional now - can come from session token
     scan_type: str = "full"  # "full", "quick", "apps_only", "theme_only"
 
 
 @router.post("/start")
 async def start_scan(
     request: ScanRequest,
+    http_request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """Start a diagnostic scan"""
     
+    # Get shop from session token or request body
+    shop = None
+    try:
+        shop = await get_optional_shop(http_request)
+    except:
+        pass
+    
+    # Fall back to request body
+    if not shop and request.shop:
+        shop = request.shop
+    
+    if not shop:
+        raise HTTPException(status_code=400, detail="Shop parameter required")
+    
+    # Override request.shop with authenticated shop
+    request.shop = shop
     # Check kill switch first
     from app.services.system_settings_service import SystemSettingsService
     from app.services.usage_limit_service import UsageLimitService
@@ -41,7 +59,7 @@ async def start_scan(
     
     # Find store
     result = await db.execute(
-        select(Store).where(Store.shopify_domain == request.shop)
+        select(Store).where(Store.shopify_domain == shop)
     )
     store = result.scalar()
     

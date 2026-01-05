@@ -9,17 +9,47 @@ var state = {
     isScanning: false
 };
 
-// API helper
+// API helper with session token support
 async function api(endpoint, options = {}) {
     const url = '/api/v1' + endpoint;
+
+    // Build headers
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+
+    // Add session token if available (embedded mode)
+    if (typeof sessionToken !== 'undefined' && sessionToken) {
+        headers['Authorization'] = 'Bearer ' + sessionToken;
+    }
+
+    // Merge with any custom headers
+    if (options.headers) {
+        Object.assign(headers, options.headers);
+    }
+
     const response = await fetch(url, {
-        headers: {
-            'Content-Type': 'application/json',
-        },
         ...options,
+        headers: headers,
     });
 
     if (!response.ok) {
+        // If 401, try to refresh session token
+        if (response.status === 401 && typeof getSessionToken === 'function') {
+            console.log('🔄 [API] Token expired, refreshing...');
+            await getSessionToken();
+            // Retry the request once
+            if (sessionToken) {
+                headers['Authorization'] = 'Bearer ' + sessionToken;
+                const retryResponse = await fetch(url, {
+                    ...options,
+                    headers: headers,
+                });
+                if (retryResponse.ok) {
+                    return retryResponse.json();
+                }
+            }
+        }
         throw new Error('API error: ' + response.status);
     }
 

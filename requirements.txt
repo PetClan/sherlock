@@ -39,3 +39,4 @@ asyncpg==0.29.0
 psycopg2-binary==2.9.9
 
 apscheduler>=3.10.0
+PyJWT>=2.8.0

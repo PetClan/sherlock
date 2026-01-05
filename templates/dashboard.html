@@ -10,6 +10,59 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
+
+    <!-- Shopify App Bridge -->
+    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+    <script>
+        // Initialize App Bridge
+        var AppBridge = window['app-bridge'];
+        var appBridge = null;
+        var sessionToken = null;
+
+        function initAppBridge() {
+            const params = new URLSearchParams(window.location.search);
+            const host = params.get('host');
+            const shop = params.get('shop');
+
+            if (host) {
+                // Running embedded in Shopify Admin
+                appBridge = AppBridge.createApp({
+                    apiKey: 'c09876c44b54257a0e42cc707beaffd1',
+                    host: host,
+                    forceRedirect: true
+                });
+
+                console.log('🔗 [AppBridge] Initialized for embedded mode');
+
+                // Get session token
+                getSessionToken();
+            } else if (shop) {
+                // Fallback: running standalone (during development)
+                console.log('⚠️ [AppBridge] Running in standalone mode (no host parameter)');
+            } else {
+                console.error('❌ [AppBridge] No shop or host parameter found');
+            }
+        }
+
+        async function getSessionToken() {
+            if (!appBridge) return null;
+
+            try {
+                const token = await AppBridge.actions.getSessionToken(appBridge);
+                sessionToken = token;
+                console.log('🔑 [AppBridge] Session token obtained');
+                return token;
+            } catch (error) {
+                console.error('❌ [AppBridge] Failed to get session token:', error);
+                return null;
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function () {
+            initAppBridge();
+        });
+    </script>
 </head>
 
 <body>

@@ -83,6 +83,7 @@ async def shopify_auth_callback(
     state: str,
     hmac: str,
     timestamp: str,
+    host: Optional[str] = None,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -120,9 +121,12 @@ async def shopify_auth_callback(
         
         print(f"✅ [Auth] Successfully installed for {shop}")
         
-        # Redirect to app or success page
-        # In production, redirect to your app's dashboard
-        success_url = f"{settings.app_url}/auth/success?shop={shop}"
+        # Redirect to dashboard with host parameter for App Bridge
+        redirect_params = f"shop={shop}"
+        if host:
+            redirect_params += f"&host={host}"
+        
+        success_url = f"{settings.app_url}/auth/success?{redirect_params}"
         return RedirectResponse(url=success_url)
         
     except Exception as e:
@@ -131,12 +135,15 @@ async def shopify_auth_callback(
 
 
 @router.get("/success")
-async def auth_success(shop: str):
+async def auth_success(shop: str, host: Optional[str] = None):
     """
     Authentication success page.
     Redirects to dashboard after successful app installation.
     """
-    return RedirectResponse(url=f"/dashboard?shop={shop}")
+    redirect_params = f"shop={shop}"
+    if host:
+        redirect_params += f"&host={host}"
+    return RedirectResponse(url=f"/dashboard?{redirect_params}")
 
 
 @router.get("/verify")
