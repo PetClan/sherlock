@@ -7,7 +7,7 @@ import jwt
 import time
 import base64
 from typing import Optional, Dict
-from config import settings
+from app.core.config import settings
 
 
 class SessionTokenService:
