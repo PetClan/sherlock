@@ -2788,7 +2788,7 @@ code {
     font-size: 13px;
 }
 
-/* Responsive billing modal */
+/* Responsive billing modals */
 @media (max-width: 600px) {
     .billing-plans {
         grid-template-columns: 1fr;
