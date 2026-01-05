@@ -97,7 +97,52 @@ function init() {
         shopNameEl.textContent = state.shop;
     }
 
-    loadDashboard();
+    // Check subscription status before loading dashboard
+    checkSubscription();
+}
+
+// Check if merchant has active subscription
+async function checkSubscription() {
+    try {
+        const status = await api('/billing/status?shop=' + state.shop);
+
+        if (status.has_subscription) {
+            // Active subscription - load dashboard
+            console.log('✅ [Billing] Active subscription:', status.plan);
+            loadDashboard();
+        } else {
+            // No subscription - show billing modal
+            console.log('⚠️ [Billing] No active subscription, showing plans');
+            showBillingModal();
+        }
+    } catch (error) {
+        console.error('❌ [Billing] Error checking subscription:', error);
+        // On error, show billing modal to be safe
+        showBillingModal();
+    }
+}
+
+// Show billing/plan selection modal
+function showBillingModal() {
+    const modal = document.getElementById('billing-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Hide billing modal
+function hideBillingModal() {
+    const modal = document.getElementById('billing-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Subscribe to a plan
+function subscribeToPlan(plan) {
+    // Redirect to Shopify billing approval
+    const testMode = window.location.hostname === 'localhost' ? '&test=true' : '';
+    window.top.location.href = '/api/v1/billing/subscribe/' + plan + '?shop=' + state.shop + testMode;
 }
 
 // Hide progress banner helper
