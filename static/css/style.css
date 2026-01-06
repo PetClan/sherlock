@@ -332,6 +332,39 @@ body {
     margin-left: 0;
 }
 
+/* Plan Status Banner */
+.plan-status-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 30px;
+    font-size: 14px;
+    color: var(--slate-300);
+}
+
+.plan-status-banner .plan-icon {
+    font-size: 16px;
+}
+
+.plan-status-banner .plan-text {
+    font-weight: 500;
+}
+
+.plan-status-banner .plan-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.plan-status-banner .plan-link:hover {
+    color: #60a5fa;
+}
+
 .built-for-shopify {
     display: inline-flex;
     align-items: center;

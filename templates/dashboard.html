@@ -31,15 +31,55 @@
 
             // Set Manage Subscription link
             const subscriptionBtn = document.getElementById('manage-subscription-btn');
+            let billingUrl = `/billing?shop=${params.get('shop')}`;
+            if (host) {
+                billingUrl += `&host=${host}`;
+            }
             if (subscriptionBtn) {
-                let billingUrl = `/billing?shop=${params.get('shop')}`;
-                if (host) {
-                    billingUrl += `&host=${host}`;
-                }
                 subscriptionBtn.href = billingUrl;
             }
+
+            // Fetch and display plan/trial status
+            fetchPlanStatus(params.get('shop'), billingUrl);
         });
-    </script>
+
+                async function fetchPlanStatus(shop, billingUrl) {
+                    try {
+                        const response = await fetch(`/api/v1/billing/status?shop=${shop}`);
+                        const data = await response.json();
+
+                        const banner = document.getElementById('plan-status-banner');
+                        const icon = document.getElementById('plan-icon');
+                        const text = document.getElementById('plan-text');
+                        const link = document.getElementById('plan-link');
+
+                        if (!banner) return;
+
+                        // Set link
+                        link.href = billingUrl;
+
+                        // Determine display text
+                        const planName = data.plan === 'professional' ? 'Professional' : 'Standard';
+
+                        if (data.on_trial) {
+                            icon.textContent = '⏱️';
+                            text.textContent = `${planName} Plan - Trial: ${data.trial_days_remaining} days remaining`;
+                            banner.style.display = 'inline-flex';
+                        } else if (data.has_subscription) {
+                            icon.textContent = '✅';
+                            text.textContent = `${planName} Plan - Active`;
+                            banner.style.display = 'inline-flex';
+                        } else {
+                            icon.textContent = '⚠️';
+                            text.textContent = 'No active subscription';
+                            banner.style.display = 'inline-flex';
+                        }
+
+                    } catch (error) {
+                        console.error('Error fetching plan status:', error);
+                    }
+                }
+            </script>
 </head>
 
 <body>
@@ -94,7 +134,14 @@
                 </div>
                 <span class="shop-badge" id="shop-name"></span>
             </div>
-        </section>
+            
+            <!-- Plan/Trial Status Banner -->
+            <div class="plan-status-banner" id="plan-status-banner" style="display: none;">
+                <span class="plan-icon" id="plan-icon">⏱️</span>
+                <span class="plan-text" id="plan-text">Standard Plan - Trial: 13 days remaining</span>
+                <a href="#" class="plan-link" id="plan-link">Manage Subscription →</a>
+            </div>
+            </section>
 
         <!-- Tabs -->
         <div class="tabs-container">
