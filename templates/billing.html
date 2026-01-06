@@ -609,7 +609,12 @@
             const shopDomain = shop.replace('.myshopify.com', '');
             const pricingUrl = `https://admin.shopify.com/store/${shopDomain}/charges/sherlock-1/pricing_plans`;
 
-            window.location.href = pricingUrl;
+            // Use top.location to break out of the iframe
+            if (window.top) {
+                window.top.location.href = pricingUrl;
+            } else {
+                window.location.href = pricingUrl;
+            }
         }
     </script>
 </body>
