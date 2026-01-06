@@ -28,6 +28,16 @@
             } else {
                 console.log('⚠️ [AppBridge] Running in standalone mode');
             }
+
+            // Set Manage Subscription link
+            const subscriptionBtn = document.getElementById('manage-subscription-btn');
+            if (subscriptionBtn) {
+                let billingUrl = `/billing?shop=${params.get('shop')}`;
+                if (host) {
+                    billingUrl += `&host=${host}`;
+                }
+                subscriptionBtn.href = billingUrl;
+            }
         });
     </script>
 </head>
@@ -43,21 +53,23 @@
                     <span class="logo-tagline">Your Store's Detective</span>
                 </div>
             </div>
-            <span class="shop-badge" id="shop-name"></span>
-            <div class="header-actions">
-                <a href="/faq" class="btn btn-secondary" style="text-decoration: none;">
-                    ❓ FAQ
-                </a>
-                <button class="btn btn-secondary" onclick="openInvestigateModal()">
-                    🔎 Investigate App
-                </button>
-                <button class="btn btn-secondary" onclick="openReportModal()">
-                    🚨 Report an App
-                </button>
-                <button class="btn btn-primary" onclick="startScan('full')">
-                    🔍 Run Full Scan
-                </button>
-            </div>
+            <div class="header-actions"></div>
+            <a href="/faq" class="btn btn-secondary" style="text-decoration: none;">
+                ❓ FAQ
+            </a>
+            <button class="btn btn-secondary" onclick="openInvestigateModal()">
+                🔎 Investigate App
+            </button>
+            <button class="btn btn-secondary" onclick="openReportModal()">
+                🚨 Report an App
+            </button>
+            <a id="manage-subscription-btn" href="#" class="btn btn-secondary" style="text-decoration: none;">
+                💳 Subscription
+            </a>
+            <button class="btn btn-primary" onclick="startScan('full')">
+                🔍 Run Full Scan
+            </button>
+        </div>
         </div>
     </header>
 
@@ -75,9 +87,12 @@
                 suspicious
                 changes before they become problems.
             </p>
-            <div class="built-for-shopify">
-                <span class="shopify-logo">🛍️</span>
-                Always-on monitoring for your Shopify store
+            <div class="hero-badges">
+                <div class="built-for-shopify">
+                    <span class="shopify-logo">🛒</span>
+                    Always-on monitoring for your Shopify store
+                </div>
+                <span class="shop-badge" id="shop-name"></span>
             </div>
         </section>
 
@@ -198,7 +213,8 @@
                     <div class="empty-state">
                         <span class="empty-icon">🔍</span>
                         <h3>Find Leftover Code</h3>
-                        <p>Scan your theme for code left behind by uninstalled apps. This leftover code can slow down your
+                        <p>Scan your theme for code left behind by uninstalled apps. This leftover code can slow down
+                            your
                             store and cause conflicts.</p>
                     </div>
                 </div>
@@ -520,9 +536,9 @@ Judge.me"></textarea>
         <p>🔍 Sherlock for Shopify v2.0 · Your Shopify Store Detective · Built in Scotland by Codename: Clan · <a
                 href="/privacy" style="color: var(--gold-400);">Privacy Policy</a></p>
     </footer>
-    
+
     <!-- JavaScript -->
     <script src="/static/js/app.js"></script>
-        </body>
-    
-    </html>
+</body>
+
+</html>

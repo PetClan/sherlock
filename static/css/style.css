@@ -315,6 +315,23 @@ body {
     margin: 0 auto;
     line-height: 1.7;
 }
+.hero-badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.hero-badges .built-for-shopify {
+    margin-top: 0;
+}
+
+.hero-badges .shop-badge {
+    margin-left: 0;
+}
+
 .built-for-shopify {
     display: inline-flex;
     align-items: center;
