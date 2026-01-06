@@ -600,26 +600,16 @@
 
         async function selectPlan(plan) {
             const btn = document.getElementById(`btn-${plan}`);
-            const originalText = btn.textContent;
 
             btn.textContent = 'Redirecting to Shopify...';
             btn.disabled = true;
 
-            try {
-                // Redirect to billing endpoint which creates subscription and redirects to Shopify
-                let billingUrl = `/api/v1/billing/subscribe/${plan}?shop=${shop}`;
+            // For Managed Pricing apps, redirect to Shopify's pricing page
+            // The app handle is 'sherlock-1' based on your app
+            const shopDomain = shop.replace('.myshopify.com', '');
+            const pricingUrl = `https://admin.shopify.com/store/${shopDomain}/charges/sherlock-1/pricing_plans`;
 
-                // In production, don't use test mode
-                // For development, you can add &test=true
-
-                window.location.href = billingUrl;
-
-            } catch (error) {
-                console.error('Error selecting plan:', error);
-                btn.textContent = originalText;
-                btn.disabled = false;
-                alert('Error processing subscription. Please try again.');
-            }
+            window.location.href = pricingUrl;
         }
     </script>
 </body>
