@@ -1030,7 +1030,7 @@ async def set_store_trial(
         store = result.scalar_one_or_none()
         
         if not store:
-            raise HTTPException(status_code=404, detail="Store not found")
+            raise HTTPException(status_code=404, ydetail="Store not found")
         
         # Set trial
         store.trial_ends_at = datetime.utcnow() + timedelta(days=days)

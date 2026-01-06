@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Plans - Sherlock</title>
+
+    <!-- Shopify App Bridge - Required for embedded apps -->
+    <meta name="shopify-api-key" content="c09876c44b54257a0e42cc707beaffd1" />
+    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+
+    <style>
+        /* Billing Page Specific Styles */
+        .billing-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .billing-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .billing-header h1 {
+            font-size: 24px;
+            color: var(--white);
+            margin: 0;
+        }
+
+        .billing-header .back-btn {
+            background: var(--navy-700);
+            border: 1px solid var(--slate-600);
+            color: var(--slate-300);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .billing-header .back-btn:hover {
+            background: var(--navy-600);
+            border-color: var(--gold-500);
+            color: var(--white);
+        }
+
+        /* Current Plan Banner */
+        .current-plan-banner {
+            background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-800) 100%);
+            border: 1px solid var(--gold-500);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .current-plan-banner h2 {
+            font-size: 28px;
+            color: var(--white);
+            margin: 0 0 8px 0;
+        }
+
+        .current-plan-banner .plan-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold-400);
+            font-size: 16px;
+        }
+
+        .current-plan-banner .plan-status .trial-icon {
+            font-size: 18px;
+        }
+
+        /* Trial Warning Banner */
+        .trial-banner {
+            background: linear-gradient(135deg, #92400e 0%, #78350f 100%);
+            border: 1px solid #fbbf24;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+        }
+
+        .trial-banner-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .trial-banner-header h3 {
+            color: #fef3c7;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .trial-banner-header .days-badge {
+            background: #fbbf24;
+            color: #78350f;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .trial-banner p {
+            color: #fde68a;
+            margin: 0 0 16px 0;
+            font-size: 14px;
+        }
+
+        .trial-banner ul {
+            color: #fde68a;
+            margin: 0 0 16px 0;
+            padding-left: 20px;
+            font-size: 14px;
+        }
+
+        .trial-banner ul li {
+            margin-bottom: 4px;
+        }
+
+        .trial-banner .subscribe-btn {
+            background: #fbbf24;
+            color: #78350f;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trial-banner .subscribe-btn:hover {
+            background: #fcd34d;
+            transform: translateY(-1px);
+        }
+
+        /* Plan Cards Grid */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .plan-card {
+            background: var(--navy-700);
+            border: 2px solid var(--slate-600);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .plan-card:hover {
+            border-color: var(--slate-500);
+            transform: translateY(-2px);
+        }
+
+        .plan-card.recommended {
+            border-color: var(--gold-500);
+        }
+
+        .plan-card.current {
+            border-color: var(--emerald-500);
+            background: linear-gradient(135deg, var(--navy-700) 0%, rgba(16, 185, 129, 0.1) 100%);
+        }
+
+        .plan-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-badge.current {
+            background: var(--emerald-500);
+            color: white;
+        }
+
+        .plan-badge.recommended {
+            background: var(--gold-500);
+            color: var(--navy-900);
+        }
+
+        .plan-card h3 {
+            color: var(--white);
+            font-size: 24px;
+            margin: 8px 0 8px 0;
+        }
+
+        .plan-price {
+            margin-bottom: 8px;
+        }
+
+        .plan-price .amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .plan-price .currency {
+            font-size: 24px;
+            color: var(--slate-400);
+            vertical-align: top;
+        }
+
+        .plan-price .period {
+            font-size: 16px;
+            color: var(--slate-400);
+        }
+
+        .plan-subtitle {
+            color: var(--slate-400);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .trial-included {
+            background: linear-gradient(135deg, var(--emerald-500) 0%, #059669 100%);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 24px 0;
+        }
+
+        .plan-features li {
+            color: var(--slate-300);
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .plan-features li .check {
+            color: var(--emerald-400);
+            font-size: 16px;
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .plan-btn.current {
+            background: var(--slate-600);
+            color: var(--slate-300);
+            cursor: default;
+        }
+
+        .plan-btn.upgrade {
+            background: linear-gradient(135deg, var(--gold-500) 0%, var(--gold-400) 100%);
+            color: var(--navy-900);
+        }
+
+        .plan-btn.upgrade:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 168, 83, 0.3);
+        }
+
+        .plan-btn.downgrade {
+            background: var(--navy-600);
+            border: 1px solid var(--slate-500);
+            color: var(--slate-200);
+        }
+
+        .plan-btn.downgrade:hover {
+            background: var(--navy-500);
+            border-color: var(--slate-400);
+        }
+
+        /* Loading State */
+        .loading-spinner {
+            text-align: center;
+            padding: 48px;
+            color: var(--slate-400);
+        }
+
+        .loading-spinner::after {
+            content: "";
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--slate-600);
+            border-top-color: var(--gold-500);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon"></span>
+                <div class="logo-text">
+                    <span class="logo-name">SHERLOCK</span>
+                    <span class="logo-tagline">Your Store's Detective</span>
+                </div>
+            </div>
+            <span class="shop-badge" id="shop-name"></span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="billing-container">
+        <!-- Back Button & Title -->
+        <div class="billing-header">
+            <a href="#" class="back-btn" id="back-btn">← Back</a>
+            <h1>Subscription Plans</h1>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading-spinner">
+            <p>Loading subscription details...</p>
+        </div>
+
+        <!-- Content (hidden until loaded) -->
+        <div id="billing-content" class="hidden">
+            <!-- Current Plan Banner -->
+            <div class="current-plan-banner" id="current-plan-banner">
+                <h2>Current Plan: <span id="current-plan-name">Standard</span></h2>
+                <div class="plan-status" id="plan-status">
+                    <span class="trial-icon">⏱️</span>
+                    <span id="plan-status-text">Trial - 14 days remaining</span>
+                </div>
+            </div>
+
+            <!-- Trial Banner (shown only during trial) -->
+            <div class="trial-banner hidden" id="trial-banner">
+                <div class="trial-banner-header">
+                    <span>⏱️</span>
+                    <h3>14-Day Free Trial</h3>
+                    <span class="days-badge" id="trial-days-badge">14 days left</span>
+                </div>
+                <p>You're currently on a free trial with full access to all features:</p>
+                <ul>
+                    <li>Daily automated scans</li>
+                    <li>Theme file monitoring & rollback</li>
+                    <li>App conflict detection</li>
+                </ul>
+                <button class="subscribe-btn" onclick="scrollToPlans()">Subscribe now to continue after trial</button>
+            </div>
+
+            <!-- Plan Cards -->
+            <div class="plans-grid" id="plans-grid">
+                <!-- Standard Plan -->
+                <div class="plan-card" id="plan-standard">
+                    <span class="plan-badge current hidden" id="badge-standard">Current</span>
+                    <h3>Standard</h3>
+                    <div class="plan-price">
+                        <span class="currency">$</span><span class="amount">29</span><span class="period">/month</span>
+                    </div>
+                    <p class="plan-subtitle">Essential protection for growing stores</p>
+                    <div class="trial-included">
+                        🎁 14-DAY FREE TRIAL INCLUDED
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="check">✓</span> Daily automated scans</li>
+                        <li><span class="check">✓</span> Theme file monitoring</li>
+                        <li><span class="check">✓</span> App conflict detection</li>
+                        <li><span class="check">✓</span> CSS risk analysis</li>
+                        <li><span class="check">✓</span> 7-day theme history</li>
+                        <li><span class="check">✓</span> One-click rollback</li>
+                        <li><span class="check">✓</span> Email support</li>
+                    </ul>
+                    <button class="plan-btn upgrade" id="btn-standard" onclick="selectPlan('standard')">
+                        Select Standard
+                    </button>
+                </div>
+
+                <!-- Professional Plan -->
+                <div class="plan-card recommended" id="plan-professional">
+                    <span class="plan-badge recommended" id="badge-professional-rec">Recommended</span>
+                    <span class="plan-badge current hidden" id="badge-professional">Current</span>
+                    <h3>Professional</h3>
+                    <div class="plan-price">
+                        <span class="currency">$</span><span class="amount">69</span><span class="period">/month</span>
+                    </div>
+                    <p class="plan-subtitle">Extended protection for established stores</p>
+                    <div class="trial-included">
+                        🎁 14-DAY FREE TRIAL INCLUDED
+                    </div>
+                    <ul class="plan-features">
+                        <li><span class="check">✓</span> Everything in Standard, plus:</li>
+                        <li><span class="check">✓</span> 30-day theme history</li>
+                        <li><span class="check">✓</span> Extended rollback window</li>
+                        <li><span class="check">✓</span> Priority support</li>
+                        <li><span class="check">✓</span> Faster response times</li>
+                        <li><span class="check">✓</span> Advanced diagnostics</li>
+                    </ul>
+                    <button class="plan-btn upgrade" id="btn-professional" onclick="selectPlan('professional')">
+                        Upgrade to Professional
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Get shop from URL
+        const params = new URLSearchParams(window.location.search);
+        const shop = params.get('shop');
+        const host = params.get('host');
+
+        // Set shop name in header
+        if (shop) {
+            document.getElementById('shop-name').textContent = shop.replace('.myshopify.com', '');
+        }
+
+        // Set back button URL
+        const backBtn = document.getElementById('back-btn');
+        let dashboardUrl = `/dashboard?shop=${shop}`;
+        if (host) {
+            dashboardUrl += `&host=${host}`;
+        }
+        backBtn.href = dashboardUrl;
+
+        // Current subscription state
+        let currentPlan = null;
+        let onTrial = false;
+        let trialDaysRemaining = 0;
+        let hasSubscription = false;
+
+        // Load billing status on page load
+        document.addEventListener('DOMContentLoaded', loadBillingStatus);
+
+        async function loadBillingStatus() {
+            try {
+                const response = await fetch(`/api/v1/billing/status?shop=${shop}`);
+                const data = await response.json();
+
+                console.log('Billing status:', data);
+
+                currentPlan = data.plan || 'standard';
+                onTrial = data.on_trial || false;
+                trialDaysRemaining = data.trial_days_remaining || 0;
+                hasSubscription = data.has_subscription || false;
+
+                updateUI();
+
+            } catch (error) {
+                console.error('Error loading billing status:', error);
+                // Show content anyway with defaults
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            // Hide loading, show content
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('billing-content').classList.remove('hidden');
+
+            // Update current plan banner
+            const planName = currentPlan === 'professional' ? 'Professional' : 'Standard';
+            document.getElementById('current-plan-name').textContent = planName;
+
+            // Update plan status text
+            const statusText = document.getElementById('plan-status-text');
+            const statusIcon = document.querySelector('.plan-status .trial-icon');
+
+            if (onTrial) {
+                statusIcon.textContent = '⏱️';
+                statusText.textContent = `Trial - ${trialDaysRemaining} days remaining`;
+            } else if (hasSubscription) {
+                statusIcon.textContent = '✅';
+                statusText.textContent = 'Active subscription';
+            } else {
+                statusIcon.textContent = '⚠️';
+                statusText.textContent = 'No active subscription';
+            }
+
+            // Show/hide trial banner
+            const trialBanner = document.getElementById('trial-banner');
+            if (onTrial) {
+                trialBanner.classList.remove('hidden');
+                document.getElementById('trial-days-badge').textContent = `${trialDaysRemaining} days left`;
+            } else {
+                trialBanner.classList.add('hidden');
+            }
+
+            // Update plan cards
+            updatePlanCards();
+        }
+
+        function updatePlanCards() {
+            const standardCard = document.getElementById('plan-standard');
+            const professionalCard = document.getElementById('plan-professional');
+            const badgeStandard = document.getElementById('badge-standard');
+            const badgeProfessional = document.getElementById('badge-professional');
+            const badgeProfessionalRec = document.getElementById('badge-professional-rec');
+            const btnStandard = document.getElementById('btn-standard');
+            const btnProfessional = document.getElementById('btn-professional');
+
+            // Reset classes
+            standardCard.classList.remove('current');
+            professionalCard.classList.remove('current');
+            badgeStandard.classList.add('hidden');
+            badgeProfessional.classList.add('hidden');
+
+            if (hasSubscription) {
+                // Has active subscription - show current plan
+                if (currentPlan === 'standard') {
+                    standardCard.classList.add('current');
+                    badgeStandard.classList.remove('hidden');
+                    badgeProfessionalRec.classList.remove('hidden');
+
+                    btnStandard.textContent = 'Current Plan';
+                    btnStandard.className = 'plan-btn current';
+                    btnStandard.disabled = true;
+
+                    btnProfessional.textContent = 'Upgrade to Professional';
+                    btnProfessional.className = 'plan-btn upgrade';
+                    btnProfessional.disabled = false;
+                } else {
+                    professionalCard.classList.add('current');
+                    badgeProfessional.classList.remove('hidden');
+                    badgeProfessionalRec.classList.add('hidden');
+
+                    btnProfessional.textContent = 'Current Plan';
+                    btnProfessional.className = 'plan-btn current';
+                    btnProfessional.disabled = true;
+
+                    btnStandard.textContent = 'Downgrade to Standard';
+                    btnStandard.className = 'plan-btn downgrade';
+                    btnStandard.disabled = false;
+                }
+            } else {
+                // No subscription (trial or expired) - both buttons are "Select"
+                btnStandard.textContent = 'Select Standard';
+                btnStandard.className = 'plan-btn upgrade';
+                btnStandard.disabled = false;
+
+                btnProfessional.textContent = 'Select Professional';
+                btnProfessional.className = 'plan-btn upgrade';
+                btnProfessional.disabled = false;
+
+                badgeProfessionalRec.classList.remove('hidden');
+            }
+        }
+
+        function scrollToPlans() {
+            document.getElementById('plans-grid').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function selectPlan(plan) {
+            const btn = document.getElementById(`btn-${plan}`);
+            const originalText = btn.textContent;
+
+            btn.textContent = 'Redirecting to Shopify...';
+            btn.disabled = true;
+
+            try {
+                // Redirect to billing endpoint which creates subscription and redirects to Shopify
+                let billingUrl = `/api/v1/billing/subscribe/${plan}?shop=${shop}`;
+
+                // In production, don't use test mode
+                // For development, you can add &test=true
+
+                window.location.href = billingUrl;
+
+            } catch (error) {
+                console.error('Error selecting plan:', error);
+                btn.textContent = originalText;
+                btn.disabled = false;
+                alert('Error processing subscription. Please try again.');
+            }
+        }
+    </script>
+</body>
+
+</html>

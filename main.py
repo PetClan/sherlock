@@ -461,6 +461,28 @@ async def pricing_page():
         </html>
     """, status_code=500)
 
+@app.get("/billing", response_class=HTMLResponse)
+async def billing_page():
+    """
+    In-app billing/subscription management page.
+    """
+    templates_path = os.path.join(os.path.dirname(__file__), "templates", "billing.html")
+    
+    if os.path.exists(templates_path):
+        with open(templates_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    
+    return HTMLResponse(content="""
+        <html>
+            <head><title>Billing - Sherlock</title></head>
+            <body>
+                <h1>Billing page not found</h1>
+                <p>Please ensure templates/billing.html exists.</p>
+            </body>
+        </html>
+    """, status_code=500)
+
 # ==================== SEO Routes ====================
 
 @app.get("/robots.txt", include_in_schema=False)
