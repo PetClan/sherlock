@@ -1007,6 +1007,45 @@ async def reset_scan_status(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/{secret_key}/set-trial/{shop}")
+async def set_store_trial(
+    secret_key: str,
+    shop: str,
+    days: int = Query(default=14, description="Trial days"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Set trial period for an existing store.
+    Used to enable trial for stores installed before trial tracking.
+    """
+    if secret_key != ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    from datetime import timedelta
+    
+    try:
+        result = await db.execute(
+            select(Store).where(Store.shopify_domain.contains(shop))
+        )
+        store = result.scalar_one_or_none()
+        
+        if not store:
+            raise HTTPException(status_code=404, detail="Store not found")
+        
+        # Set trial
+        store.trial_ends_at = datetime.utcnow() + timedelta(days=days)
+        store.subscription_status = 'trial'
+        
+        await db.commit()
+        
+        return {
+            "success": True,
+            "shop": store.shopify_domain,
+            "trial_ends_at": store.trial_ends_at.isoformat(),
+            "message": f"Trial set for {days} days"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{secret_key}/reset-store/{shop}")
 async def reset_store_for_reinstall(
