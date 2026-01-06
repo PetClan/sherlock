@@ -178,13 +178,21 @@ class ShopifyAuthService:
             store.access_token = access_token
             store.is_active = True
             store.updated_at = datetime.utcnow()
+            # Reset trial if no active subscription (reinstall scenario)
+            if not store.subscription_status or store.subscription_status in ['cancelled', 'expired', None]:
+                from datetime import timedelta
+                store.trial_ends_at = datetime.utcnow() + timedelta(days=14)
+                store.subscription_status = 'trial'
         else:
-            # Create new store
+            # Create new store with 14-day trial
+            from datetime import timedelta
             store = Store(
                 shopify_domain=shop,
                 access_token=access_token,
                 is_active=True,
-                installed_at=datetime.utcnow()
+                installed_at=datetime.utcnow(),
+                trial_ends_at=datetime.utcnow() + timedelta(days=14),
+                subscription_status='trial'
             )
             self.db.add(store)
         

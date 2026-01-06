@@ -199,10 +199,28 @@ class BillingService:
         subscriptions = data.get("activeSubscriptions", [])
         
         if not subscriptions:
+            # No Shopify subscription - check local trial status
+            on_trial = False
+            trial_days_remaining = 0
+            
+            if store.trial_ends_at:
+                from datetime import datetime, timezone
+                now = datetime.now(timezone.utc)
+                trial_end = store.trial_ends_at
+                if trial_end.tzinfo is None:
+                    trial_end = trial_end.replace(tzinfo=timezone.utc)
+                
+                if trial_end > now:
+                    on_trial = True
+                    trial_days_remaining = (trial_end - now).days
+            
             return {
-                "status": "none",
+                "status": "trial" if on_trial else "none",
                 "has_subscription": False,
-                "plan": None
+                "plan": store.sherlock_plan or "standard",
+                "on_trial": on_trial,
+                "trial_days_remaining": trial_days_remaining,
+                "trial_ends_at": store.trial_ends_at.isoformat() if store.trial_ends_at else None
             }
         
         # Get the first active subscription
@@ -219,13 +237,18 @@ class BillingService:
             plan_key=plan_key
         )
         
+        # Check if currently in trial (Shopify tracks this)
+        shopify_trial_days = sub.get("trialDays", 0)
+        on_trial = shopify_trial_days is not None and shopify_trial_days > 0
+        
         return {
             "status": sub.get("status", "").lower(),
             "has_subscription": sub.get("status") == "ACTIVE",
             "plan": plan_key,
             "subscription_id": sub.get("id"),
             "name": sub.get("name"),
-            "trial_days": sub.get("trialDays"),
+            "on_trial": on_trial,
+            "trial_days_remaining": shopify_trial_days if on_trial else 0,
             "current_period_end": sub.get("currentPeriodEnd")
         }
     
