@@ -4,35 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Primary Meta Tags -->
-    <title>Pricing - Sherlock for Shopify | 24/7 Store Protection from $29/month</title>
-    <meta name="title" content="Pricing - Sherlock for Shopify | 24/7 Store Protection from $29/month">
+    <title>Pricing - Sherlock for Shopify</title>
     <meta name="description"
-        content="Protect your Shopify store 24/7 from app conflicts and theme damage. Plans start at $29/month with 14-day free trial. No code changes, instant results.">
-    <meta name="keywords"
-        content="Shopify app pricing, Shopify store protection, Shopify theme backup, app conflict detection, Shopify monitoring tool">
-    <meta name="author" content="Sherlock for Shopify">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://codenamesherlock.com/pricing">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://codenamesherlock.com/pricing">
-    <meta property="og:title" content="Pricing - Sherlock for Shopify | 24/7 Store Protection">
-    <meta property="og:description"
-        content="Protect your Shopify store 24/7 from app conflicts and theme damage. Plans start at $29/month with 14-day free trial.">
-    <meta property="og:image" content="https://codenamesherlock.com/static/images/sherlock-og.png">
-    <meta property="og:site_name" content="Sherlock for Shopify">
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://codenamesherlock.com/pricing">
-    <meta property="twitter:title" content="Pricing - Sherlock for Shopify | 24/7 Store Protection">
-    <meta property="twitter:description"
-        content="Protect your Shopify store 24/7 from app conflicts and theme damage. Plans start at $29/month with 14-day free trial.">
-    <meta property="twitter:image" content="https://codenamesherlock.com/static/images/sherlock-og.png">
-    
-    <!-- Favicon -->
+        content="Simple, transparent pricing for Sherlock - Your Store's Detective. Start with a 14-day free trial.">
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
@@ -41,42 +15,7 @@
     <!-- Google Fonts -->
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap">
-    
-    <!-- Structured Data / JSON-LD -->
-    <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "Product",
-            "name": "Sherlock for Shopify",
-            "description": "24/7 store protection that catches app conflicts, theme damage, and performance issues before they cost you sales.",
-            "url": "https://codenamesherlock.com/pricing",
-            "brand": {
-                "@type": "Brand",
-                "name": "Sherlock"
-            },
-            "offers": [
-                {
-                    "@type": "Offer",
-                    "name": "Standard Plan",
-                    "price": "29",
-                    "priceCurrency": "USD",
-                    "priceValidUntil": "2026-12-31",
-                    "availability": "https://schema.org/InStock",
-                    "description": "7-day theme history, daily scans, email support"
-                },
-                {
-                    "@type": "Offer",
-                    "name": "Professional Plan",
-                    "price": "69",
-                    "priceCurrency": "USD",
-                    "priceValidUntil": "2026-12-31",
-                    "availability": "https://schema.org/InStock",
-                    "description": "30-day theme history, priority support, advanced features"
-                }
-            ]
-        }
-        </script>
-    
+
     <style>
         /* ============================================
            SHERLOCK PRICING PAGE - STANDALONE CSS
@@ -183,7 +122,7 @@
 
         /* Main Content */
         .main-container {
-            max-width: 1100px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 48px 24px 80px;
         }
@@ -208,10 +147,10 @@
             margin: 0 auto;
         }
 
-        /* Pricing Grid */
+        /* Pricing Grid - 2 columns */
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 24px;
             margin-bottom: 48px;
         }
@@ -266,7 +205,7 @@
         }
 
         .plan-price {
-            margin-bottom: 24px;
+            margin-bottom: 12px;
         }
 
         .price-amount {
@@ -286,17 +225,11 @@
             color: var(--slate-400);
         }
 
-        .price-trial {
-            font-size: 32px;
-            font-weight: 700;
+        .trial-badge {
             color: var(--emerald-400);
-        }
-
-        .trial-duration {
-            display: block;
             font-size: 14px;
-            color: var(--slate-400);
-            margin-top: 4px;
+            font-weight: 500;
+            margin-bottom: 20px;
         }
 
         .feature-list {
@@ -479,8 +412,7 @@
         }
 
         /* Responsive */
-        /* Tablet */
-        @media (max-width: 900px) {
+        @media (max-width: 768px) {
             .pricing-grid {
                 grid-template-columns: 1fr;
                 max-width: 400px;
@@ -495,125 +427,24 @@
             .faq-grid {
                 grid-template-columns: 1fr;
             }
-
-            .header-inner {
-                flex-wrap: wrap;
-                gap: 12px;
-            }
-
-            .page-title {
-                font-size: 36px;
-            }
-
-            .page-subtitle {
-                font-size: 16px;
-            }
         }
 
-        /* Mobile */
         @media (max-width: 640px) {
-            .header {
-                padding: 12px 16px;
-            }
-
-            .header-inner {
-                justify-content: center;
-            }
-
-            .back-link {
-                display: none;
-            }
-
-            .logo-icon {
-                width: 36px;
-                height: 36px;
-            }
-
-            .logo-name {
-                font-size: 20px;
-            }
-
-            .logo-tagline {
-                font-size: 9px;
-            }
-
             .main-container {
-                padding: 24px 16px 48px;
+                padding: 32px 16px 60px;
             }
 
             .page-title {
-                font-size: 28px;
-                margin-bottom: 8px;
+                font-size: 32px;
             }
 
-            .page-subtitle {
-                font-size: 14px;
-                margin-bottom: 32px;
-            }
-
-            .pricing-grid {
-                max-width: 100%;
-            }
-
-            .pricing-card {
-                padding: 24px 20px;
-            }
-
-            .plan-name {
-                font-size: 20px;
-            }
-
-            .plan-price {
-                font-size: 40px;
-            }
-
-            .comparison-section {
-                display: none;
-            }
-
-            .mobile-break {
-                display: block;
-            }
-
-            .faq-section {
-                margin-top: 48px;
-            }
-
-            .faq-title {
-                font-size: 24px;
-            }
-
-            .faq-question {
-                font-size: 15px;
-            }
-
-            .faq-answer {
+            .comparison-table {
                 font-size: 13px;
             }
 
-            .footer {
-                padding: 20px 16px;
-                font-size: 12px;
-            }
-        }
-
-        .mobile-break {
-            display: none;
-        }
-
-        /* Small Mobiles */
-        @media (max-width: 400px) {
-            .page-title {
-                font-size: 24px;
-            }
-
-            .plan-price {
-                font-size: 36px;
-            }
-
-            .trust-badges {
-                flex-direction: column;
-                gap: 8px;
+            .comparison-table th,
+            .comparison-table td {
+                padding: 12px;
             }
         }
     </style>
@@ -638,32 +469,12 @@
     <main class="main-container">
         <div class="page-header">
             <h1 class="page-title">Simple, Transparent Pricing</h1>
-            <p class="page-subtitle">Protect your Shopify store with Sherlock.<br class="mobile-break"> Start with a 14-day free
-                trial.</p>
+            <p class="page-subtitle">Protect your Shopify store with Sherlock. Both plans include a 14-day free trial.
+            </p>
         </div>
 
         <!-- Pricing Cards -->
         <div class="pricing-grid">
-            <!-- Free Trial -->
-            <div class="pricing-card">
-                <h2 class="plan-name">Free Trial</h2>
-                <p class="plan-description">Try Sherlock risk-free for 14 days</p>
-                <div class="plan-price">
-                    <span class="price-trial">FREE</span>
-                    <span class="trial-duration">14 days, full access</span>
-                </div>
-                <ul class="feature-list">
-                    <li>Daily automated scans</li>
-                    <li>Theme file monitoring</li>
-                    <li>App conflict detection</li>
-                    <li>CSS risk analysis</li>
-                    <li>7-day theme history</li>
-                    <li>Theme rollback</li>
-                    <li>Email support</li>
-                </ul>
-                <a href="/install" class="cta-button cta-secondary">Start Free Trial</a>
-            </div>
-
             <!-- Standard -->
             <div class="pricing-card featured">
                 <span class="popular-badge">Most Popular</span>
@@ -673,6 +484,7 @@
                     <span class="price-currency">$</span><span class="price-amount">29</span>
                     <span class="price-period">/month</span>
                 </div>
+                <p class="trial-badge">✓ 14-day free trial included</p>
                 <ul class="feature-list">
                     <li>Daily automated scans</li>
                     <li>Theme file monitoring</li>
@@ -683,7 +495,7 @@
                     <li>Performance monitoring</li>
                     <li>Email support</li>
                 </ul>
-                <a href="/install" class="cta-button cta-primary">Get Started</a>
+                <a href="/install" class="cta-button cta-primary">Start Free Trial</a>
             </div>
 
             <!-- Professional -->
@@ -694,6 +506,7 @@
                     <span class="price-currency">$</span><span class="price-amount">69</span>
                     <span class="price-period">/month</span>
                 </div>
+                <p class="trial-badge">✓ 14-day free trial included</p>
                 <ul class="feature-list">
                     <li>Everything in Standard, plus:</li>
                     <li>30-day theme history</li>
@@ -701,7 +514,7 @@
                     <li>Priority support</li>
                     <li>Faster response times</li>
                 </ul>
-                <a href="/install" class="cta-button cta-secondary">Get Started</a>
+                <a href="/install" class="cta-button cta-secondary">Start Free Trial</a>
             </div>
         </div>
 
@@ -712,15 +525,18 @@
                 <thead>
                     <tr>
                         <th>Feature</th>
-                        <th>Free Trial</th>
                         <th>Standard</th>
                         <th>Professional</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Daily Automated Scans</td>
+                        <td>14-Day Free Trial</td>
                         <td><span class="check-icon">✓</span></td>
+                        <td><span class="check-icon">✓</span></td>
+                    </tr>
+                    <tr>
+                        <td>Daily Automated Scans</td>
                         <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
                     </tr>
@@ -728,11 +544,9 @@
                         <td>Theme File Monitoring</td>
                         <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
-                        <td><span class="check-icon">✓</span></td>
                     </tr>
                     <tr>
                         <td>App Conflict Detection</td>
-                        <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
                     </tr>
@@ -740,11 +554,9 @@
                         <td>CSS Risk Analysis</td>
                         <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
-                        <td><span class="check-icon">✓</span></td>
                     </tr>
                     <tr>
                         <td>Theme Rollback</td>
-                        <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
                     </tr>
@@ -752,11 +564,9 @@
                         <td>Performance Monitoring</td>
                         <td><span class="check-icon">✓</span></td>
                         <td><span class="check-icon">✓</span></td>
-                        <td><span class="check-icon">✓</span></td>
                     </tr>
                     <tr>
                         <td>Theme History</td>
-                        <td>7 days</td>
                         <td>7 days</td>
                         <td>30 days</td>
                     </tr>
@@ -764,17 +574,14 @@
                         <td>On-Demand Scans</td>
                         <td>5/day</td>
                         <td>5/day</td>
-                        <td>5/day</td>
                     </tr>
                     <tr>
                         <td>Theme Restores</td>
                         <td>3/day</td>
                         <td>3/day</td>
-                        <td>3/day</td>
                     </tr>
                     <tr>
                         <td>Support</td>
-                        <td>Email</td>
                         <td>Email</td>
                         <td>Priority</td>
                     </tr>
@@ -787,9 +594,9 @@
             <h2 class="faq-title">Frequently Asked Questions</h2>
             <div class="faq-grid">
                 <div class="faq-item">
-                <h3 class="faq-question">What happens after the free trial?</h3>
-                <p class="faq-answer">After 14 days, you can choose to subscribe to Standard or Professional. If you don't subscribe,
-                    your account and data will be deleted.</p>
+                    <h3 class="faq-question">How does the free trial work?</h3>
+                    <p class="faq-answer">Both plans include a 14-day free trial with full access to all features. You
+                        won't be charged until the trial ends. Cancel anytime during the trial at no cost.</p>
                 </div>
                 <div class="faq-item">
                     <h3 class="faq-question">Can I cancel anytime?</h3>
