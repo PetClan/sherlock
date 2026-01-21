@@ -39,7 +39,11 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
-
+    
+    <!-- Shopify App Bridge - Required for embedded apps -->
+    <meta name="shopify-api-key" content="c09876c44b54257a0e42cc707beaffd1" />
+    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+    
     <!-- Stylesheets -->
     <link rel="stylesheet" href="/static/css/style.css">
 
@@ -730,53 +734,79 @@
     </div>
 
     <script>
-        // Check installation status and handle OAuth flow
+        /**
+         * Sherlock Install Flow - App Bridge Compatible
+         * 
+         * This handles the OAuth flow correctly for embedded apps:
+         * 1. If embedded=1 (in iframe), use App Bridge to escape iframe first
+         * 2. If not embedded, redirect directly to OAuth
+         */
         (async function handleInstall() {
             const params = new URLSearchParams(window.location.search);
             const shop = params.get('shop');
             const host = params.get('host');
+            const embedded = params.get('embedded');
 
-            if (shop) {
-                // Shop parameter present - check if already installed
-                try {
-                    const response = await fetch('/api/v1/auth/verify?shop=' + encodeURIComponent(shop));
-                    const data = await response.json();
-
-                    if (data.installed) {
-                        // Already installed - redirect to dashboard
-                        let redirectUrl = '/dashboard?shop=' + encodeURIComponent(shop);
-                        if (host) {
-                            redirectUrl += '&host=' + encodeURIComponent(host);
-                        }
-                        console.log('✅ Already installed, redirecting to dashboard');
-                        window.location.href = redirectUrl;
-                        return;
-                    }
-                } catch (error) {
-                    console.log('Could not verify installation:', error);
-                }
-
-                // Not installed - show redirecting message and auto-start OAuth
-                document.getElementById('install-with-shop').style.display = 'block';
-                document.getElementById('install-no-shop').style.display = 'none';
-
-                // Normalize shop domain
-                let normalizedShop = shop;
-                if (!normalizedShop.includes('.myshopify.com')) {
-                    normalizedShop = normalizedShop + '.myshopify.com';
-                }
-
-                // Auto-start OAuth after brief delay (so user sees the message)
-                setTimeout(function () {
-                    console.log('🔐 Starting OAuth flow for ' + normalizedShop);
-                    window.location.href = '/auth/shopify?shop=' + encodeURIComponent(normalizedShop);
-                }, 800);
-
-            } else {
-                // No shop parameter - show instructions
+            // No shop parameter - show install instructions
+            if (!shop) {
                 document.getElementById('install-with-shop').style.display = 'none';
                 document.getElementById('install-no-shop').style.display = 'block';
+                return;
             }
+
+            // Shop parameter present - check if already installed
+            try {
+                const response = await fetch('/api/v1/auth/verify?shop=' + encodeURIComponent(shop));
+                const data = await response.json();
+
+                if (data.installed) {
+                    // Already installed - redirect to dashboard
+                    console.log('✅ Already installed, redirecting to dashboard');
+                    let redirectUrl = '/dashboard?shop=' + encodeURIComponent(shop);
+                    if (host) {
+                        redirectUrl += '&host=' + encodeURIComponent(host);
+                    }
+
+                    // Use top window redirect if embedded, otherwise normal redirect
+                    if (embedded === '1') {
+                        window.open(redirectUrl, '_top');
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.log('Could not verify installation:', error);
+            }
+
+            // Not installed - show redirecting message
+            document.getElementById('install-with-shop').style.display = 'block';
+            document.getElementById('install-no-shop').style.display = 'none';
+
+            // Normalize shop domain
+            let normalizedShop = shop;
+            if (!normalizedShop.includes('.myshopify.com')) {
+                normalizedShop = normalizedShop + '.myshopify.com';
+            }
+
+            // Build the OAuth URL
+            const authUrl = '/api/v1/auth/shopify?shop=' + encodeURIComponent(normalizedShop);
+
+            // Delay to show the redirecting message
+            setTimeout(function () {
+                console.log('🔐 Starting OAuth flow for ' + normalizedShop);
+
+                // CRITICAL: Handle iframe escape for embedded apps
+                // If embedded=1, we're inside an iframe and must escape it
+                // before redirecting to OAuth (X-Frame-Options: DENY on Shopify OAuth)
+                if (embedded === '1') {
+                    console.log('📦 Embedded mode - redirecting top window');
+                    window.open(authUrl, '_top');
+                } else {
+                    console.log('🌐 Standalone mode - normal redirect');
+                    window.location.href = authUrl;
+                }
+            }, 800);
         })();
     </script>
 </body>
