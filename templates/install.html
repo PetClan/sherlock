@@ -733,99 +733,70 @@
         </div>
     </div>
 
-    <script>
-        /**
-         * Sherlock Install Flow - Official App Bridge Method
-         * 
-         * Per Shopify docs: https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/authorization-code-grant
-         * 
-         * When embedded=1, we MUST use App Bridge Redirect to escape the iframe
-         * before redirecting to OAuth (X-Frame-Options: DENY on Shopify OAuth pages)
-         */
-        (async function handleInstall() {
-            const params = new URLSearchParams(window.location.search);
-            const shop = params.get('shop');
-            const host = params.get('host');
-            const embedded = params.get('embedded');
+<script>
+    /**
+     * Sherlock Install Flow - CDN App Bridge (Current)
+     * 
+     * Uses window.open() which App Bridge CDN intercepts automatically.
+     * - window.open(url, '_self') for in-app navigation
+     * - window.open(url, '_top') for external/OAuth redirects (escapes iframe)
+     */
+    (async function handleInstall() {
+        const params = new URLSearchParams(window.location.search);
+        const shop = params.get('shop');
+        const host = params.get('host');
+        const embedded = params.get('embedded');
 
-            // No shop parameter - show install instructions
-            if (!shop) {
-                document.getElementById('install-with-shop').style.display = 'none';
-                document.getElementById('install-no-shop').style.display = 'block';
+        // No shop parameter - show install instructions
+        if (!shop) {
+            document.getElementById('install-with-shop').style.display = 'none';
+            document.getElementById('install-no-shop').style.display = 'block';
+            return;
+        }
+
+        // Shop parameter present - check if already installed
+        try {
+            const response = await fetch('/api/v1/auth/verify?shop=' + encodeURIComponent(shop));
+            const data = await response.json();
+
+            if (data.installed) {
+                console.log('✅ Already installed, redirecting to dashboard');
+                let redirectUrl = '/dashboard?shop=' + encodeURIComponent(shop);
+                if (host) {
+                    redirectUrl += '&host=' + encodeURIComponent(host);
+                }
+
+                // App Bridge CDN intercepts window.open for in-app navigation
+                window.open(redirectUrl, '_self');
                 return;
             }
+        } catch (error) {
+            console.log('Could not verify installation:', error);
+        }
 
-            // Shop parameter present - check if already installed
-            try {
-                const response = await fetch('/api/v1/auth/verify?shop=' + encodeURIComponent(shop));
-                const data = await response.json();
+        // Not installed - show redirecting message
+        document.getElementById('install-with-shop').style.display = 'block';
+        document.getElementById('install-no-shop').style.display = 'none';
 
-                if (data.installed) {
-                    console.log('✅ Already installed, redirecting to dashboard');
-                    let redirectUrl = '/dashboard?shop=' + encodeURIComponent(shop);
-                    if (host) {
-                        redirectUrl += '&host=' + encodeURIComponent(host);
-                    }
+        // Normalize shop domain
+        let normalizedShop = shop;
+        if (!normalizedShop.includes('.myshopify.com')) {
+            normalizedShop = normalizedShop + '.myshopify.com';
+        }
 
-                    // Use App Bridge redirect if embedded
-                    if (embedded === '1' && host && window['app-bridge']) {
-                        const AppBridge = window['app-bridge'];
-                        const app = AppBridge.createApp({
-                            apiKey: 'c09876c44b54257a0e42cc707beaffd1',
-                            host: host
-                        });
-                        const redirect = AppBridge.actions.Redirect.create(app);
-                        redirect.dispatch(AppBridge.actions.Redirect.Action.APP, redirectUrl);
-                    } else {
-                        window.location.href = redirectUrl;
-                    }
-                    return;
-                }
-            } catch (error) {
-                console.log('Could not verify installation:', error);
-            }
+        // Build the full OAuth URL
+        const authUrl = 'https://app.codenamesherlock.com/api/v1/auth/shopify?shop=' + encodeURIComponent(normalizedShop);
 
-            // Not installed - show redirecting message
-            document.getElementById('install-with-shop').style.display = 'block';
-            document.getElementById('install-no-shop').style.display = 'none';
+        // Delay to show the redirecting message
+        setTimeout(function () {
+            console.log('🔑 Starting OAuth flow for ' + normalizedShop);
 
-            // Normalize shop domain
-            let normalizedShop = shop;
-            if (!normalizedShop.includes('.myshopify.com')) {
-                normalizedShop = normalizedShop + '.myshopify.com';
-            }
-
-            // Build the full OAuth URL (must be absolute for REMOTE redirect)
-            const authUrl = 'https://app.codenamesherlock.com/api/v1/auth/shopify?shop=' + encodeURIComponent(normalizedShop);
-
-            // Delay to show the redirecting message
-            setTimeout(function () {
-                console.log('🔐 Starting OAuth flow for ' + normalizedShop);
-
-                /**
-                 * OFFICIAL APP BRIDGE METHOD for escaping iframe
-                 * 
-                 * Per Shopify docs: If embedded=1, use App Bridge Redirect.Action.REMOTE
-                 * to break out of the iframe before redirecting to OAuth
-                 */
-                if (embedded === '1' && host && window['app-bridge']) {
-                    console.log('📦 Embedded mode - using App Bridge to escape iframe');
-                    const AppBridge = window['app-bridge'];
-                    const app = AppBridge.createApp({
-                        apiKey: 'c09876c44b54257a0e42cc707beaffd1',
-                        host: host
-                    });
-                    const redirect = AppBridge.actions.Redirect.create(app);
-                    // REMOTE action opens URL outside the iframe
-                    redirect.dispatch(AppBridge.actions.Redirect.Action.REMOTE, authUrl);
-                } else {
-                    // Not embedded - normal redirect works
-                    console.log('🌐 Standalone mode - normal redirect');
-                    window.location.href = authUrl;
-                }
-            }, 800);
-        })();
-    </script>
+            // App Bridge CDN intercepts window.open with _top to escape the iframe
+            // This works for both embedded and standalone modes
+            window.open(authUrl, '_top');
+        }, 800);
+    })();
+</script>   
 </body>
 
 </html>
