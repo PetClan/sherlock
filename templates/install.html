@@ -125,7 +125,7 @@
         .preview-header {
             background: linear-gradient(135deg, #1a1f3c 0%, #0d1117 100%);
             padding: 16px 32px;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid rgba(212, 175, 55, 0.2);
@@ -749,6 +749,7 @@
 
         // No shop parameter - show install instructions
         if (!shop) {
+            document.querySelector('.install-overlay').style.display = 'flex';
             document.getElementById('install-with-shop').style.display = 'none';
             document.getElementById('install-no-shop').style.display = 'block';
             return;
@@ -799,6 +800,7 @@
         }
 
         // Not installed - show redirecting message
+        document.querySelector('.install-overlay').style.display = 'flex';
         document.getElementById('install-with-shop').style.display = 'block';
         document.getElementById('install-no-shop').style.display = 'none';
 
