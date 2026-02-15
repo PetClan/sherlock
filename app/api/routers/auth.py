@@ -121,13 +121,34 @@ async def shopify_auth_callback(
         
         print(f"✅ [Auth] Successfully installed for {shop}")
         
-        # Redirect to dashboard with host parameter for App Bridge
+        # Check if store has an active subscription
+        # On reinstall, merchants need to re-approve charges
+        from billing_service import get_billing_service
+        billing_service = get_billing_service(db)
+        
+        try:
+            billing_status = await billing_service.get_subscription_status(shop)
+            has_subscription = billing_status.get("has_subscription", False)
+            print(f"💳 [Auth] Subscription check for {shop}: has_subscription={has_subscription}")
+        except Exception as billing_err:
+            print(f"⚠️ [Auth] Billing check failed for {shop}: {billing_err}")
+            has_subscription = False
+        
+        # Build redirect params
         redirect_params = f"shop={shop}"
         if host:
             redirect_params += f"&host={host}"
         
-        success_url = f"{settings.app_url}/auth/success?{redirect_params}"
-        return RedirectResponse(url=success_url)
+        if has_subscription:
+            # Active subscription exists - go to dashboard
+            success_url = f"{settings.app_url}/auth/success?{redirect_params}"
+            return RedirectResponse(url=success_url)
+        else:
+            # No active subscription - redirect to Managed Pricing page
+            shop_slug = shop.replace(".myshopify.com", "")
+            pricing_url = f"https://admin.shopify.com/store/{shop_slug}/charges/sherlock-1/pricing_plans"
+            print(f"💳 [Auth] No subscription for {shop} - redirecting to pricing")
+            return RedirectResponse(url=pricing_url)
         
     except Exception as e:
         print(f"❌ [Auth] Callback error: {e}")
