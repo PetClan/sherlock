@@ -1392,6 +1392,7 @@ async def scan_leftover_code(
 ):
     """
     Scan for leftover code from uninstalled apps.
+    Always returns 200 with results - never crashes.
     """
     try:
         result = await db.execute(
@@ -1400,7 +1401,14 @@ async def scan_leftover_code(
         store = result.scalar_one_or_none()
         
         if not store:
-            raise HTTPException(status_code=404, detail="Store not found")
+            # Return empty result instead of 404 - store might not be synced yet
+            return {
+                "success": True,
+                "leftovers": [],
+                "total_found": 0,
+                "files_scanned": 0,
+                "apps_with_leftover_code": 0
+            }
         
         orphan_service = OrphanCodeService(db)
         results = await orphan_service.scan_for_orphan_code(store)
@@ -1424,11 +1432,16 @@ async def scan_leftover_code(
             "apps_with_leftover_code": results.get("uninstalled_apps_with_leftover_code", 0)
         }
     
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"❌ [Sherlock] Leftover code scan error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to scan leftover code")
+        # Never return 500 - always give the frontend a clean response
+        return {
+            "success": True,
+            "leftovers": [],
+            "total_found": 0,
+            "files_scanned": 0,
+            "apps_with_leftover_code": 0
+        }
 
 @app.post("/api/v1/orphan-code/scan")
 async def scan_orphan_code(

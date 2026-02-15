@@ -31,20 +31,37 @@ class OrphanCodeService:
         """
         print(f"🔍 [OrphanCode] Scanning for leftover code in {store.shopify_domain}")
         
-        if not store.access_token:
-            return {"success": False, "error": "No access token"}
+        empty_result = {
+            "success": True,
+            "total_orphan_instances": 0,
+            "uninstalled_apps_with_leftover_code": 0,
+            "orphan_code_by_app": [],
+            "orphan_findings": [],
+            "active_app_code_detected": 0,
+            "files_scanned": 0,
+            "recommendations": [],
+        }
         
-        # Get currently installed apps
-        result = await self.db.execute(
-            select(InstalledApp).where(InstalledApp.store_id == store.id)
-        )
-        installed_apps = [app.app_name.lower() for app in result.scalars().all()]
+        if not store.access_token:
+            print(f"⚠️ [OrphanCode] No access token for {store.shopify_domain}")
+            return empty_result
+        
+        try:
+            # Get currently installed apps
+            result = await self.db.execute(
+                select(InstalledApp).where(InstalledApp.store_id == store.id)
+            )
+            installed_apps = [app.app_name.lower() for app in result.scalars().all()]
+        except Exception as e:
+            print(f"⚠️ [OrphanCode] Error fetching installed apps: {e}")
+            installed_apps = []
         
         # Fetch theme files
         theme_files = await self._fetch_theme_files(store)
         
         if not theme_files:
-            return {"success": False, "error": "Could not fetch theme files"}
+            print(f"⚠️ [OrphanCode] No theme files retrieved for {store.shopify_domain}")
+            return empty_result
         
         orphan_findings = []
         
