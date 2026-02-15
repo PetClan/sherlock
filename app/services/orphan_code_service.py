@@ -92,8 +92,8 @@ class OrphanCodeService:
                             
                             # Get context (the line containing the match)
                             lines = content.split("\n")
-                            context_start = max(0, line_num - 2)
-                            context_end = min(len(lines), line_num + 1)
+                            context_start = max(0, line_num - 1)
+                            context_end = min(len(lines), line_num + 2)
                             snippet = "\n".join(lines[context_start:context_end])
                             
                             finding = {
