@@ -87,6 +87,12 @@ function init() {
     const params = new URLSearchParams(window.location.search);
     state.shop = params.get('shop');
 
+    // Fallback: get shop from App Bridge config (embedded mode)
+    if (!state.shop && window.shopify && window.shopify.config) {
+        state.shop = window.shopify.config.shop;
+        console.log('🔗 [init] Got shop from App Bridge config:', state.shop);
+    }
+
     if (!state.shop) {
         showError('No shop specified. Please install the app first.');
         return;

@@ -23,15 +23,29 @@
             const params = new URLSearchParams(window.location.search);
             const host = params.get('host');
 
+            // Get shop from URL params, or fall back to App Bridge config (embedded mode)
+            var shop = params.get('shop');
+            if (!shop && window.shopify && window.shopify.config) {
+                shop = window.shopify.config.shop;
+                console.log('🔗 [AppBridge] Got shop from App Bridge config:', shop);
+            }
+
             if (host && window.shopify) {
                 console.log('🔗 [AppBridge] Running in embedded mode - fetch() is auto-authenticated');
             } else {
                 console.log('⚠️ [AppBridge] Running in standalone mode');
             }
 
+            // Inject shop into URL if missing (so app.js can pick it up)
+            if (shop && !params.get('shop')) {
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('shop', shop);
+                window.history.replaceState({}, '', newUrl.toString());
+            }
+
             // Set Manage Subscription link
             const subscriptionBtn = document.getElementById('manage-subscription-btn');
-            let billingUrl = `/billing?shop=${params.get('shop')}`;
+            let billingUrl = `/billing?shop=${shop}`;
             if (host) {
                 billingUrl += `&host=${host}`;
             }
@@ -40,7 +54,7 @@
             }
 
             // Fetch and display plan/trial status
-            fetchPlanStatus(params.get('shop'), billingUrl);
+            fetchPlanStatus(shop, billingUrl);
         });
 
         async function fetchPlanStatus(shop, billingUrl) {
