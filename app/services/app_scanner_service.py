@@ -211,34 +211,90 @@ class AppScannerService:
                 except:
                     return []
                 
-                # Extract app blocks
+                # Extract app blocks from settings_data.json
                 current = settings_data.get("current", {})
-                blocks = current.get("blocks", {})
                 
                 apps_found = []
                 seen_apps = set()
                 
-                for block_id, block_data in blocks.items():
-                    block_type = block_data.get("type", "")
+                def extract_apps_from_blocks(blocks_dict):
+                    """Helper to extract app handles from a blocks dictionary"""
+                    if not isinstance(blocks_dict, dict):
+                        return
+                    for block_id, block_data in blocks_dict.items():
+                        if not isinstance(block_data, dict):
+                            continue
+                        block_type = block_data.get("type", "")
+                        
+                        # Pattern: shopify://apps/{app-handle}/blocks/{block-name}/{uuid}
+                        if block_type.startswith("shopify://apps/"):
+                            parts = block_type.split("/")
+                            if len(parts) >= 4:
+                                app_handle = parts[3]
+                                
+                                if app_handle not in seen_apps:
+                                    seen_apps.add(app_handle)
+                                    app_name = self._handle_to_display_name(app_handle)
+                                    apps_found.append({
+                                        "source": "app_block",
+                                        "app_name": app_name,
+                                        "app_handle": app_handle,
+                                        "disabled": block_data.get("disabled", False),
+                                    })
+                
+                # 1. Check root-level blocks
+                extract_apps_from_blocks(current.get("blocks", {}))
+                
+                # 2. Check section-level blocks (where most OS 2.0 app blocks live)
+                sections = current.get("sections", {})
+                if isinstance(sections, dict):
+                    for section_name, section_data in sections.items():
+                        if isinstance(section_data, dict):
+                            extract_apps_from_blocks(section_data.get("blocks", {}))
+                
+                # 3. Scan template JSON files for app blocks in sections
+                try:
+                    assets_response = await client.get(
+                        f"https://{store.shopify_domain}/admin/api/2024-01/themes/{theme_id}/assets.json",
+                        headers={
+                            "X-Shopify-Access-Token": store.access_token,
+                            "Content-Type": "application/json"
+                        },
+                        timeout=30.0
+                    )
                     
-                    # Pattern: shopify://apps/{app-handle}/blocks/{block-name}/{uuid}
-                    if block_type.startswith("shopify://apps/"):
-                        parts = block_type.split("/")
-                        if len(parts) >= 4:
-                            app_handle = parts[3]  # e.g., "judge-me-reviews"
-                            
-                            if app_handle not in seen_apps:
-                                seen_apps.add(app_handle)
+                    if assets_response.status_code == 200:
+                        all_assets = assets_response.json().get("assets", [])
+                        template_jsons = [
+                            a["key"] for a in all_assets 
+                            if a.get("key", "").startswith("templates/") and a.get("key", "").endswith(".json")
+                        ]
+                        
+                        for template_key in template_jsons[:15]:
+                            try:
+                                tmpl_response = await client.get(
+                                    f"https://{store.shopify_domain}/admin/api/2024-01/themes/{theme_id}/assets.json",
+                                    params={"asset[key]": template_key},
+                                    headers={
+                                        "X-Shopify-Access-Token": store.access_token,
+                                        "Content-Type": "application/json"
+                                    },
+                                    timeout=15.0
+                                )
                                 
-                                # Convert handle to display name
-                                app_name = self._handle_to_display_name(app_handle)
-                                
-                                apps_found.append({
-                                    "source": "app_block",
-                                    "app_name": app_name,
-                                    "app_handle": app_handle,
-                                    "disabled": block_data.get("disabled", False),
-                                })
+                                if tmpl_response.status_code == 200:
+                                    tmpl_content = tmpl_response.json().get("asset", {}).get("value", "{}")
+                                    tmpl_data = json.loads(tmpl_content)
+                                    
+                                    tmpl_sections = tmpl_data.get("sections", {})
+                                    if isinstance(tmpl_sections, dict):
+                                        for sec_name, sec_data in tmpl_sections.items():
+                                            if isinstance(sec_data, dict):
+                                                extract_apps_from_blocks(sec_data.get("blocks", {}))
+                            except Exception:
+                                continue
+                except Exception as e:
+                    print(f"⚠️ [AppScanner] Error scanning template JSONs: {e}")
                 
                 print(f"✅ [AppScanner] Found {len(apps_found)} apps via app blocks")
                 return apps_found

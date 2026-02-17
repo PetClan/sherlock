@@ -174,7 +174,7 @@ function renderStats(apps, scanHistory, performance) {
         '<div class="grid grid-3" style="margin-bottom: 24px;">' +
         '<div class="stat-card clickable" onclick="switchTab(\'apps\', document.querySelector(\'.tab[onclick*=apps]\'))" title="View all installed apps">' +
         '<div class="stat-value">' + (apps.total || 0) + '</div>' +
-        '<div class="stat-label">Installed Apps</div>' +
+        '<div class="stat-label">Storefront Apps</div>' +
         '</div>' +
         '<div class="stat-card clickable" onclick="switchTab(\'apps\', document.querySelector(\'.tab[onclick*=apps]\'))" title="View suspect apps">' +
         '<div class="stat-value ' + (apps.suspect_count > 0 ? 'danger' : 'success') + '">' +
@@ -1200,7 +1200,7 @@ function renderAllApps(appsData) {
     mainContent.innerHTML =
         '<div style="padding: 24px;">' +
         '<button class="btn btn-secondary" onclick="backToDashboard()" style="margin-bottom: 20px;">← Back to Dashboard</button>' +
-        '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">📦 All Installed Apps (' + (appsData.total || 0) + ')</h2>' +
+    '<h2 style="font-family: var(--font-display); margin-bottom: 24px;">📦 Storefront Apps Detected (' + (appsData.total || 0) + ')</h2>' +
         appsHtml +
         '</div>';
 }
@@ -1449,14 +1449,14 @@ function renderInstalledApps(data) {
             <div style="font-size: 32px;">📦</div>
             <div>
                 <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">App Monitoring</div>
-                <div style="color: #94a3b8; font-size: 14px;">Sherlock tracks all installed apps, monitors their behavior, and identifies which ones might cause problems. Each app is classified by category and risk level.</div>
+                <div style="color: #94a3b8; font-size: 14px;">Sherlock detects apps that interact with your storefront — scripts, theme code, and app blocks that can cause conflicts and slowdowns. Each app is classified by category and risk level.</div>
             </div>
         </div>
         
         <div class="apps-summary" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
             <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
                 <span style="font-size: 28px; font-weight: bold; color: var(--cyan);">${data.total}</span>
-                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Total Apps</span>
+                <span style="color: var(--slate-400); font-size: 13px; display: block; margin-top: 4px;">Storefront Apps</span>
             </div>
             <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; text-align: center;">
                 <span style="font-size: 28px; font-weight: bold; color: ${appsWithRisk > 0 ? 'var(--gold)' : 'var(--green)'};">${appsWithRisk}</span>
