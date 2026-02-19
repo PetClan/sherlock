@@ -294,11 +294,12 @@ class AppScannerService:
                                     tmpl_content = tmpl_response.json().get("asset", {}).get("value", "{}")
                                     tmpl_data = json.loads(tmpl_content)
                                     
-                                    tmpl_sections = tmpl_data.get("sections", {})
-                                    if isinstance(tmpl_sections, dict):
-                                        for sec_name, sec_data in tmpl_sections.items():
-                                            if isinstance(sec_data, dict):
-                                                extract_apps_from_blocks(sec_data.get("blocks", {}))
+                                    if isinstance(tmpl_data, dict):
+                                        tmpl_sections = tmpl_data.get("sections", {})
+                                        if isinstance(tmpl_sections, dict):
+                                            for sec_name, sec_data in tmpl_sections.items():
+                                                if isinstance(sec_data, dict):
+                                                    extract_apps_from_blocks(sec_data.get("blocks", {}))
                             except Exception:
                                 continue
                 except Exception as e:
@@ -309,7 +310,7 @@ class AppScannerService:
                 
         except Exception as e:
             print(f"❌ [AppScanner] Error fetching app blocks: {e}")
-            return []
+            return apps_found if apps_found else []
     
     def _handle_to_display_name(self, handle: str) -> str:
         """Convert app handle to display name"""
@@ -547,12 +548,13 @@ class AppScannerService:
             if risk_data["is_suspect"]:
                 suspects.append(app_name)
         
-        # Remove stale apps no longer detected on the storefront
-        current_app_names = {app["app_name"].lower() for app in scanned_apps}
-        for app_name_lower, app in existing_apps.items():
-            if app_name_lower not in current_app_names:
-                print(f"🧹 [AppScanner] Removing stale app: {app.app_name}")
-                await self.db.delete(app)
+        # Remove stale apps only if we actually found apps (avoid deleting everything on scan error)
+        if len(scanned_apps) > 0:
+            current_app_names = {app["app_name"].lower() for app in scanned_apps}
+            for app_name_lower, app in existing_apps.items():
+                if app_name_lower not in current_app_names:
+                    print(f"🧹 [AppScanner] Removing stale app: {app.app_name}")
+                    await self.db.delete(app)
         
         await self.db.flush()
         
