@@ -243,6 +243,15 @@ class ThemeAnalyzerService:
         duplicate_issues = await self._check_duplicate_scripts(store, files, theme_id, installed_apps, signature_service)
         all_issues.extend(duplicate_issues)
         
+        # Auto-resolve previous issues - fresh scan replaces old findings
+        from sqlalchemy import update
+        await self.db.execute(
+            update(ThemeIssue)
+            .where(ThemeIssue.store_id == store.id)
+            .where(ThemeIssue.is_resolved == False)
+            .values(is_resolved=True, resolved_at=datetime.utcnow())
+        )
+        
         # Store issues in database
         for issue_data in all_issues:
             issue = ThemeIssue(
