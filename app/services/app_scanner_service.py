@@ -547,6 +547,13 @@ class AppScannerService:
             if risk_data["is_suspect"]:
                 suspects.append(app_name)
         
+        # Remove stale apps no longer detected on the storefront
+        current_app_names = {app["app_name"].lower() for app in scanned_apps}
+        for app_name_lower, app in existing_apps.items():
+            if app_name_lower not in current_app_names:
+                print(f"🧹 [AppScanner] Removing stale app: {app.app_name}")
+                await self.db.delete(app)
+        
         await self.db.flush()
         
         # Sort by risk score
