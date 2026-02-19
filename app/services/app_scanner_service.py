@@ -214,6 +214,14 @@ class AppScannerService:
                 # Extract app blocks from settings_data.json
                 current = settings_data.get("current", {})
                 
+                # In some themes, "current" is a string preset name - resolve it
+                if isinstance(current, str):
+                    presets = settings_data.get("presets", {})
+                    current = presets.get(current, {}) if isinstance(presets, dict) else {}
+                
+                if not isinstance(current, dict):
+                    current = {}
+                
                 apps_found = []
                 seen_apps = set()
                 
