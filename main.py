@@ -22,6 +22,7 @@ from apscheduler.triggers.cron import CronTrigger
 from app.core.config import settings
 from app.db.database import init_db, get_db
 from app.db.models import Store, InstalledApp, Diagnosis, ThemeIssue, PerformanceSnapshot, DailyScan
+from app.db.wp_models import WordPressSite, WPScanSubmission, WPPluginEvent, WPPluginSignature
 from app.services.diagnosis_service import DiagnosisService
 from app.services.app_scanner_service import AppScannerService
 from app.services.theme_analyzer_service import ThemeAnalyzerService
@@ -312,7 +313,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title=settings.app_name,
-    description="Diagnose which Shopify app is causing issues in your store",
+    description="Diagnose app issues for Shopify and WordPress stores",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -338,6 +339,9 @@ app.include_router(auth_router)
 # Include billing router for subscription management
 from billing import router as billing_router
 app.include_router(billing_router)
+# Include WordPress API router
+from wp_router import router as wp_router
+app.include_router(wp_router, prefix="/api/v1")
 
 # Mount static files
 import os
