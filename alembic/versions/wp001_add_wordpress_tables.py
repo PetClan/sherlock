@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = 'wp001_add_wordpress_tables'
-down_revision = 'ae32cd163dad'
+down_revision = 'add_subscription_fields'
 branch_labels = None
 depends_on = None
 
